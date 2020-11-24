@@ -1,0 +1,31 @@
+<script type="module" about="progress">
+  const $progress = document.querySelector('#progress');
+  const $bar = $progress.querySelector('.bar');
+  const $label = $progress.querySelector('.progress');
+
+  window.renderProgress = (fetchCount, fetchedCount) => {
+    if (fetchCount === 0) {
+      return;
+    }
+
+    const value = Math.min(Number((fetchedCount * 100 / fetchCount).toFixed(2)), 100);
+    $progress.dataset.percent = value;
+
+    if (value === 100) {
+      $progress.classList.remove('active');
+      $progress.classList.add('success');
+    }
+
+    $bar.style.width = $label.innerText = `${value}%`;
+    return value;
+  };
+
+  window.resetProgress = () => {
+    $progress.dataset.percent = 0;
+    $progress.classList.add('active');
+    $progress.classList.remove('success');
+  };
+
+  window.showProgress = () => $progress.classList.remove('hidden');
+  window.hideProgress = () => $progress.classList.add('hidden');
+</script>

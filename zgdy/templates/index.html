@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% block title %}ZGDY Gallery{% endblock %}
+{% block style %}
+  <style type="text/css">
+    .ui.header {
+      display: table;
+    }
+
+    .signature {
+      white-space: pre;
+    }
+  </style>
+{% endblock %}
+{% block container %}
+  {% include 'includes/modal.html' %}
+  <h2 class="ui header">
+    <i class="flag checkered icon"></i>
+    <div class="content">
+      The Input
+      <div class="sub header">Input zgdy user's unique_id, one per line</div>
+    </div>
+  </h2>
+
+  <div class="ui form">
+    <div class="field">
+      <textarea id="unique_id"></textarea>
+    </div>
+    <button class="ui button primary right labeled icon" type="submit" id="fetch">
+      <i class="rocket icon"></i>Fetch
+    </button>
+    <button class="negative ui button  right labeled icon" id="reset">
+      <i class="eraser icon"></i>Reset
+    </button>
+  </div>
+
+  {% include 'includes/progress.html' %}
+
+  <h2 class="ui header">
+    <i class="table icon"></i>
+    <div class="content">
+      The Output
+      <div class="sub header">
+        <button class="mini red ui basic button" id="clear">
+          <i class="icon trash alternate outline"></i>
+          Clear
+        </button>
+        <button class="mini positive ui basic button" id="export">
+          <i class="icon cloud download"></i>
+          Export
+        </button>
+      </div>
+    </div>
+  </h2>
+
+  <table id="output" class="ui fixed purple celled selectable table">
+    <thead>
+    <tr>
+      <th class="two wide">unique_id</th>
+      <th class="fourteen wide">signature</th>
+    </tr>
+    </thead>
+    <tbody>
+    </tbody>
+    <tfoot class="transition">
+    <tr class="positive">
+      <td colspan="2">
+        <i class="red icon heart"></i>
+        input and fetch your first signature
+      </td>
+    </tr>
+    </tfoot>
+  </table>
+{% endblock %}
+{% block script %}
+  {% include 'includes/modal.module' %}
+  {% include 'includes/progress.module' %}
+  <script type="module" about="utils">
+    import dayjs from 'https://cdn.jsdelivr.net/npm/dayjs@1.9.6/esm/index.js/+esm';
+
+    window.downloadFile = (blob) => {
+      const time = dayjs().format('YYYY_MM_DD@HH_mm_ss');
+      const filename = `signature_export@${time}.csv`;
+      const url = URL.createObjectURL(blob);
+      const $stub = document.createElement("a");
+      $stub.style.display = "none";
+      document.body.appendChild($stub);
+      $stub.href = url;
+      $stub.download = filename;
+      $stub.click();
+      $stub.remove();
+      URL.revokeObjectURL(url);
+    };
+
+    window.orderTable = ($body, key, keys) => {
+      let $rows = Array.from($body.children);
+      let group = {};
+
+      for (const [index, $row] of $rows.entries()) {
+        const value = $row.dataset[key];
+
+        if (group.hasOwnProperty(value)) {
+          group[value].push(index);
+        } else {
+          group[value] = [index];
+        }
+      }
+
+      for (const key of keys) {
+        const index = group[key].shift();
+        $body.appendChild($rows[index]);
+      }
+    };
+
+    window.connect = (uri) => {
+      const channel = new WebSocket(uri);
+      showModal('Make Connection', 'Please wait...', false);
+      channel.raw_send = channel.send;
+      channel.send = (data) => {
+        if (channel.readyState !== 1) {
+          return showModal('Channel Closed!', 'Please refresh page.');
+        }
+        channel.raw_send(data);
+      };
+      channel.onclose = () => {
+        showModal('Channel Closed!', 'Please refresh page.');
+      };
+      channel.onopen = hideModal;
+      return channel;
+    };
+  </script>
+  <script type="module" about="main">
+    let fetchCount = 0;
+    let fetchedCount = 0;
+    const $tbody = document.querySelector('#output > tbody');
+    const $uniqueId = document.querySelector('#unique_id');
+    const $tfoot = document.querySelector('tfoot');
+
+    function updateFetchCount(value) {
+      fetchCount = value;
+      renderProgress(fetchCount, fetchedCount);
+    }
+
+    function updateFetchedCount(value) {
+      fetchedCount = value;
+      const percent = renderProgress(fetchCount, fetchedCount);
+
+      if (percent === 100) {
+        orderTable($tbody, 'uniqueId', $uniqueId.value.split('\n'));
+      }
+    }
+
+    function renderOutput(status, data) {
+      const $row = document.createElement('tr');
+
+      if (status !== 200) {
+        $row.classList.add('negative');
+      }
+
+      const [uniqueId, info] = data;
+      $row.dataset.uniqueId = uniqueId;
+      $row.innerHTML = `<td>${uniqueId}</td><td class="signature">${info}</td>`;
+      $tbody.appendChild($row);
+    }
+
+    const channel = connect(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/zgdy/`);
+
+    channel.onmessage = function (event) {
+      if (event.data instanceof Blob) {
+        downloadFile(event.data);
+        return;
+      }
+
+      const [type, status, data] = JSON.parse(event.data);
+      console.log(data);
+
+      if (type === 'get') {
+        renderOutput(status, data);
+        updateFetchedCount(fetchedCount + 1);
+      }
+    };
+
+    document.querySelector('#fetch').onclick = function (e) {
+      let uniqueID = $uniqueId.value;
+
+      if (!uniqueID.length) {
+        return showModal('Empty unique_id!', 'Please input unique_id in the box.');
+      }
+
+      let uniqueIDs = uniqueID.split('\n');
+      resetProgress();
+      showProgress();
+      $tfoot.classList.add('hidden');
+      updateFetchCount(fetchCount + uniqueIDs.length);
+
+      for (let item of uniqueIDs) {
+        channel.send(JSON.stringify(['get', item]));
+      }
+    };
+
+    document.querySelector('#clear').onclick = function (e) {
+      $tbody.innerHTML = '';
+      $tfoot.classList.remove('hidden');
+      hideProgress();
+      updateFetchCount(0);
+      updateFetchedCount(0);
+    };
+
+    document.querySelector('#export').onclick = function (e) {
+      let rows = Array.from($tbody.querySelectorAll('tr'), item => {
+        let tds = item.querySelectorAll('td');
+        return [tds[0].innerText, tds[1].innerText];
+      });
+
+      if (!rows.length) {
+        return showModal('Empty Table!', 'Please fetch first.');
+      }
+
+      channel.send(JSON.stringify(['export', [['unique_id', 'signature']].concat(rows)]));
+    };
+
+    document.querySelector('#reset').onclick = function (e) {
+      $uniqueId.value = '';
+    };
+  </script>
+{% endblock %}

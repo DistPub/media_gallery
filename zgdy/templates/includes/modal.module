@@ -1,0 +1,24 @@
+<script type="module" about="modal">
+  const $modal = document.querySelector('#modal');
+  $modal.querySelector('.close').onclick = () => $modal.close();
+
+  const $message = $modal.querySelector('.message');
+  const $title = $modal.querySelector('.modal-message-title');
+  const $body = $modal.querySelector('.modal-message-body');
+
+  window.showModal = (title, body, negative=true) => {
+    updateModalStyle(negative);
+    $title.innerText = title;
+    $body.innerText = body;
+    $modal.showModal();
+  };
+  window.hideModal = () => $modal.querySelector('.close').click();
+
+  const updateModalStyle = (negative) => {
+    if (negative) {
+      $message.classList.add('negative');
+    } else {
+      $message.classList.remove('negative');
+    }
+  };
+</script>
