@@ -1,8 +1,7 @@
-const params = JSON.parse(new URL(location).searchParams.get('workbox'));
-
-importScripts(params.endpoint);
+{% load static %}
+importScripts('{% static "js/workbox/workbox-sw.js" %}');
 workbox.setConfig({
-  modulePathPrefix: params.prefix
+  modulePathPrefix: '{% get_static_prefix %}js/workbox/'
 });
 
 const {registerRoute} = workbox.routing;

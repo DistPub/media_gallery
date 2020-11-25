@@ -10,12 +10,7 @@
 <script type="module">
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      const workbox = {
-        endpoint: '{% static "js/workbox/workbox-sw.js" %}',
-        prefix: "{% get_static_prefix %}js/workbox/"
-      };
-      const swURL = '{% url "sw.js" %}' + `?workbox=${encodeURIComponent(JSON.stringify(workbox))}`;
-      navigator.serviceWorker.register(swURL);
+      navigator.serviceWorker.register('{% url "sw.js" %}');
     })
   }
 </script>
