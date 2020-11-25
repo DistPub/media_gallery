@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html>
 <head>
@@ -6,6 +7,18 @@
     <title>{% block title %}{% endblock %}</title>
 </head>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui-css@2.4.1/semantic.min.css">
+<script type="module">
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      const workbox = {
+        endpoint: '{% static "js/workbox/workbox-sw.js" %}',
+        prefix: "{% get_static_prefix %}js/workbox/"
+      };
+      const swURL = '{% url "sw.js" %}' + `?workbox=${encodeURIComponent(JSON.stringify(workbox))}`;
+      navigator.serviceWorker.register(swURL);
+    })
+  }
+</script>
 {% block style %}{% endblock %}
 <body class="ui container">
 {% block container %}{% endblock %}
