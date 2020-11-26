@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'channels',
+    'base',
     'zgdy',
+    'libp2p',
 ]
 
 MIDDLEWARE = [

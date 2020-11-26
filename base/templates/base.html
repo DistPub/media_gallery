@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="utf-8"/>
     <meta content='width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,minimal-ui' name='viewport'/>
@@ -10,7 +10,7 @@
 <script type="module">
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('{% url "sw.js" %}');
+      navigator.serviceWorker.register('{% url "base:sw.js" %}');
     })
   }
 </script>
