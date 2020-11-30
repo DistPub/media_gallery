@@ -17,3 +17,12 @@ services:
           && daphne -b 0.0.0.0 -p 7000 media_gallery.asgi:application"
       ports:
           - 7800:7000
+      depends_on:
+        - webrtc-star
+
+  webrtc-star:
+      image: libp2p/js-libp2p-webrtc-star
+      container_name: webrtc-star
+      restart: always
+      ports:
+          - 7890:9090
