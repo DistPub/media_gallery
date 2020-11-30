@@ -2,86 +2,93 @@
 {% block title %}js-libp2p demo{% endblock %}
 {% block sw_url %}{% url "libp2p:sw.js" %}{% endblock %}
 {% block container %}
-<header>
-  <h1 id="status">Starting libp2p...</h1>
-</header>
-<main>
-  <pre id="output"></pre>
-</main>
+  <header>
+    <h1 id="status">Starting libp2p...</h1>
+  </header>
+  <main>
+    <input type="text" id="peer"/>
+    <input type="text" id="content"/>
+    <button type="submit" onclick="
+      dailing(
+        document.querySelector('#peer').value,
+        document.querySelector('#content').value)
+    ">say hi</button>
+  </main>
 {% endblock %}
 {% block script %}
-<script src="https://wzrd.in/standalone/libp2p@0.29.3"></script>
-<script src="https://wzrd.in/standalone/libp2p-websockets@0.14.0"></script>
-<script src="https://wzrd.in/standalone/libp2p-webrtc-star@0.20.1"></script>
-<script src="https://wzrd.in/standalone/libp2p-bootstrap@0.12.1"></script>
-<script src="https://wzrd.in/standalone/libp2p-noise@2.0.1"></script>
-<script src="https://wzrd.in/standalone/libp2p-mplex@0.10.1"></script>
-<script>
-  window.addEventListener('load', async () => {
-    // Create our libp2p node
-    const libp2p = await window.libp2p.create({
-      addresses: {
-        // Add the signaling server address, along with our PeerId to our multiaddrs list
-        // libp2p will automatically attempt to dial to the signaling server so that it can
-        // receive inbound connections from other peers
-        listen: [
-          '/dns4/wrtc-star1.par.dwebops.pub/tcp/443/wss/p2p-webrtc-star',
-          '/dns4/wrtc-star2.sjc.dwebops.pub/tcp/443/wss/p2p-webrtc-star'
-        ]
-      },
-      modules: {
-        transport: [window.libp2pWebsockets, window.libp2pWebrtcStar],
-        connEncryption: [window.libp2pNoise.NOISE],
-        streamMuxer: [window.libp2pMplex],
-        peerDiscovery: [window.libp2pBootstrap]
-      },
-      config: {
-        peerDiscovery: {
-          // The `tag` property will be searched when creating the instance of your Peer Discovery service.
-          // The associated object, will be passed to the service when it is instantiated.
-          [window.libp2pBootstrap.tag]: {
-            enabled: true,
-            list: [
-              '/dnsaddr/bootstrap.libp2p.io/p2p/QmNnooDu7bfjPFoTZYxMNLWUQJyrVwtbZg5gBMjTezGAJN',
-              '/dnsaddr/bootstrap.libp2p.io/p2p/QmbLHAnMoJPWSCR5Zhtx6BHJX9KiKNN6tpvbUcqanj75Nb',
-              '/dnsaddr/bootstrap.libp2p.io/p2p/QmZa1sAxajnQjVM8WjWXoMbmPd7NsWhfKsPkErzpm9wGkp',
-              '/dnsaddr/bootstrap.libp2p.io/p2p/QmQCU2EcMqAqQPR2i9bChDtGNJchTbq5TbXJJ16u19uLTa',
-              '/dnsaddr/bootstrap.libp2p.io/p2p/QmcZf59bWwK5XFi76CZX8cbJ4BhTzzA3gU1ZjYZcYW3dwt'
-            ]
-          }
-        }
+  <script src="https://wzrd.in/standalone/libp2p@0.29.3"></script>
+  <script src="https://wzrd.in/standalone/libp2p-websockets@0.14.0"></script>
+  <script src="https://wzrd.in/standalone/libp2p-webrtc-star@0.20.1"></script>
+  <script src="https://wzrd.in/standalone/libp2p-bootstrap@0.12.1"></script>
+  <script src="https://wzrd.in/standalone/libp2p-noise@2.0.1"></script>
+  <script src="https://wzrd.in/standalone/libp2p-mplex@0.10.1"></script>
+  <script src="https://wzrd.in/standalone/it-pipe@1.1.0"></script>
+  <script type="module">
+    import {tap,collect} from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs';
+
+    window.addEventListener('load', async () => {
+      // Create our libp2p node
+      const libp2p = await window.libp2p.create({
+        addresses: {
+          // Add the signaling server address, along with our PeerId to our multiaddrs list
+          // libp2p will automatically attempt to dial to the signaling server so that it can
+          // receive inbound connections from other peers
+          listen: [
+            '/dns4/webrtc-star.dist.pub/tcp/443/wss/p2p-webrtc-star',
+          ]
+        },
+        modules: {
+          transport: [window.libp2pWebsockets, window.libp2pWebrtcStar],
+          connEncryption: [window.libp2pNoise.NOISE],
+          streamMuxer: [window.libp2pMplex],
+        },
+      })
+
+      // UI elements
+      const status = document.getElementById('status')
+
+      function log(txt) {
+        console.info(txt)
+      }
+
+      // Listen for new connections to peers
+      libp2p.connectionManager.on('peer:connect', (connection) => {
+        log(`Connected to ${connection.remotePeer.toB58String()}`)
+      })
+
+      // Listen for peers disconnecting
+      libp2p.connectionManager.on('peer:disconnect', (connection) => {
+        log(`Disconnected from ${connection.remotePeer.toB58String()}`)
+      })
+
+      await libp2p.start()
+      window.p2pNode = libp2p;
+
+      // logic
+      p2pNode.handle('/echo', async ({connection, stream}) => {
+        await itPipe(
+          stream.source,
+          tap((msg) => {log(`receive from peer: ${connection.remoteAddr.toString()} content: ${msg}`)}),
+          collect
+        )
+      })
+
+      status.innerText = `libp2p started!: ${p2pNode.peerId.toB58String()}`
+      log(`My id is ${p2pNode.peerId}`)
+      log(`My id is ${p2pNode.peerId.toB58String()}`)
+      log(`I can use ${p2pNode.multiaddrs.length} transports to communicate`)
+      for (const item of p2pNode.multiaddrs) {
+        log(`One is ${item.toString()}`)
       }
     })
 
-    // UI elements
-    const status = document.getElementById('status')
-    const output = document.getElementById('output')
-
-    output.textContent = ''
-
-    function log(txt) {
-      console.info(txt)
-      output.textContent += `${txt.trim()}\n`
+    window.dailing = async function (peerId, content) {
+      const connection = await p2pNode.dial(`/dns4/webrtc-star.dist.pub/tcp/443/wss/p2p-webrtc-star/p2p/${peerId}`)
+      const stream = await connection.newStream('/echo')
+      await itPipe(
+        [content],
+        stream.stream,
+      )
     }
-
-    // Listen for new peers
-    libp2p.on('peer:discovery', (peerId) => {
-      log(`Found peer ${peerId.toB58String()}`)
-    })
-
-    // Listen for new connections to peers
-    libp2p.connectionManager.on('peer:connect', (connection) => {
-      log(`Connected to ${connection.remotePeer.toB58String()}`)
-    })
-
-    // Listen for peers disconnecting
-    libp2p.connectionManager.on('peer:disconnect', (connection) => {
-      log(`Disconnected from ${connection.remotePeer.toB58String()}`)
-    })
-
-    await libp2p.start()
-    status.innerText = 'libp2p started!'
-    log(`libp2p id is ${libp2p.peerId.toB58String()}`)
-  })
-</script>
+  </script>
 {% endblock %}
