@@ -16,7 +16,6 @@ Including another URLconf
 from django.urls import path, include
 
 urlpatterns = [
-    path('', include(('base.urls', 'base'))),
     path('zgdy/', include(('zgdy.urls', 'zgdy'))),
     path('libp2p/', include(('libp2p.urls', 'libp2p'))),
 ]

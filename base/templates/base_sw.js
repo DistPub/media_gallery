@@ -12,16 +12,18 @@ const cdn = [
   'https://cdn.jsdelivr.net',
   'https://fonts.googleapis.com',
   'https://fonts.gstatic.com',
+  {% block extendCDN %}{% endblock %}
 ];
 
 registerRoute(
   ({url}) => cdn.includes(url.origin) === false,
-  new NetworkFirst()
+  new NetworkFirst({cacheName: 'website'})
 );
 
 registerRoute(
   ({url}) => cdn.includes(url.origin),
   new CacheFirst({
+    cacheName: 'cdn',
     plugins: [
       new CacheableResponsePlugin({statuses: [0, 200]})
     ],

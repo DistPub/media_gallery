@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}js-libp2p demo{% endblock %}
+{% block sw_url %}{% url "libp2p:sw.js" %}{% endblock %}
 {% block container %}
 <header>
   <h1 id="status">Starting libp2p...</h1>
@@ -9,13 +10,6 @@
 </main>
 {% endblock %}
 {% block script %}
-<script type="module">
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('{% url "libp2p:sw.js" %}');
-  })
-}
-</script>
 <script src="https://wzrd.in/standalone/libp2p@0.29.3"></script>
 <script src="https://wzrd.in/standalone/libp2p-websockets@0.14.0"></script>
 <script src="https://wzrd.in/standalone/libp2p-webrtc-star@0.20.1"></script>
