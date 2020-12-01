@@ -22,6 +22,7 @@
   <script src="https://wzrd.in/standalone/libp2p-noise@2.0.1"></script>
   <script src="https://wzrd.in/standalone/libp2p-mplex@0.10.1"></script>
   <script src="https://wzrd.in/standalone/it-pipe@1.1.0"></script>
+  <script src="https://bundle.run/it-length-prefixed@3.1.0"></script>
   <script type="module">
     import {map,filter,collect,consume} from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs';
 
@@ -115,7 +116,9 @@
         // handle request and send response
         await itPipe(
           stream.source,
+          (source) => map(decode, source),
           (source) => map(transform(connection, stream), source),
+          (source) => map(encode, source),
           stream.sink,
         );
 
@@ -129,6 +132,7 @@
         log(`[${anotherConn.id}][${anotherStream.id}][request]>> ${contents.join(', ')}`);
         const results = await itPipe(
           contents,
+          (source) => map(encode, source),
           anotherStream,
           consume,
         );
@@ -139,6 +143,7 @@
         // only handle no response
         await itPipe(
           stream.source,
+          (source) => map(decode, source),
           filter((msg) => {
             log(`[${connection.id}][${stream.id}][request]<< ${msg}`);
             return false;
@@ -154,6 +159,14 @@
       return stream;
     }
 
+    function encode(msg) {
+      return encodeURI(msg);
+    }
+
+    function decode(msg) {
+      return decodeURI(msg);
+    }
+
     window.dailing = async function (peerId, content) {
       const connection = await getConnectionByPeerId(peerId);
       const stream = await getStreamByConnectionProtocol(connection, '/echo');
@@ -161,7 +174,9 @@
       log(`[${connection.id}][${stream.id}][request]>> ${content}`);
       const results = await itPipe(
         [content],
+        (source) => map(encode, source),
         stream,
+        (source) => map(decode, source),
         collect,
       );
       log(`[${connection.id}][${stream.id}][response]<< ${results}`);
