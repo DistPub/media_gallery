@@ -19,76 +19,152 @@
   <script src="https://wzrd.in/standalone/libp2p@0.29.3"></script>
   <script src="https://wzrd.in/standalone/libp2p-websockets@0.14.0"></script>
   <script src="https://wzrd.in/standalone/libp2p-webrtc-star@0.20.1"></script>
-  <script src="https://wzrd.in/standalone/libp2p-bootstrap@0.12.1"></script>
   <script src="https://wzrd.in/standalone/libp2p-noise@2.0.1"></script>
   <script src="https://wzrd.in/standalone/libp2p-mplex@0.10.1"></script>
   <script src="https://wzrd.in/standalone/it-pipe@1.1.0"></script>
   <script type="module">
-    import {tap,collect} from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs';
+    import {map,filter,collect,consume} from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs';
 
-    window.addEventListener('load', async () => {
-      // Create our libp2p node
-      const libp2p = await window.libp2p.create({
+    const country = '/dns4/webrtc-star.dist.pub/tcp/443/wss/p2p-webrtc-star';
+    const addressBook = {};
+    const connectionBook = {};
+    window.p2pAddressBook = addressBook;
+    window.p2pConnectionBook = connectionBook;
+
+    function log(txt) {
+      console.info(txt);
+    }
+    function getIdHomeByConnection(connection) {
+      const id = connection.remotePeer.toB58String();
+      const home = connection.remoteAddr ? connection.remoteAddr.toString() : null;
+      return [id, home]
+    }
+    async function getConnectionByPeerId(id) {
+      if (connectionBook.hasOwnProperty(id)) {
+        return connectionBook[id];
+      }
+
+      let address;
+      if (addressBook.hasOwnProperty(id)) {
+        address = addressBook[id];
+      } else {
+        address = `${country}/p2p/${id}`;
+      }
+      const connection = await p2pNode.dial(address);
+      connectionBook[id] = connection;
+      return connection;
+    }
+
+    async function ping(my, address) {
+      const latency = await my.ping(address);
+      log(`I'm ${latency}ms away by ping from the home ${address}`);
+    }
+
+    (async () => {
+      const my = await libp2p.create({
         addresses: {
-          // Add the signaling server address, along with our PeerId to our multiaddrs list
-          // libp2p will automatically attempt to dial to the signaling server so that it can
-          // receive inbound connections from other peers
-          listen: [
-            '/dns4/webrtc-star.dist.pub/tcp/443/wss/p2p-webrtc-star',
-          ]
+          listen: [country]
         },
         modules: {
           transport: [window.libp2pWebsockets, window.libp2pWebrtcStar],
           connEncryption: [window.libp2pNoise.NOISE],
           streamMuxer: [window.libp2pMplex],
         },
-      })
+      });
+      window.p2pNode = my;
 
-      // UI elements
-      const status = document.getElementById('status')
+      // event
+      my.on('peer:discovery', (peerId) => {
+        log(`* Nice to meet ${peerId.toB58String()}`);
+      });
+      my.connectionManager.on('peer:connect', (connection) => {
+        const [id, home] = getIdHomeByConnection(connection);
+        const flag = connection.stat.direction === 'outbound' ? '>>' : '<<';
 
-      function log(txt) {
-        console.info(txt)
-      }
+        log(`+${flag}[${connection.id}] meet ${home ? 'person' : id} at ${home || 'somewhere'}`);
 
-      // Listen for new connections to peers
-      libp2p.connectionManager.on('peer:connect', (connection) => {
-        log(`Connected to ${connection.remotePeer.toB58String()}`)
-      })
+        if (home) {
+          addressBook[id] = home;
+          ping(my, home);
+        }
+      });
+      my.connectionManager.on('peer:disconnect', (connection) => {
+        const id = connection.remotePeer.toB58String();
+        delete connectionBook[id];
+        log(`- Good Bye to ${id}`);
+        delete addressBook[id];
+      });
 
-      // Listen for peers disconnecting
-      libp2p.connectionManager.on('peer:disconnect', (connection) => {
-        log(`Disconnected from ${connection.remotePeer.toB58String()}`)
-      })
-
-      await libp2p.start()
-      window.p2pNode = libp2p;
+      await my.start();
+      const id = my.peerId.toB58String();
+      const home = `${country}/p2p/${id}`;
+      log(`My home: ${home}`);
+      addressBook[id] = home;
 
       // logic
-      p2pNode.handle('/echo', async ({connection, stream}) => {
+      document.getElementById('status').innerText = `libp2p started!: ${id}`;
+
+      function transform(connection, stream) {
+        return (msg) => {
+          log(`[${connection.id}][${stream.id}][request]<< ${msg}`);
+          return `transform msg: ${msg}`;
+        }
+      }
+
+      my.handle('/echo', async ({connection, stream}) => {
+        // handle request and send response
         await itPipe(
           stream.source,
-          tap((msg) => {log(`receive from peer: ${connection.remoteAddr.toString()} content: ${msg}`)}),
-          collect
-        )
-      })
+          (source) => map(transform(connection, stream), source),
+          stream.sink,
+        );
 
-      status.innerText = `libp2p started!: ${p2pNode.peerId.toB58String()}`
-      log(`My id is ${p2pNode.peerId}`)
-      log(`My id is ${p2pNode.peerId.toB58String()}`)
-      log(`I can use ${p2pNode.multiaddrs.length} transports to communicate`)
-      for (const item of p2pNode.multiaddrs) {
-        log(`One is ${item.toString()}`)
-      }
-    })
+        // push more message
+        const remotePeerId = connection.remotePeer.toB58String();
+        const contents = ['hello client', `this is push from ${id}`];
+
+        const anotherConn = await getConnectionByPeerId(remotePeerId);
+        const anotherStream = await getStreamByConnectionProtocol(anotherConn, '/print');
+
+        log(`[${anotherConn.id}][${anotherStream.id}][request]>> ${contents.join(', ')}`);
+        const results = await itPipe(
+          contents,
+          anotherStream,
+          consume,
+        );
+        log(`[${anotherConn.id}][${anotherStream.id}][response]<< ${results}`);
+      });
+
+      my.handle('/print', async ({connection, stream}) => {
+        // only handle no response
+        await itPipe(
+          stream.source,
+          filter((msg) => {
+            log(`[${connection.id}][${stream.id}][request]<< ${msg}`);
+            return false;
+          }),
+          stream.sink,
+        );
+      });
+    })();
+
+    async function getStreamByConnectionProtocol(connection, protocol) {
+      let stream = await connection.newStream(protocol);
+      stream = await stream.stream;
+      return stream;
+    }
 
     window.dailing = async function (peerId, content) {
-      const connection = await p2pNode.dial(`/dns4/webrtc-star.dist.pub/tcp/443/wss/p2p-webrtc-star/p2p/${peerId}`)
-      const stream = await connection.newStream('/echo')
-      await itPipe(
+      const connection = await getConnectionByPeerId(peerId);
+      const stream = await getStreamByConnectionProtocol(connection, '/echo');
+
+      log(`[${connection.id}][${stream.id}][request]>> ${content}`);
+      const results = await itPipe(
         [content],
-        stream.stream,
-      )
+        stream,
+        collect,
+      );
+      log(`[${connection.id}][${stream.id}][response]<< ${results}`);
     }
   </script>
 {% endblock %}
