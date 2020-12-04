@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}js-libp2p demo{% endblock %}
 {% block sw_url %}{% url "libp2p:sw.js" %}{% endblock %}
 {% block container %}
@@ -16,9 +17,11 @@
   </main>
 {% endblock %}
 {% block script %}
-  <script src="https://wzrd.in/standalone/libp2p@0.29.3"></script>
+  <script src="{% static 'libp2p/libp2p.js' %}"></script>
+{#  <script src="https://wzrd.in/standalone/libp2p@0.29.3"></script>#}
   <script src="https://wzrd.in/standalone/libp2p-websockets@0.14.0"></script>
-  <script src="https://wzrd.in/standalone/libp2p-webrtc-star@0.20.2"></script>
+  <script src="{% static 'libp2p/webrtc-star.js' %}"></script>
+{#  <script src="https://wzrd.in/standalone/libp2p-webrtc-star@0.20.2"></script>#}
   <script src="https://wzrd.in/standalone/libp2p-noise@2.0.1"></script>
   <script src="https://wzrd.in/standalone/libp2p-mplex@0.10.1"></script>
   <script src="https://bundle.run/it-pipe@1.1.0"></script>
@@ -30,6 +33,12 @@
     const connectionBook = {};
     window.p2pAddressBook = addressBook;
     window.p2pConnectionBook = connectionBook;
+    const simplePeerOptions = {
+      trickle: true,
+      config: {
+        iceServers: {{ iceServers|safe }},
+      }
+    };
 
     function log(txt) {
       console.info(txt);
@@ -53,12 +62,7 @@
         address = `${country}/p2p/${id}`;
       }
       const connection = await p2pNode.dial(address, {
-        spOptions: {
-          trickle: true,
-          config: {
-            "iceServers": {{ iceServers|safe }},
-          }
-        }
+        spOptions: simplePeerOptions
       });
       connectionBook[id] = connection;
       return connection;
@@ -82,6 +86,11 @@
         config: {
           peerDiscovery: {
             autoDial: false,
+          },
+          transport: {
+            WebRTCStar: {
+              listenerOptions: simplePeerOptions
+            }
           }
         }
       });
