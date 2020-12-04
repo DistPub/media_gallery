@@ -18,12 +18,12 @@
 {% block script %}
   <script src="https://wzrd.in/standalone/libp2p@0.29.3"></script>
   <script src="https://wzrd.in/standalone/libp2p-websockets@0.14.0"></script>
-  <script src="https://wzrd.in/standalone/libp2p-webrtc-star@0.20.1"></script>
+  <script src="https://wzrd.in/standalone/libp2p-webrtc-star@0.20.2"></script>
   <script src="https://wzrd.in/standalone/libp2p-noise@2.0.1"></script>
   <script src="https://wzrd.in/standalone/libp2p-mplex@0.10.1"></script>
   <script src="https://bundle.run/it-pipe@1.1.0"></script>
   <script type="module">
-    import {map,filter,collect,consume} from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs';
+    import {map, filter, collect, consume} from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs';
 
     const country = '/dns4/webrtc-star.dist.pub/tcp/443/wss/p2p-webrtc-star';
     const addressBook = {};
@@ -34,11 +34,13 @@
     function log(txt) {
       console.info(txt);
     }
+
     function getIdHomeByConnection(connection) {
       const id = connection.remotePeer.toB58String();
       const home = connection.remoteAddr ? connection.remoteAddr.toString() : null;
       return [id, home]
     }
+
     async function getConnectionByPeerId(id) {
       if (connectionBook.hasOwnProperty(id)) {
         return connectionBook[id];
@@ -50,7 +52,14 @@
       } else {
         address = `${country}/p2p/${id}`;
       }
-      const connection = await p2pNode.dial(address);
+      const connection = await p2pNode.dial(address, {
+        spOptions: {
+          trickle: true,
+          config: {
+            "iceServers": {{ iceServers|safe }},
+          }
+        }
+      });
       connectionBook[id] = connection;
       return connection;
     }
