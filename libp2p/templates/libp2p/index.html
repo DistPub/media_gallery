@@ -7,13 +7,14 @@
     <h1 id="status">Starting libp2p...</h1>
   </header>
   <main>
-    <input type="text" id="peer"/>
-    <input type="text" id="content"/>
+    <input type="text" id="peer"/><br>
+    <textarea id="content"></textarea><textarea id="received" readonly></textarea><br>
     <button type="submit" onclick="
       dailing(
         document.querySelector('#peer').value,
         document.querySelector('#content').value)
     ">say hi</button>
+    <ul id="peers"></ul>
   </main>
 {% endblock %}
 {% block script %}
@@ -25,13 +26,13 @@
   <script src="https://wzrd.in/standalone/libp2p-noise@2.0.1"></script>
   <script src="https://wzrd.in/standalone/libp2p-mplex@0.10.1"></script>
   <script src="https://bundle.run/it-pipe@1.1.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/peer-id@0.14.2/dist/index.min.js"></script>
   <script type="module">
     import {map, filter, collect, consume} from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs';
 
     const country = '/dns4/webrtc-star.dist.pub/tcp/443/wss/p2p-webrtc-star';
-    const addressBook = {};
+    const peers = [];
     const connectionBook = {};
-    window.p2pAddressBook = addressBook;
     window.p2pConnectionBook = connectionBook;
     const simplePeerOptions = {
       trickle: true,
@@ -42,6 +43,8 @@
 
     function log(txt) {
       console.info(txt);
+      const $output = document.querySelector('#received');
+      $output.value = `${$output.value}\n${txt}`;
     }
 
     function getIdHomeByConnection(connection) {
@@ -54,14 +57,7 @@
       if (connectionBook.hasOwnProperty(id)) {
         return connectionBook[id];
       }
-
-      let address;
-      if (addressBook.hasOwnProperty(id)) {
-        address = addressBook[id];
-      } else {
-        address = `${country}/p2p/${id}`;
-      }
-      const connection = await p2pNode.dial(address, {
+      const connection = await p2pNode.dial(PeerId.createFromB58String(id), {
         spOptions: simplePeerOptions
       });
       connectionBook[id] = connection;
@@ -97,8 +93,16 @@
       window.p2pNode = my;
 
       // event
+      my.on('error', (error) => log(error));
       my.on('peer:discovery', (peerId) => {
-        log(`* Nice to meet ${peerId.toB58String()}`);
+        const id = peerId.toB58String();
+        log(`* Nice to meet ${id}`);
+
+        if (!peers.includes(id)) {
+          const $li = document.createElement('li');
+          $li.innerText = id;
+          document.querySelector('#peers').appendChild($li);
+        }
       });
       my.connectionManager.on('peer:connect', (connection) => {
         const [id, home] = getIdHomeByConnection(connection);
@@ -107,25 +111,20 @@
         log(`+${flag}[${connection.id}] meet ${home ? 'person' : id} at ${home || 'somewhere'}`);
 
         ping(my, connection.remotePeer);
-        if (home) {
-          addressBook[id] = home;
-        }
       });
       my.connectionManager.on('peer:disconnect', (connection) => {
         const id = connection.remotePeer.toB58String();
         delete connectionBook[id];
         log(`- Good Bye to ${id}`);
-        delete addressBook[id];
       });
 
       await my.start();
       const id = my.peerId.toB58String();
       const home = `${country}/p2p/${id}`;
       log(`My home: ${home}`);
-      addressBook[id] = home;
 
       // logic
-      document.getElementById('status').innerText = `libp2p started!: ${id}`;
+      document.getElementById('status').innerText = `libp2p started!\n${id}`;
 
       function transform(connection, stream) {
         return (msg) => {
@@ -135,7 +134,6 @@
       }
 
       my.handle('/echo', async ({connection, stream}) => {
-        ping(my, connection.remotePeer);
         // handle request and send response
         await itPipe(
           stream.source,
