@@ -79,6 +79,11 @@
           connEncryption: [window.libp2pNoise.NOISE],
           streamMuxer: [window.libp2pMplex],
         },
+        config: {
+          peerDiscovery: {
+            autoDial: false,
+          }
+        }
       });
       window.p2pNode = my;
 
