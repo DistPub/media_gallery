@@ -106,9 +106,9 @@
 
         log(`+${flag}[${connection.id}] meet ${home ? 'person' : id} at ${home || 'somewhere'}`);
 
+        ping(my, connection.remotePeer);
         if (home) {
           addressBook[id] = home;
-          ping(my, home);
         }
       });
       my.connectionManager.on('peer:disconnect', (connection) => {
@@ -135,6 +135,7 @@
       }
 
       my.handle('/echo', async ({connection, stream}) => {
+        ping(my, connection.remotePeer);
         // handle request and send response
         await itPipe(
           stream.source,
