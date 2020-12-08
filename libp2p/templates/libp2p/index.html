@@ -2,20 +2,97 @@
 {% load static %}
 {% block title %}js-libp2p demo{% endblock %}
 {% block sw_url %}{% url "libp2p:sw.js" %}{% endblock %}
+{% block style %}
+  <style type="text/css">
+    section.main {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 1em 0 1em 0;
+    }
+    main.stage {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      overflow: auto;
+    }
+    footer.ui.input {
+      display: flex;
+    }
+    #shell {
+      flex-grow: 1;
+    }
+  </style>
+{% endblock %}
 {% block container %}
-  <header>
-    <h1 id="status">Starting libp2p...</h1>
-  </header>
-  <main>
-    <input type="text" id="peer"/><br>
-    <textarea id="content"></textarea><textarea id="received" readonly></textarea><br>
-    <button type="submit" onclick="
-      dailing(
-        document.querySelector('#peer').value,
-        document.querySelector('#content').value)
-    ">say hi</button>
-    <ul id="peers"></ul>
-  </main>
+  {% include 'includes/modal.html' %}
+  {% include 'includes/modal.module' %}
+  <script type="module">
+    window.showModal('Login', 'Starting libp2p...', false)
+  </script>
+
+  <section class="main">
+    <header class="ui pointing menu">
+      <div class="ui simple dropdown item">
+        <i class="add icon"></i> New Chat
+        <i class="dropdown icon"></i>
+        <div class="menu" id="peers">
+        </div>
+      </div>
+      <a class="item">
+        User A
+      </a>
+      <a class="item active">
+        User B
+      </a>
+      <div class="right menu">
+        <div class="item">
+          <div class="ui disabled transparent icon input">
+            <input type="text" placeholder="Search...">
+            <i class="search link icon"></i>
+          </div>
+        </div>
+        <a class="ui item">
+          Logout
+        </a>
+      </div>
+    </header>
+
+    <main class="stage">
+    </main>
+
+
+    <footer class="ui action input">
+      <div class="ui compact menu">
+        <div class="ui simple dropdown item">
+          <span class="text">Echo</span>
+          <i class="dropdown icon"></i>
+          <div class="menu">
+            <div class="item">Echo</div>
+          </div>
+        </div>
+      </div>
+      <input id="shell" type="text" placeholder="text...">
+      <div class="ui primary button" onclick="sendText()">Send</div>
+    </footer>
+  </section>
+  <section id="template" style="display: none">
+    <div class="ui feed template">
+      <div class="event">
+        <div class="label">
+          <img src="/images/avatar/small/jenny.jpg">
+        </div>
+        <div class="content">
+          <div class="date">
+            3 days ago
+          </div>
+          <div class="summary">
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 {% endblock %}
 {% block script %}
   <script src="{% static 'libp2p/libp2p.js' %}"></script>
@@ -27,6 +104,8 @@
   <script src="https://wzrd.in/standalone/libp2p-mplex@0.10.1"></script>
   <script src="https://bundle.run/it-pipe@1.1.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/peer-id@0.14.2/dist/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.production.min.js"></script>
   <script type="module">
     import {map, filter, collect, consume} from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs';
 
@@ -43,8 +122,6 @@
 
     function log(txt) {
       console.info(txt);
-      const $output = document.querySelector('#received');
-      $output.value = `${$output.value}\n${txt}`;
     }
 
     function getIdHomeByConnection(connection) {
@@ -99,11 +176,21 @@
         log(`* Nice to meet ${id}`);
 
         if (!peers.includes(id)) {
-          const $li = document.createElement('li');
+          const $li = document.createElement('div');
+          $li.classList.add('item');
           $li.innerText = id;
+          $li.onclick = () => openChat(id);
           document.querySelector('#peers').appendChild($li);
         }
       });
+      function openChat(id) {
+        document.querySelector('.active').classList.remove('active');
+        const nav = document.createElement('a');
+        nav.classList.add('item', 'active');
+        nav.innerText = id;
+        const target = document.querySelector('.right.menu');
+        target.parentNode.insertBefore(nav, target);
+      }
       my.connectionManager.on('peer:connect', (connection) => {
         const [id, home] = getIdHomeByConnection(connection);
         const flag = connection.stat.direction === 'outbound' ? '>>' : '<<';
@@ -119,15 +206,15 @@
       });
 
       await my.start();
+      hideModal();
       const id = my.peerId.toB58String();
       const home = `${country}/p2p/${id}`;
       log(`My home: ${home}`);
 
       // logic
-      document.getElementById('status').innerText = `libp2p started!\n${id}`;
-
       function transform(connection, stream) {
         return (msg) => {
+          renderMessage(msg);
           log(`[${connection.id}][${stream.id}][request]<< ${msg}`);
           return `transform msg: ${msg}`;
         }
@@ -166,6 +253,7 @@
           stream.source,
           (source) => map(decode, source),
           filter((msg) => {
+            renderMessage(msg);
             log(`[${connection.id}][${stream.id}][request]<< ${msg}`);
             return false;
           }),
@@ -187,6 +275,20 @@
     function decode(msg) {
       return decodeURI(msg);
     }
+
+    window.sendText = async function () {
+      const shell = document.querySelector('#shell');
+      const context = shell.value;
+      await window.dailing(document.querySelector('.active').innerText, context);
+      renderMessage(context);
+      shell.value = '';
+    };
+
+    window.renderMessage = function (content) {
+      const item = document.querySelector('.ui.feed.template').cloneNode(true);
+      item.querySelector('.summary').innerText = content;
+      document.querySelector('.stage').appendChild(item);
+    };
 
     window.dailing = async function (peerId, content) {
       const connection = await getConnectionByPeerId(peerId);
