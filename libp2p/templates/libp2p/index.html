@@ -203,6 +203,7 @@
       } else {
         window.addEventListener("unload", async () => {
           await database.put('status', false);
+          await database.get('status');
         })
       }
 
@@ -284,10 +285,13 @@
             document.querySelector('#peers').appendChild($li);
           }
         });
-        my.once('stop', async () => {
-          my.stop();
+        async function stop() {
+          await my.stop();
           await database.put('status', false);
-        });
+          await database.get('status');
+        }
+        my.once('stop', stop);
+        window.addEventListener("unload", stop);
 
         function openChat(id) {
           document.querySelector('.active').classList.remove('active');
