@@ -1,0 +1,17 @@
+{
+  "name": "libp2p",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dep.js",
+  "scripts": {
+    "build": "browserify dep.js -o dep.bundle.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "datastore-level": "^2.0.0",
+    "it-pipe": "^1.1.0",
+    "libp2p-mplex": "^0.10.1",
+    "libp2p-noise": "^2.0.1"
+  }
+}

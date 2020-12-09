@@ -109,14 +109,10 @@
 {% block script %}
   <script src="{% static 'libp2p/libp2p.js' %}"></script>
 {#  <script src="https://wzrd.in/standalone/libp2p@0.29.3"></script>#}
-  <script src="https://wzrd.in/standalone/libp2p-websockets@0.14.0"></script>
   <script src="{% static 'libp2p/webrtc-star.js' %}"></script>
 {#  <script src="https://wzrd.in/standalone/libp2p-webrtc-star@0.20.2"></script>#}
-  <script src="https://wzrd.in/standalone/libp2p-noise@2.0.1"></script>
-  <script src="https://wzrd.in/standalone/libp2p-mplex@0.10.1"></script>
-  <script src="https://bundle.run/it-pipe@1.1.0"></script>
+  <script src="{% static 'libp2p/dep.bundle.js' %}"></script>
   <script src="https://cdn.jsdelivr.net/npm/peer-id@0.14.2/dist/index.min.js"></script>
-  <script src="https://bundle.run/datastore-level@2.0.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.production.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.production.min.js"></script>
   <script type="module">
@@ -248,7 +244,7 @@
             listen: [country]
           },
           modules: {
-            transport: [window.libp2pWebsockets, window.libp2pWebrtcStar],
+            transport: [window.libp2pWebrtcStar],
             connEncryption: [window.libp2pNoise.NOISE],
             streamMuxer: [window.libp2pMplex],
           },
