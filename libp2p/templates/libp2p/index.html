@@ -5,7 +5,7 @@
 {% block style %}
   <style type="text/css">
     section.main {
-      display: flex;
+      display: none;
       flex-direction: column;
       height: 100%;
       padding: 1em 0 1em 0;
@@ -27,9 +27,14 @@
 {% block container %}
   {% include 'includes/modal.html' %}
   {% include 'includes/modal.module' %}
-  <script type="module">
-    window.showModal('Login', 'Starting libp2p...', false)
-  </script>
+  <section class="login">
+    <div class="user-login-history ui relaxed divided list">
+    </div>
+    <div class="login ui action input">
+      <input id="username" type="text" placeholder="Create New User...">
+      <button class="ui primary button" onclick="loginUser()">Login</button>
+    </div>
+  </section>
 
   <section class="main">
     <header class="ui pointing menu">
@@ -52,7 +57,7 @@
             <i class="search link icon"></i>
           </div>
         </div>
-        <a class="ui item">
+        <a class="ui item" onclick="logout()">
           Logout
         </a>
       </div>
@@ -77,6 +82,13 @@
     </footer>
   </section>
   <section id="template" style="display: none">
+    <div class="user-login-history-template item">
+      <i class="large github middle aligned icon"></i>
+      <div class="content">
+        <a class="header"></a>
+        <div class="description">Updated 10 mins ago</div>
+      </div>
+    </div>
     <div class="ui feed template">
       <div class="event">
         <div class="label">
@@ -104,6 +116,7 @@
   <script src="https://wzrd.in/standalone/libp2p-mplex@0.10.1"></script>
   <script src="https://bundle.run/it-pipe@1.1.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/peer-id@0.14.2/dist/index.min.js"></script>
+  <script src="https://bundle.run/datastore-level@2.0.0"></script>
   <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.production.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.production.min.js"></script>
   <script type="module">
@@ -120,189 +133,286 @@
       }
     };
 
-    function log(txt) {
-      console.info(txt);
-    }
+    window.logout = () => {
+      p2pNode.emit('stop');
+      sessionStorage.removeItem('current-username');
+      location.reload();
+    };
 
-    function getIdHomeByConnection(connection) {
-      const id = connection.remotePeer.toB58String();
-      const home = connection.remoteAddr ? connection.remoteAddr.toString() : null;
-      return [id, home]
-    }
 
-    async function getConnectionByPeerId(id) {
-      if (connectionBook.hasOwnProperty(id)) {
-        return connectionBook[id];
+    // chose a peer or create new peer
+    window.loginUser = async (username, force=false) => {
+      if (!username) {
+        username = document.querySelector('#username').value;
       }
-      const connection = await p2pNode.dial(PeerId.createFromB58String(id), {
-        spOptions: simplePeerOptions
+      await startLibp2p(username, force, () => {
+        document.querySelector('section.login').style.display = 'none';
+        document.querySelector('section.main').style.display = 'flex';
       });
-      connectionBook[id] = connection;
-      return connection;
-    }
+      sessionStorage.setItem('current-username', username);
+    };
+    function renderUserLoginHistory(dbs) {
+      const target = document.querySelector('.login.input');
 
-    async function ping(my, address) {
-      const latency = await my.ping(address);
-      log(`I'm ${latency}ms away by ping from the home ${address}`);
+      for (const db of dbs) {
+        const item = document.querySelector('.user-login-history-template.item').cloneNode(true);
+        const username = db.name.slice('level-js-shell-'.length);
+        const header = item.querySelector('.header');
+        header.innerText = username;
+        header.onclick = () => loginUser(username);
+        target.parentNode.insertBefore(item, target);
+      }
     }
-
     (async () => {
-      const my = await libp2p.create({
-        addresses: {
-          listen: [country]
-        },
-        modules: {
-          transport: [window.libp2pWebsockets, window.libp2pWebrtcStar],
-          connEncryption: [window.libp2pNoise.NOISE],
-          streamMuxer: [window.libp2pMplex],
-        },
-        config: {
-          peerDiscovery: {
-            autoDial: false,
-          },
-          transport: {
-            WebRTCStar: {
-              listenerOptions: simplePeerOptions
-            }
-          }
-        }
-      });
-      window.p2pNode = my;
-
-      // event
-      my.on('error', (error) => log(error));
-      my.on('peer:discovery', (peerId) => {
-        const id = peerId.toB58String();
-        log(`* Nice to meet ${id}`);
-
-        if (!peers.includes(id)) {
-          const $li = document.createElement('div');
-          $li.classList.add('item');
-          $li.innerText = id;
-          $li.onclick = () => openChat(id);
-          document.querySelector('#peers').appendChild($li);
-        }
-      });
-      function openChat(id) {
-        document.querySelector('.active').classList.remove('active');
-        const nav = document.createElement('a');
-        nav.classList.add('item', 'active');
-        nav.innerText = id;
-        const target = document.querySelector('.right.menu');
-        target.parentNode.insertBefore(nav, target);
+      const username = sessionStorage.getItem('current-username');
+      if (username) {
+        await loginUser(username, true);
+      } else {
+        let dbs = await indexedDB.databases();
+        dbs = dbs.filter(item => item.name.startsWith('level-js-shell-'));
+        renderUserLoginHistory(dbs);
       }
-      my.connectionManager.on('peer:connect', (connection) => {
-        const [id, home] = getIdHomeByConnection(connection);
-        const flag = connection.stat.direction === 'outbound' ? '>>' : '<<';
-
-        log(`+${flag}[${connection.id}] meet ${home ? 'person' : id} at ${home || 'somewhere'}`);
-
-        ping(my, connection.remotePeer);
-      });
-      my.connectionManager.on('peer:disconnect', (connection) => {
-        const id = connection.remotePeer.toB58String();
-        delete connectionBook[id];
-        log(`- Good Bye to ${id}`);
-      });
-
-      await my.start();
-      hideModal();
-      const id = my.peerId.toB58String();
-      const home = `${country}/p2p/${id}`;
-      log(`My home: ${home}`);
-
-      // logic
-      function transform(connection, stream) {
-        return (msg) => {
-          renderMessage(msg);
-          log(`[${connection.id}][${stream.id}][request]<< ${msg}`);
-          return `transform msg: ${msg}`;
-        }
-      }
-
-      my.handle('/echo', async ({connection, stream}) => {
-        // handle request and send response
-        await itPipe(
-          stream.source,
-          (source) => map(decode, source),
-          (source) => map(transform(connection, stream), source),
-          (source) => map(encode, source),
-          stream.sink,
-        );
-
-        // push more message
-        const remotePeerId = connection.remotePeer.toB58String();
-        const contents = ['hello client', `this is push from ${id}`];
-
-        const anotherConn = await getConnectionByPeerId(remotePeerId);
-        const anotherStream = await getStreamByConnectionProtocol(anotherConn, '/print');
-
-        log(`[${anotherConn.id}][${anotherStream.id}][request]>> ${contents.join(', ')}`);
-        const results = await itPipe(
-          contents,
-          (source) => map(encode, source),
-          anotherStream,
-          consume,
-        );
-        log(`[${anotherConn.id}][${anotherStream.id}][response]<< ${results}`);
-      });
-
-      my.handle('/print', async ({connection, stream}) => {
-        // only handle no response
-        await itPipe(
-          stream.source,
-          (source) => map(decode, source),
-          filter((msg) => {
-            renderMessage(msg);
-            log(`[${connection.id}][${stream.id}][request]<< ${msg}`);
-            return false;
-          }),
-          stream.sink,
-        );
-      });
     })();
 
-    async function getStreamByConnectionProtocol(connection, protocol) {
-      let stream = await connection.newStream(protocol);
-      stream = await stream.stream;
-      return stream;
-    }
+    async function startLibp2p(username, force, cb) {
+      window.showModal(`Login ${username}`, 'check username...', false);
+      const database = (new window.datastoreLevel(`shell-${username}`)).db;
+      window.database = database;
+      const isContinue = await (async () => {
+        await database.put('welcome', 'shell');
+        database.db.codec.opts.valueEncoding = 'json';
 
-    function encode(msg) {
-      return encodeURI(msg);
-    }
+        try {
+          const status = await database.get('status');
 
-    function decode(msg) {
-      return decodeURI(msg);
-    }
+          if (status) {
+            return false;
+          }
+        } catch (error) {
+          log('create new peer');
+        }
 
-    window.sendText = async function () {
-      const shell = document.querySelector('#shell');
-      const context = shell.value;
-      await window.dailing(document.querySelector('.active').innerText, context);
-      renderMessage(context);
-      shell.value = '';
-    };
+        await database.put('status', true);
+        return true;
+      })();
 
-    window.renderMessage = function (content) {
-      const item = document.querySelector('.ui.feed.template').cloneNode(true);
-      item.querySelector('.summary').innerText = content;
-      document.querySelector('.stage').appendChild(item);
-    };
+      if (!isContinue && !force) {
+        const message = 'user already login, please use another username';
+        window.showModal(`Login ${username}`, message, true);
+        throw message;
+      } else {
+        window.addEventListener("unload", async () => {
+          await database.put('status', false);
+        })
+      }
 
-    window.dailing = async function (peerId, content) {
-      const connection = await getConnectionByPeerId(peerId);
-      const stream = await getStreamByConnectionProtocol(connection, '/echo');
+      function log(txt) {
+        console.info(txt);
+      }
 
-      log(`[${connection.id}][${stream.id}][request]>> ${content}`);
-      const results = await itPipe(
-        [content],
-        (source) => map(encode, source),
-        stream,
-        (source) => map(decode, source),
-        collect,
-      );
-      log(`[${connection.id}][${stream.id}][response]<< ${results}`);
+      function getIdHomeByConnection(connection) {
+        const id = connection.remotePeer.toB58String();
+        const home = connection.remoteAddr ? connection.remoteAddr.toString() : null;
+        return [id, home]
+      }
+
+      async function getConnectionByPeerId(id) {
+        if (connectionBook.hasOwnProperty(id)) {
+          return connectionBook[id];
+        }
+        const connection = await p2pNode.dial(PeerId.createFromB58String(id), {
+          spOptions: simplePeerOptions
+        });
+        connectionBook[id] = connection;
+        return connection;
+      }
+
+      async function ping(my, address) {
+        const latency = await my.ping(address);
+        log(`I'm ${latency}ms away by ping from the home ${address}`);
+      }
+
+      window.showModal(`Login ${username}`, 'Starting libp2p...', false);
+      (async () => {
+        let id;
+
+        try {
+          id = await database.get('peerId');
+        } catch (error) {
+          log(error);
+        }
+
+        const my = await libp2p.create({
+          addresses: {
+            listen: [country]
+          },
+          modules: {
+            transport: [window.libp2pWebsockets, window.libp2pWebrtcStar],
+            connEncryption: [window.libp2pNoise.NOISE],
+            streamMuxer: [window.libp2pMplex],
+          },
+          config: {
+            peerDiscovery: {
+              autoDial: false,
+            },
+            transport: {
+              WebRTCStar: {
+                listenerOptions: simplePeerOptions
+              }
+            }
+          },
+          datastore: new window.datastoreLevel('libp2p'),
+          peerStore: {
+            persistence: true,
+            threshold: 1
+          },
+          peerId: id ? PeerId.createFromB58String(id) : null,
+        });
+        window.p2pNode = my;
+
+        // event
+        my.on('error', (error) => log(error));
+        my.on('peer:discovery', (peerId) => {
+          const id = peerId.toB58String();
+          log(`* Nice to meet ${id}`);
+
+          if (!peers.includes(id)) {
+            const $li = document.createElement('div');
+            $li.classList.add('item');
+            $li.innerText = id;
+            $li.onclick = () => openChat(id);
+            document.querySelector('#peers').appendChild($li);
+          }
+        });
+        my.once('stop', async () => {
+          my.stop();
+          await database.put('status', false);
+        });
+
+        function openChat(id) {
+          document.querySelector('.active').classList.remove('active');
+          const nav = document.createElement('a');
+          nav.classList.add('item', 'active');
+          nav.innerText = id;
+          const target = document.querySelector('.right.menu');
+          target.parentNode.insertBefore(nav, target);
+        }
+
+        my.connectionManager.on('peer:connect', (connection) => {
+          const [id, home] = getIdHomeByConnection(connection);
+          const flag = connection.stat.direction === 'outbound' ? '>>' : '<<';
+
+          log(`+${flag}[${connection.id}] meet ${home ? 'person' : id} at ${home || 'somewhere'}`);
+
+          ping(my, connection.remotePeer);
+        });
+        my.connectionManager.on('peer:disconnect', (connection) => {
+          const id = connection.remotePeer.toB58String();
+          delete connectionBook[id];
+          log(`- Good Bye to ${id}`);
+        });
+
+        await my.start();
+        cb();
+        hideModal();
+        id = my.peerId.toB58String();
+        const home = `${country}/p2p/${id}`;
+        log(`My home: ${home}`);
+        await database.put('peerId', id);
+
+        // logic
+        function transform(connection, stream) {
+          return (msg) => {
+            renderMessage(msg);
+            log(`[${connection.id}][${stream.id}][request]<< ${msg}`);
+            return `transform msg: ${msg}`;
+          }
+        }
+
+        my.handle('/echo', async ({connection, stream}) => {
+          // handle request and send response
+          await itPipe(
+            stream.source,
+            (source) => map(decode, source),
+            (source) => map(transform(connection, stream), source),
+            (source) => map(encode, source),
+            stream.sink,
+          );
+
+          // push more message
+          const remotePeerId = connection.remotePeer.toB58String();
+          const contents = ['hello client', `this is push from ${id}`];
+
+          const anotherConn = await getConnectionByPeerId(remotePeerId);
+          const anotherStream = await getStreamByConnectionProtocol(anotherConn, '/print');
+
+          log(`[${anotherConn.id}][${anotherStream.id}][request]>> ${contents.join(', ')}`);
+          const results = await itPipe(
+            contents,
+            (source) => map(encode, source),
+            anotherStream,
+            consume,
+          );
+          log(`[${anotherConn.id}][${anotherStream.id}][response]<< ${results}`);
+        });
+
+        my.handle('/print', async ({connection, stream}) => {
+          // only handle no response
+          await itPipe(
+            stream.source,
+            (source) => map(decode, source),
+            filter((msg) => {
+              renderMessage(msg);
+              log(`[${connection.id}][${stream.id}][request]<< ${msg}`);
+              return false;
+            }),
+            stream.sink,
+          );
+        });
+      })();
+
+      async function getStreamByConnectionProtocol(connection, protocol) {
+        let stream = await connection.newStream(protocol);
+        stream = await stream.stream;
+        return stream;
+      }
+
+      function encode(msg) {
+        return encodeURI(msg);
+      }
+
+      function decode(msg) {
+        return decodeURI(msg);
+      }
+
+      window.sendText = async function () {
+        const shell = document.querySelector('#shell');
+        const context = shell.value;
+        await window.dailing(document.querySelector('.active').innerText, context);
+        renderMessage(context);
+        shell.value = '';
+      };
+
+      window.renderMessage = function (content) {
+        const item = document.querySelector('.ui.feed.template').cloneNode(true);
+        item.querySelector('.summary').innerText = content;
+        document.querySelector('.stage').appendChild(item);
+      };
+
+      window.dailing = async function (peerId, content) {
+        const connection = await getConnectionByPeerId(peerId);
+        const stream = await getStreamByConnectionProtocol(connection, '/echo');
+
+        log(`[${connection.id}][${stream.id}][request]>> ${content}`);
+        const results = await itPipe(
+          [content],
+          (source) => map(encode, source),
+          stream,
+          (source) => map(decode, source),
+          collect,
+        );
+        log(`[${connection.id}][${stream.id}][response]<< ${results}`);
+      }
     }
   </script>
 {% endblock %}

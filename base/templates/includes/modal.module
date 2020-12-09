@@ -10,7 +10,9 @@
     updateModalStyle(negative);
     $title.innerText = title;
     $body.innerText = body;
-    $modal.showModal();
+    if (!$modal.open) {
+      $modal.showModal();
+    }
   };
   window.hideModal = () => $modal.querySelector('.close').click();
 
