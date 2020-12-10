@@ -224,8 +224,8 @@
         }
       });
       async function stop() {
-        await my.stop();
         await database.put('status', false);
+        await my.stop();
         await database.get('status');
       }
       my.once('stop', stop);
