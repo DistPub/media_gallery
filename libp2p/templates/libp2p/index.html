@@ -292,7 +292,12 @@
 
       window.dailing = async function (id, content) {
         await shell.exec({topic:'test', receivers:[id], action:'/echo', args:[content]})
+        await shell.exec({topic:'test', receivers:[id], action:'/Whoami', args:[]})
       }
+      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:['--help']})
+      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:['--version']})
+      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:[]})
+      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:[1,2,3]})
     }
   </script>
 {% endblock %}

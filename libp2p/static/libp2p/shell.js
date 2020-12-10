@@ -77,9 +77,9 @@ class Shell extends window.events.EventEmitter{
     try {
       const func = this['action' + action.slice(1)]
       if (func instanceof AsyncFunction) {
-        results = func({}, ...args)
+        results = func.apply(this, [{}, ...args])
       } else {
-        results = await func({}, ...args)
+        results = await func.apply(this, [{}, ...args])
       }
 
       if (results === undefined) {
@@ -115,7 +115,7 @@ class Shell extends window.events.EventEmitter{
     })
     const results = []
     for (const action of actions) {
-      results.push([Shell.translateActionNameToProtocol(action), this[action]])
+      results.push([Shell.translateActionNameToProtocol(action), this[action].bind(this)])
     }
     return results
   }
@@ -127,11 +127,11 @@ class Shell extends window.events.EventEmitter{
   actionWhoami(_, arg) {
     if (arg === '--help') {
       return 'show the username related to the peer id'
-    } else if (args === '--version'){
+    } else if (arg === '--version'){
       return '1.0.0'
     }
 
-    if (!arguments.length) {
+    if (!arg) {
       return this.userNode.username
     }
     throw `unsupported args: ${arg}`
