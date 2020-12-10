@@ -113,7 +113,8 @@
   <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.production.min.js"></script>
   <script type="module">
     import {map, filter, collect, consume} from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs';
-
+    import UserNode from '{% static "libp2p/user-node.js" %}'
+    import Shell from '{% static "libp2p/shell.js" %}'
     const country = '/dns4/webrtc-star.dist.pub/tcp/443/wss/p2p-webrtc-star';
     const peers = [];
     const connectionBook = {};
@@ -126,7 +127,7 @@
     };
 
     window.logout = () => {
-      p2pNode.emit('stop');
+      p2pNode.stop();
       sessionStorage.removeItem('current-username');
       location.reload();
     };
@@ -203,189 +204,83 @@
         console.info(txt);
       }
 
-      function getIdHomeByConnection(connection) {
-        const id = connection.remotePeer.toB58String();
-        const home = connection.remoteAddr ? connection.remoteAddr.toString() : null;
-        return [id, home]
-      }
-
-      async function getConnectionByPeerId(id) {
-        if (connectionBook.hasOwnProperty(id)) {
-          return connectionBook[id];
-        }
-        const connection = await p2pNode.dial(PeerId.createFromB58String(id), {
-          spOptions: simplePeerOptions
-        });
-        connectionBook[id] = connection;
-        return connection;
-      }
-
-      async function ping(my, address) {
-        const latency = await my.ping(address);
-        log(`I'm ${latency}ms away by ping from the home ${address}`);
-      }
-
       window.showModal(`Login ${username}`, 'Starting libp2p...', false);
-      (async () => {
-        let id;
+      const my = new UserNode(database, username, country, simplePeerOptions);
 
-        try {
-          id = await database.get('peerId');
-        } catch (error) {
-          log(error);
+
+
+      // event
+      my.on('user:hi', (id) => {
+        log(`* Nice to meet ${id}`);
+
+
+
+        if (!peers.includes(id)) {
+          const $li = document.createElement('div');
+          $li.classList.add('item');
+          $li.innerText = id;
+          $li.onclick = () => openChat(id);
+          document.querySelector('#peers').appendChild($li);
         }
+      });
+      async function stop() {
+        await my.stop();
+        await database.put('status', false);
+        await database.get('status');
+      }
+      my.once('stop', stop);
+      window.addEventListener("unload", stop);
 
-        const my = await libp2p.create({
-          addresses: {
-            listen: [country]
-          },
-          modules: {
-            transport: [window.libp2pWebrtcStar],
-            connEncryption: [window.libp2pNoise.NOISE],
-            streamMuxer: [window.libp2pMplex],
-          },
-          config: {
-            peerDiscovery: {
-              autoDial: false,
-            },
-            transport: {
-              WebRTCStar: {
-                listenerOptions: simplePeerOptions
-              }
-            }
-          },
-          datastore: new window.datastoreLevel('libp2p'),
-          peerStore: {
-            persistence: true,
-            threshold: 1
-          },
-          peerId: id ? PeerId.createFromB58String(id) : null,
-        });
-        window.p2pNode = my;
+      await my.init()
+      const shell = new Shell(my);
+      shell.install()
+      window.p2pNode = my;
 
-        // event
-        my.on('error', (error) => log(error));
-        my.on('peer:discovery', (peerId) => {
-          const id = peerId.toB58String();
-          log(`* Nice to meet ${id}`);
+      function openChat(id) {
+        document.querySelector('.active').classList.remove('active');
+        const nav = document.createElement('a');
+        nav.classList.add('item', 'active');
+        nav.innerText = id;
+        const target = document.querySelector('.right.menu');
+        target.parentNode.insertBefore(nav, target);
+      }
+      cb();
+      hideModal();
 
-          if (!peers.includes(id)) {
-            const $li = document.createElement('div');
-            $li.classList.add('item');
-            $li.innerText = id;
-            $li.onclick = () => openChat(id);
-            document.querySelector('#peers').appendChild($li);
-          }
-        });
-        async function stop() {
-          await my.stop();
-          await database.put('status', false);
-          await database.get('status');
+      // logic
+      function transform(connection, stream) {
+        return (msg) => {
         }
-        my.once('stop', stop);
-        window.addEventListener("unload", stop);
-
-        function openChat(id) {
-          document.querySelector('.active').classList.remove('active');
-          const nav = document.createElement('a');
-          nav.classList.add('item', 'active');
-          nav.innerText = id;
-          const target = document.querySelector('.right.menu');
-          target.parentNode.insertBefore(nav, target);
-        }
-
-        my.connectionManager.on('peer:connect', (connection) => {
-          const [id, home] = getIdHomeByConnection(connection);
-          const flag = connection.stat.direction === 'outbound' ? '>>' : '<<';
-
-          log(`+${flag}[${connection.id}] meet ${home ? 'person' : id} at ${home || 'somewhere'}`);
-
-          ping(my, connection.remotePeer);
-        });
-        my.connectionManager.on('peer:disconnect', (connection) => {
-          const id = connection.remotePeer.toB58String();
-          delete connectionBook[id];
-          log(`- Good Bye to ${id}`);
-        });
-
-        await my.start();
-        cb();
-        hideModal();
-        id = my.peerId.toB58String();
-        const home = `${country}/p2p/${id}`;
-        log(`My home: ${home}`);
-        await database.put('peerId', id);
-
-        // logic
-        function transform(connection, stream) {
-          return (msg) => {
-            renderMessage(msg);
-            log(`[${connection.id}][${stream.id}][request]<< ${msg}`);
-            return `transform msg: ${msg}`;
-          }
-        }
-
-        my.handle('/echo', async ({connection, stream}) => {
-          // handle request and send response
-          await itPipe(
-            stream.source,
-            (source) => map(decode, source),
-            (source) => map(transform(connection, stream), source),
-            (source) => map(encode, source),
-            stream.sink,
-          );
-
-          // push more message
-          const remotePeerId = connection.remotePeer.toB58String();
-          const contents = ['hello client', `this is push from ${id}`];
-
-          const anotherConn = await getConnectionByPeerId(remotePeerId);
-          const anotherStream = await getStreamByConnectionProtocol(anotherConn, '/print');
-
-          log(`[${anotherConn.id}][${anotherStream.id}][request]>> ${contents.join(', ')}`);
-          const results = await itPipe(
-            contents,
-            (source) => map(encode, source),
-            anotherStream,
-            consume,
-          );
-          log(`[${anotherConn.id}][${anotherStream.id}][response]<< ${results}`);
-        });
-
-        my.handle('/print', async ({connection, stream}) => {
-          // only handle no response
-          await itPipe(
-            stream.source,
-            (source) => map(decode, source),
-            filter((msg) => {
-              renderMessage(msg);
-              log(`[${connection.id}][${stream.id}][request]<< ${msg}`);
-              return false;
-            }),
-            stream.sink,
-          );
-        });
-      })();
-
-      async function getStreamByConnectionProtocol(connection, protocol) {
-        let stream = await connection.newStream(protocol);
-        stream = await stream.stream;
-        return stream;
       }
 
-      function encode(msg) {
-        return encodeURI(msg);
-      }
+      shell.installAction('/echo', async ({id}, ...args) => {
+        let results = []
+        for (let msg of args) {
+          log(`<< ${msg}`);
+          results.push(`transform msg: ${msg}`);
+        }
+        await shell.exec({topic:'test', receivers:[id], action:'/print',
+          args:['hello client', `your id is ${id}`]})
+        return results
+      })
 
-      function decode(msg) {
-        return decodeURI(msg);
-      }
+      shell.installAction('/print', (_, ...args) => {
+        for (let msg of args) {
+          log(`<< ${msg}`);
+        }
+      });
+
+      shell.on('action:response', ({username, response}) => {
+        renderMessage(`${username}[response]=>${response.results}`)
+      })
+      shell.on('action:request', ({username, request}) => {
+        renderMessage(`${username}[request]=>${request.action}(${request.args})`)
+      })
 
       window.sendText = async function () {
         const shell = document.querySelector('#shell');
         const context = shell.value;
         await window.dailing(document.querySelector('.active').innerText, context);
-        renderMessage(context);
         shell.value = '';
       };
 
@@ -395,19 +290,8 @@
         document.querySelector('.stage').appendChild(item);
       };
 
-      window.dailing = async function (peerId, content) {
-        const connection = await getConnectionByPeerId(peerId);
-        const stream = await getStreamByConnectionProtocol(connection, '/echo');
-
-        log(`[${connection.id}][${stream.id}][request]>> ${content}`);
-        const results = await itPipe(
-          [content],
-          (source) => map(encode, source),
-          stream,
-          (source) => map(decode, source),
-          collect,
-        );
-        log(`[${connection.id}][${stream.id}][response]<< ${results}`);
+      window.dailing = async function (id, content) {
+        await shell.exec({topic:'test', receivers:[id], action:'/echo', args:[content]})
       }
     }
   </script>

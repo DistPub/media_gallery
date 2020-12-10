@@ -30021,13 +30021,15 @@ module.exports = function whichTypedArray(value) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"available-typed-arrays":22,"call-bind/callBound":71,"es-abstract/helpers/getOwnPropertyDescriptor":110,"foreach":113,"has-symbols":117,"is-typed-array":154}],215:[function(require,module,exports){
-window.libp2pNoise = require('libp2p-noise');
-window.libp2pMplex = require('libp2p-mplex');
-window.itPipe = require('it-pipe');
-window.datastoreLevel = require('datastore-level');
-window.libp2p = require('libp2p');
-window.libp2pWebrtcStar = require('libp2p-webrtc-star');
-},{"datastore-level":265,"it-pipe":396,"libp2p":511,"libp2p-mplex":453,"libp2p-noise":468,"libp2p-webrtc-star":481}],216:[function(require,module,exports){
+window.libp2pNoise = require('libp2p-noise')
+window.libp2pMplex = require('libp2p-mplex')
+window.itPipe = require('it-pipe')
+window.datastoreLevel = require('datastore-level')
+window.libp2p = require('libp2p')
+window.libp2pWebrtcStar = require('libp2p-webrtc-star')
+window.cryptoKeys = require('libp2p-crypto/src/keys')
+window.events = require('events')
+},{"datastore-level":265,"events":111,"it-pipe":396,"libp2p":511,"libp2p-crypto/src/keys":431,"libp2p-mplex":453,"libp2p-noise":468,"libp2p-webrtc-star":481}],216:[function(require,module,exports){
 'use strict'
 // base-x encoding / decoding
 // Copyright (c) 2018 base-x contributors
