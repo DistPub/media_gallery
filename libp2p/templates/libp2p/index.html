@@ -111,6 +111,7 @@
   <script src="https://cdn.jsdelivr.net/npm/peer-id@0.14.2/dist/index.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.production.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ipfs@0.52.2/dist/index.min.js"></script>
   <script type="module">
     import {map, filter, collect, consume} from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs';
     import UserNode from '{% static "libp2p/user-node.js" %}'
@@ -298,6 +299,60 @@
       await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:['--version']})
       await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:[]})
       await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:[1,2,3]})
+    }
+  </script>
+  <script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', async () => {
+      const node = await Ipfs.create()
+      window.ipfsNode = node
+
+      const status = node.isOnline() ? 'online' : 'offline'
+
+      console.log(`Node status: ${status}`)
+
+      window.dl = new window.datastoreLevel('ipfs', {prefix: '', version: 2})
+
+      rootCid = PeerId.createFromBytes(await dl.get('/local/filesroot')).toB58String()
+      console.log(`root cid: ${rootCid}`)
+
+      console.log(await ipfsNode.files.stat('/'))
+
+      for await (let item of ipfsNode.files.ls('/')) {
+        console.log(item)
+      }
+
+      await ipfsNode.files.touch('/a')
+      await ipfsNode.files.touch('/b')
+      await ipfsNode.files.touch('/c')
+
+      console.log(await ipfsNode.files.stat('/'))
+
+      for await (let item of ipfsNode.files.ls('/')) {
+        console.log(item)
+      }
+    })
+
+    async function addThenCPFileToMFS(content) {
+      const str = content.path
+      var last = str.substring(str.lastIndexOf("/") + 1, str.length);
+      content.path = last
+      const {cid} = await ipfsNode.add(content)
+
+      console.log('successfully stored', cid)
+      await ipfsNode.files.cp(`/ipfs/${cid}`, str, {parents: true})
+
+      console.log(await ipfsNode.files.stat('/'))
+
+    }
+
+    async function catFile(cid) {
+      for await (const data of ipfsNode.cat(cid)) {
+        console.log(data.toString())
+      }
+    }
+
+    async function updateRootCid(cid) {
+      await window.dl.put('/local/filesroot', PeerId.createFromB58String(cid).toBytes())
     }
   </script>
 {% endblock %}
