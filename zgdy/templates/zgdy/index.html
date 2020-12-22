@@ -47,7 +47,11 @@
         </button>
         <button class="mini positive ui basic button" id="export">
           <i class="icon cloud download"></i>
-          Export
+          Export CSV
+        </button>
+        <button class="mini positive ui basic button" id="preview">
+          <i class="icon cloud download"></i>
+          Export & Preview Excel(beta)
         </button>
       </div>
     </div>
@@ -75,12 +79,24 @@
 {% block script %}
   {% include 'includes/modal.module' %}
   {% include 'includes/progress.module' %}
+  <script src="https://cdn.jsdelivr.net/npm/ipfs@0.52.2/dist/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.16.9/dist/xlsx.full.min.js"></script>
   <script type="module" about="utils">
     import dayjs from 'https://cdn.jsdelivr.net/npm/dayjs@1.9.6/esm/index.js/+esm';
 
-    window.downloadFile = (blob) => {
+    (async () => {
+      window.ipfsNode = await Ipfs.create()
+      const status = ipfsNode.isOnline() ? 'online' : 'offline'
+      console.log(`Node status: ${status}`)
+    })();
+
+    window.generateFileName = (suffix) => {
       const time = dayjs().format('YYYY_MM_DD@HH_mm_ss');
-      const filename = `signature_export@${time}.csv`;
+      return `signature_export@${time}.${suffix}`;
+    };
+
+    window.downloadFile = (blob, name) => {
+      const filename = name || generateFileName('csv');
       const url = URL.createObjectURL(blob);
       const $stub = document.createElement("a");
       $stub.style.display = "none";
@@ -90,6 +106,32 @@
       $stub.click();
       $stub.remove();
       URL.revokeObjectURL(url);
+    };
+
+    window.previewExcelFile = async (tableElement) => {
+      const workbook = XLSX.utils.table_to_book(tableElement, { sheet:"zgdy" });
+      const options = { bookType: 'xlsx', bookSST: true, type: 'array' };
+      const workbookOut = XLSX.write(workbook, options);
+      const fileBlob = new Blob([workbookOut], {type:"application/octet-stream"})
+
+      const filename = generateFileName('xlsx')
+      downloadFile(fileBlob, filename)
+
+      const fileDetails = { path: filename, content: fileBlob }
+      const ipfsOptions = { wrapWithDirectory: true }
+      const { cid } = await window.ipfsNode.add(fileDetails, ipfsOptions)
+
+      while (1) {
+        try {
+          let response = await fetch(`https://ipfs.io/ipfs/${cid}`)
+          await response.text()
+          const url = `https://view.officeapps.live.com/op/view.aspx?src=https://ipfs.io/ipfs/${cid}/${filename}`
+          window.open(url, '_blank')
+          break
+        } catch(error) {
+          console.log(`wait file upload to ipfs.io, ${error}`)
+        }
+      }
     };
 
     window.orderTable = ($body, key, keys) => {
@@ -222,5 +264,17 @@
     document.querySelector('#reset').onclick = function (e) {
       $uniqueId.value = '';
     };
+
+    document.querySelector('#preview').onclick = function (e) {
+      let rows = Array.from($tbody.querySelectorAll('tr'));
+
+      if (!rows.length) {
+        return showModal('Empty Table!', 'Please fetch first.');
+      }
+
+      let table = document.querySelector('#output').cloneNode(true);
+      table.querySelector('tfoot').remove();
+      previewExcelFile(table);
+    }
   </script>
 {% endblock %}
