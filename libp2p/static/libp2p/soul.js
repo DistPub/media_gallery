@@ -59,15 +59,15 @@ class Soul extends window.events.EventEmitter {
     await this.node.files.write(file, `${this.pre}\n`, { offset })
   }
 
-  async backwards(cursor=null, reverse=true) {
+  async backwards(experience=null, reverse=true) {
     let experiences;
     let pre;
 
-    if (!cursor) {
+    if (!experience) {
       experiences = this.experiences
       pre = this.pre
     } else {
-      const { value } = await this.node.dag.get(cursor)
+      const { value } = await this.node.dag.get(experience)
       experiences = value.experiences
       pre = value.pre
     }
@@ -78,6 +78,27 @@ class Soul extends window.events.EventEmitter {
 
     experiences.map(async item => this.emit('backwards', (await this.node.dag.get(item)).value))
     return pre
+  }
+
+  async empathy(experience, deep=0) {
+    let cursor = experience
+    let experiences = []
+    let recursive = deep === 1
+
+    do {
+      const { value } = await this.node.dag.get(cursor)
+      experiences = value.experiences.concat(experiences)
+      cursor = value.pre
+
+      if (!cursor) {
+        break
+      }
+
+      deep ++
+    } while (deep <= 0 || recursive)
+    experiences.map(async item => this.emit('empathy', (await this.node.dag.get(item)).value))
+    this.experiences = this.experiences.concat(experiences)
+    await this.db.put('experiences', this.experiences.map(item => item.toString()));
   }
 }
 

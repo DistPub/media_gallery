@@ -288,6 +288,13 @@
           renderMessage(`${data.username}[response]=>${data.response.results}`)
         }
       })
+      soul.on('empathy', data=>{
+        if (data.request) {
+          renderMessage(`${data.username}[request]=>${data.request.action}(${data.request.args})`)
+        } else {
+          renderMessage(`${data.username}[response]=>${data.response.results}`)
+        }
+      })
 
       window.sendText = async function () {
         const shell = document.querySelector('#shell');
