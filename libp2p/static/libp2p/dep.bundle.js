@@ -30029,7 +30029,8 @@ window.libp2p = require('libp2p')
 window.libp2pWebrtcStar = require('libp2p-webrtc-star')
 window.cryptoKeys = require('libp2p-crypto/src/keys')
 window.events = require('events')
-},{"datastore-level":265,"events":111,"it-pipe":396,"libp2p":511,"libp2p-crypto/src/keys":431,"libp2p-mplex":453,"libp2p-noise":468,"libp2p-webrtc-star":481}],216:[function(require,module,exports){
+window.cids = require('cids')
+},{"cids":260,"datastore-level":265,"events":111,"it-pipe":396,"libp2p":511,"libp2p-crypto/src/keys":431,"libp2p-mplex":453,"libp2p-noise":468,"libp2p-webrtc-star":481}],216:[function(require,module,exports){
 'use strict'
 // base-x encoding / decoding
 // Copyright (c) 2018 base-x contributors

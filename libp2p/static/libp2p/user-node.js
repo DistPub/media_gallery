@@ -181,7 +181,7 @@ class UserNode extends window.events.EventEmitter {
           }
         }
       },
-      datastore: new window.datastoreLevel('libp2p'),
+      datastore: new window.datastoreLevel(`${this.username}/libp2p`, { prefix: '' }),
       peerStore: {
         persistence: true,
         threshold: 1

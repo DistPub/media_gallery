@@ -1,10 +1,12 @@
 import { log, AsyncFunction } from "./utils.js"
 
 class Shell extends window.events.EventEmitter{
-  constructor(userNode) {
+  constructor(userNode, soul) {
     super()
+    this.soul = soul
     this.userNode = userNode
     this.addEventListener()
+    this.soul.addEventListener(this)
   }
 
   addEventListener() {
