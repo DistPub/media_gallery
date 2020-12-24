@@ -11,7 +11,9 @@ class Soul extends window.events.EventEmitter {
   }
 
   async init() {
-    this.node = await window.Ipfs.create({ repo: `${this.username}/ipfs` })
+    const repo = `${this.username}/ipfs`
+    this.node = await window.Ipfs.create({ repo })
+    this.repo = new window.datastoreLevel(repo, {prefix: '', version: 2})
     try {
       this.experiences = (await this.db.get('experiences')).map(item => new window.cids(item))
       this.pre = new window.cids(await this.db.get('pre'))
@@ -99,6 +101,14 @@ class Soul extends window.events.EventEmitter {
     experiences.map(async item => this.emit('empathy', (await this.node.dag.get(item)).value))
     this.experiences = this.experiences.concat(experiences)
     await this.db.put('experiences', this.experiences.map(item => item.toString()));
+  }
+
+  async resetMemory(root) {
+    await this.repo.put('/local/filesroot', new window.cids(root).bytes)
+  }
+
+  get memory() {
+    return (async () => { return new window.cids(await this.repo.get('/local/filesroot')).toString() })()
   }
 }
 
