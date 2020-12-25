@@ -23,11 +23,13 @@ class Soul extends window.events.EventEmitter {
   }
 
   addEventListener(shell) {
-    shell.on('action:request', data => this.handleAction(data))
-    shell.on('action:response', data => this.handleAction(data))
+    shell.on('action:request', data => this.handleExperience(data))
+    shell.on('action:response', data => this.handleExperience(data))
+    shell.on('pipe:request', data => this.handleExperience(data))
+    shell.on('pipe:response', data => this.handleExperience(data))
   }
 
-  async handleAction(data) {
+  async handleExperience(data) {
     const cid = await this.node.dag.put(data)
     this.experiences.push(cid)
     await this.db.put('experiences', this.experiences.map(item => item.toString()));
