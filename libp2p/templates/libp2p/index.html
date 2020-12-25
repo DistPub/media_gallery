@@ -240,6 +240,7 @@
       shell.install()
       window.p2pNode = my;
       window.soul = soul;
+      window.shell = shell;
 
       function openChat(id) {
         document.querySelector('.active').classList.remove('active');
@@ -258,22 +259,14 @@
         }
       }
 
-      shell.installAction('/echo', async ({id}, ...args) => {
-        let results = []
-        for (let msg of args) {
-          log(`<< ${msg}`);
-          results.push(`transform msg: ${msg}`);
-        }
-        await shell.exec({topic:'test', receivers:[id], action:'/print',
-          args:['hello client', `your id is ${id}`]})
-        return results
-      })
-
       shell.installAction('/print', (_, ...args) => {
         for (let msg of args) {
           log(`<< ${msg}`);
         }
       });
+
+      shell.on('pipe:request', log)
+      shell.on('pipe:response', log)
 
       shell.on('action:response', ({username, response}) => {
         renderMessage(`${username}[response]=>${response.results}`)
@@ -310,8 +303,7 @@
       };
 
       window.dailing = async function (id, content) {
-        await shell.exec({topic:'test', receivers:[id], action:'/echo', args:[content]})
-        await shell.exec({topic:'test', receivers:[id], action:'/Whoami', args:[]})
+        await shell.exec({topic:'test', receivers:[id], action:'/Echo', args:[content]})
       }
       soul.backwards(null, false)
 {#      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:['--help']})#}
