@@ -142,9 +142,9 @@ class Shell extends window.events.EventEmitter{
         }
 
         if (pipe) {
-          yield Object.assign({}, response)
+          yield window.cloneDeep(response)
         } else {
-          this.emit('action:response', Object.assign({}, response))
+          this.emit('action:response', window.cloneDeep(response))
         }
       }
     } catch(error) {
@@ -163,6 +163,7 @@ class Shell extends window.events.EventEmitter{
     for (const [protocol, action] of this.getAllActions()) {
       this.installAction(protocol, action)
     }
+    this.installHelper()
   }
 
   async installModule(...pathes) {
@@ -261,6 +262,42 @@ class Shell extends window.events.EventEmitter{
    */
   actionPing() {
     return 'pong'
+  }
+
+  /**
+   * Yield each item of iterable variable
+   * @param _ - unused
+   * @param iterable - Iterator
+   */
+  async *actionMapArgs(_, iterable) {
+    for await (const item of iterable) {
+      yield item
+    }
+  }
+
+  /**
+   * Reduce pipeExec action results
+   * @param _ - unused
+   * @param pipeResults - ActionResponse array
+   * @returns {Array} - Pure results array
+   */
+  actionReduceResults(_, pipeResults) {
+    const results = []
+    for (const item of pipeResults) {
+      results.push(item.response.results)
+    }
+    return results
+  }
+
+  installHelper() {
+    function helper(action) {
+      return (...args) => {
+        return {args, action}
+      }
+    }
+    window.pipe = helper('/PipeExec')
+    window.map = helper('/MapArgs')
+    window.reduce = helper('/ReduceResults')
   }
 }
 
