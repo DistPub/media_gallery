@@ -1,4 +1,4 @@
-import { log, AsyncFunction } from "./utils.js"
+import { log, AsyncFunction, AsyncGeneratorFunction, GeneratorFunction } from "./utils.js"
 import { collect } from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs'
 
 class Shell extends window.events.EventEmitter{
@@ -15,32 +15,28 @@ class Shell extends window.events.EventEmitter{
     this.userNode.on('handle:response', data => this.emit('action:response', data))
   }
 
-  async exec({ topic, receivers, action, args}) {
-    if (!receivers.length) {
-      await this.applyAction(topic, action, args)
-    } else {
-      for await (const _ of this.rpc(topic, receivers, action, args)) {}
-    }
+  async exec(options) {
+    for await (const _ of this.execGenerator(options)) {}
   }
 
-  async *execGenerator({ topic, receivers, action, args}) {
+  execGenerator({ topic='topic', receivers=[], action='/Ping', args=[] }={}, pipe=false) {
     if (!receivers.length) {
-      yield await this.applyAction(topic, action, args, true)
+      return this.applyAction(topic, action, args, pipe)
     } else {
-      for await (const response of this.rpc(topic, receivers, action, args, true)) {
-        yield response
-      }
+      return this.rpc(topic, receivers, action, args, pipe)
     }
   }
 
   createPipeExecGenerator(action) {
-    const nextAction = {...action}
     async function* wrapper(preActionResponses) {
       for await (const item of preActionResponses) {
+        const nextAction = Object.assign({ args: [] }, action)
+
         if (!item.response.results.ignore) {
           nextAction.args = nextAction.args.concat([item.response.results])
         }
-        for await (const item of this.execGenerator(nextAction)) {
+
+        for await (const item of this.execGenerator(nextAction, true)) {
           yield item
         }
       }
@@ -81,23 +77,26 @@ class Shell extends window.events.EventEmitter{
       }
 
       const [remoteUser, status, results] = await this.userNode.pipe([username, topic].concat(args), stream)
-      const response = {
-        topic,
-        sender: receiver,
-        username: remoteUser,
-        receiver: id,
-        response: { status, results }
-      }
 
-      if (pipe) {
-        yield response
-      } else {
-        this.emit('action:response', response)
+      for (const result of results) {
+        const response = {
+          topic,
+          sender: receiver,
+          username: remoteUser,
+          receiver: id,
+          response: {status, results: result}
+        }
+
+        if (pipe) {
+          yield response
+        } else {
+          this.emit('action:response', response)
+        }
       }
     }
   }
 
-  async applyAction(topic, action, args, pipe) {
+  async *applyAction(topic, action, args, pipe) {
     const id = this.userNode.id
     const username = this.userNode.username
 
@@ -112,38 +111,51 @@ class Shell extends window.events.EventEmitter{
     }
 
     let status = 0
-    let results
-
-    try {
-      const func = this['action' + action.slice(1)]
-      if (func instanceof AsyncFunction) {
-        results = await func.apply(this, [{topic}, ...args])
-      } else if (func instanceof Function) {
-        results = func.apply(this, [{topic}, ...args])
-      } else {
-        throw `${action} action not supported in the shell`
-      }
-
-      if (results === undefined) {
-        results = null
-      }
-    } catch(error) {
-      status = 1
-      results = error.toString()
-    }
+    let generator
 
     const response = {
       topic,
       sender: id,
       username: username,
       receiver: id,
-      response: { status, results }
+      response: { status }
     }
 
-    if (pipe) {
-      return response
-    } else {
-      this.emit('action:response', response)
+    try {
+      const func = this['action' + action.slice(1)]
+
+      if (func instanceof AsyncGeneratorFunction || func instanceof GeneratorFunction) {
+        generator = func.apply(this, [{topic}, ...args])
+      } else if (func instanceof AsyncFunction) {
+        generator = (async function* (self) { yield await func.apply(self, [{topic}, ...args]) })(this)
+      } else if (func instanceof Function) {
+        generator = (function* (self) { yield func.apply(self, [{topic}, ...args]) })(this)
+      } else {
+        throw `${action} action not supported in the shell`
+      }
+
+      for await (const item of generator) {
+        if (item === undefined) {
+          response.response.results = null
+        } else {
+          response.response.results = item
+        }
+
+        if (pipe) {
+          yield Object.assign({}, response)
+        } else {
+          this.emit('action:response', Object.assign({}, response))
+        }
+      }
+    } catch(error) {
+      response.response.status = 1
+      response.response.results = error.toString()
+
+      if (pipe) {
+        yield response
+      } else {
+        this.emit('action:response', response)
+      }
     }
   }
 
@@ -202,7 +214,7 @@ class Shell extends window.events.EventEmitter{
    * @param version - Show version message
    * @return {string} The username
    */
-  actionWhoami(meta, {help, version}) {
+  actionWhoami(meta, {help, version}={}) {
     if (help) {
       return 'show the username related to the peer id'
     } else if (version){
@@ -241,6 +253,14 @@ class Shell extends window.events.EventEmitter{
     }
     execs.push(collect)
     return await window.itPipe(...execs)
+  }
+
+  /**
+   * Ping
+   * @returns {string} pong
+   */
+  actionPing() {
+    return 'pong'
   }
 }
 

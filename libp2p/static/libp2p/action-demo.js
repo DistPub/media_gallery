@@ -17,4 +17,20 @@ function c() {
   privateLogic()
 }
 
-export default [a, b, c]
+function* g() {
+  yield 1
+  yield 2
+}
+
+function makePromise(delay, val) {
+  return new Promise(resolve => {
+    setTimeout(() => resolve(val), delay);
+  });
+}
+
+async function* gg() {
+  yield await makePromise(1000, 1)
+  yield await makePromise(1000, 2)
+}
+
+export default [a, b, c, g, gg]

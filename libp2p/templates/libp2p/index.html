@@ -303,9 +303,9 @@
         await shell.exec({topic:'test', receivers:[id], action:'/Echo', args:[content]})
       }
       soul.backwards(null, false)
-      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:[{ help: true }]})
-      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:[{ version: true }]})
-      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:[{}]})
+      await shell.exec({action:'/Whoami', args:[{ help: true }]})
+      await shell.exec({action:'/Whoami', args:[{ version: true }]})
+      await shell.exec({action:'/Whoami'})
     }
   </script>
   <script type="text/javascripti">

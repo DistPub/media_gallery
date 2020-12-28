@@ -1,6 +1,6 @@
 import { encode, decode } from "./codec.js"
 import { map, collect } from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs'
-import { log, AsyncFunction } from './utils.js'
+import { log, AsyncFunction, AsyncGeneratorFunction, GeneratorFunction } from './utils.js'
 
 const transportClassName = window.libp2pWebrtcStar.prototype[Symbol.toStringTag]
 
@@ -110,18 +110,26 @@ class UserNode extends window.events.EventEmitter {
       })
 
       let status = 0
-      let results
+      let results = []
+      let generator
 
       try {
         const di = { connection, stream, id, username, topic }
-        if (action instanceof AsyncFunction) {
-          results = await action(di, ...args)
+
+        if (action instanceof AsyncGeneratorFunction || action instanceof GeneratorFunction) {
+          generator = action(di, ...args)
+        } else if (action instanceof AsyncFunction) {
+          generator = (async function* () { yield await action(di, ...args) })()
         } else {
-          results = action(di, ...args)
+          generator = (function* () { yield  action(di, ...args) })()
         }
 
-        if (results === undefined) {
-          results = null
+        for await (const item of generator) {
+          if (item === undefined) {
+            results.push(null)
+          } else {
+            results.push(item)
+          }
         }
       } catch(error) {
         log(`handler error: ${error}`)
