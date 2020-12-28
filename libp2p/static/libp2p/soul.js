@@ -25,8 +25,6 @@ class Soul extends window.events.EventEmitter {
   addEventListener(shell) {
     shell.on('action:request', data => this.handleExperience(data))
     shell.on('action:response', data => this.handleExperience(data))
-    shell.on('pipe:request', data => this.handleExperience(data))
-    shell.on('pipe:response', data => this.handleExperience(data))
   }
 
   async handleExperience(data) {

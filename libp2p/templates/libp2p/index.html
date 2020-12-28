@@ -265,9 +265,6 @@
         }
       });
 
-      shell.on('pipe:request', log)
-      shell.on('pipe:response', log)
-
       shell.on('action:response', ({username, response}) => {
         renderMessage(`${username}[response]=>${response.results}`)
       })
@@ -306,10 +303,9 @@
         await shell.exec({topic:'test', receivers:[id], action:'/Echo', args:[content]})
       }
       soul.backwards(null, false)
-{#      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:['--help']})#}
-{#      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:['--version']})#}
-{#      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:[]})#}
-{#      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:[1,2,3]})#}
+      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:[{ help: true }]})
+      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:[{ version: true }]})
+      await shell.exec({topic:'test', receivers:[], action:'/Whoami', args:[{}]})
     }
   </script>
   <script type="text/javascripti">

@@ -33,36 +33,6 @@ class Shell extends window.events.EventEmitter{
     }
   }
 
-  async pipeExec(action, ...more) {
-    if (!more.length) {
-      return await this.exec(action)
-    }
-
-    const id = this.userNode.id
-    const username = this.userNode.username
-    const actions = [action].concat(more)
-    this.emit('pipe:request', {
-      actions,
-      sender: id,
-      username: username
-    })
-
-    const execs = []
-    for (const [idx, action] of actions.entries()) {
-      if (idx === 0){
-        execs.push([{ response: { results: { ignore: true } } }])
-      }
-      execs.push(this.createPipeExecGenerator(action))
-    }
-    execs.push(collect)
-    const responses = await window.itPipe(...execs)
-    this.emit('pipe:response', {
-      actions,
-      responses,
-      receiver: id
-    })
-  }
-
   createPipeExecGenerator(action) {
     const nextAction = {...action}
     async function* wrapper(preActionResponses) {
@@ -147,9 +117,9 @@ class Shell extends window.events.EventEmitter{
     try {
       const func = this['action' + action.slice(1)]
       if (func instanceof AsyncFunction) {
-        results = func.apply(this, [{}, ...args])
+        results = await func.apply(this, [{topic}, ...args])
       } else if (func instanceof Function) {
-        results = await func.apply(this, [{}, ...args])
+        results = func.apply(this, [{topic}, ...args])
       } else {
         throw `${action} action not supported in the shell`
       }
@@ -202,21 +172,56 @@ class Shell extends window.events.EventEmitter{
     return '/' + action.slice('action'.length)
   }
 
-  actionWhoami(_, arg) {
-    if (arg === '--help') {
+  /**
+   * Show the username
+   *  Note: this example use `object` type as action argument payload, so that client can pass keyword args
+   *
+   * @param meta -
+   *  If this is a remote action call, meta contains { connection, stream, id, username, topic }
+   *  If this is a local action call, meta contains { topic }
+   * @param help - Show help message
+   * @param version - Show version message
+   * @return {string} The username
+   */
+  actionWhoami(meta, {help, version}) {
+    if (help) {
       return 'show the username related to the peer id'
-    } else if (arg === '--version'){
+    } else if (version){
       return '1.0.0'
-    }
-
-    if (!arg) {
+    } else {
       return this.userNode.username
     }
-    throw `unsupported args: ${arg}`
   }
 
+  /**
+   * Echo message
+   *  Note: this example use `array` type as action argument payload, so that client can only pass position args
+   *
+   * @param _ - Meta data, this action don't care, so it give a `_` variable name
+   * @param args - Need echo messages
+   * @returns {string} - Combined message
+   */
   actionEcho(_, ...args) {
     return args.join(' ')
+  }
+
+  /**
+   * Exec action in pipe
+   *
+   * @param _ - Meta data
+   * @param actions - Action array
+   * @returns {Promise.<[ActionResponse]>} Action responses
+   */
+  async actionPipeExec(_, ...actions) {
+    const execs = []
+    for (const [idx, action] of actions.entries()) {
+      if (idx === 0){
+        execs.push([{ response: { results: { ignore: true } } }])
+      }
+      execs.push(this.createPipeExecGenerator(action))
+    }
+    execs.push(collect)
+    return await window.itPipe(...execs)
   }
 }
 
