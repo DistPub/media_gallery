@@ -107,8 +107,8 @@ class Soul extends window.events.EventEmitter {
     await this.repo.put('/local/filesroot', new window.cids(root).bytes)
   }
 
-  get memory() {
-    return (async () => { return new window.cids(await this.repo.get('/local/filesroot')).toString() })()
+  async getMemory() {
+    return new window.cids(await this.repo.get('/local/filesroot')).toString()
   }
 }
 
