@@ -153,6 +153,25 @@ class Shell extends window.events.EventEmitter{
     }
   }
 
+  async installModule(...pathes) {
+    for (const path of pathes) {
+      try {
+        const {default: actions} = await import(path)
+        for (const action of actions) {
+          if (!(typeof action === 'function')) {
+            continue
+          }
+          this.installAction(`/${action.name}`, action.bind(this))
+          Shell.prototype[`action${action.name}`] = action.bind(this)
+        }
+
+        log(`install module(${path}) success`)
+      } catch (error) {
+        log(`install module(${path}) error: ${error}`)
+      }
+    }
+  }
+
   installAction(protocol, action) {
     this.userNode.node.handle(protocol, this.userNode.createProtocolHandler(action))
   }
