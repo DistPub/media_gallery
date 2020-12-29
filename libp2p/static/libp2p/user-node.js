@@ -14,8 +14,8 @@ class UserNode extends window.events.EventEmitter {
     this.connectionBook = new Map()
   }
 
-  async init() {
-    this.node = await this.createLibp2pNode(this.signallingServer, this.simplePeerOptions)
+  async init(optionFilter=item=>item) {
+    this.node = await this.createLibp2pNode(this.signallingServer, this.simplePeerOptions, optionFilter)
     this.addEventListener()
     await this.node.start();
     this.id = this.node.peerId.toB58String()
@@ -92,7 +92,7 @@ class UserNode extends window.events.EventEmitter {
     })
   }
 
-  createProtocolHandler(action) {
+  createProtocolHandler(action, soul) {
     return async ({ connection, stream, protocol }) => {
       const id = connection.remotePeer.toB58String()
       const [username, topic, ...args] = await window.itPipe(
@@ -114,7 +114,7 @@ class UserNode extends window.events.EventEmitter {
       let generator
 
       try {
-        const di = { connection, stream, id, username, topic }
+        const di = { connection, stream, id, username, topic, soul }
 
         if (action instanceof AsyncGeneratorFunction || action instanceof GeneratorFunction) {
           generator = action(di, ...args)
@@ -173,8 +173,8 @@ class UserNode extends window.events.EventEmitter {
     return peerId
   }
 
-  async createLibp2pNode(signallingServer, simplePeerOptions) {
-    return await libp2p.create({
+  async createLibp2pNode(signallingServer, simplePeerOptions, optionFilter) {
+    return await libp2p.create(optionFilter({
       addresses: {listen: [signallingServer]},
       modules: {
         transport: [window.libp2pWebrtcStar],
@@ -195,7 +195,7 @@ class UserNode extends window.events.EventEmitter {
         threshold: 1
       },
       peerId: await this.getPeerId(),
-    })
+    }))
   }
 
   async saveId() {

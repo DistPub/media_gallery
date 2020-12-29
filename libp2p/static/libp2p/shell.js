@@ -123,13 +123,14 @@ class Shell extends window.events.EventEmitter{
 
     try {
       const func = this['action' + action.slice(1)]
+      const di = { topic, soul: this.soul }
 
       if (func instanceof AsyncGeneratorFunction || func instanceof GeneratorFunction) {
-        generator = func.apply(this, [{topic}, ...args])
+        generator = func.apply(this, [di, ...args])
       } else if (func instanceof AsyncFunction) {
-        generator = (async function* (self) { yield await func.apply(self, [{topic}, ...args]) })(this)
+        generator = (async function* (self) { yield await func.apply(self, [di, ...args]) })(this)
       } else if (func instanceof Function) {
-        generator = (function* (self) { yield func.apply(self, [{topic}, ...args]) })(this)
+        generator = (function* (self) { yield func.apply(self, [di, ...args]) })(this)
       } else {
         throw `${action} action not supported in the shell`
       }
@@ -186,7 +187,7 @@ class Shell extends window.events.EventEmitter{
   }
 
   installAction(protocol, action) {
-    this.userNode.node.handle(protocol, this.userNode.createProtocolHandler(action))
+    this.userNode.node.handle(protocol, this.userNode.createProtocolHandler(action, this.soul))
   }
 
   getAllActions() {
@@ -209,8 +210,8 @@ class Shell extends window.events.EventEmitter{
    *  Note: this example use `object` type as action argument payload, so that client can pass keyword args
    *
    * @param meta -
-   *  If this is a remote action call, meta contains { connection, stream, id, username, topic }
-   *  If this is a local action call, meta contains { topic }
+   *  If this is a remote action call, meta contains { connection, stream, id, username, topic, soul }
+   *  If this is a local action call, meta contains { topic, soul }
    * @param help - Show help message
    * @param version - Show version message
    * @return {string} The username

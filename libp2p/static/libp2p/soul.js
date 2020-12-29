@@ -10,9 +10,9 @@ class Soul extends window.events.EventEmitter {
     this.pre = null
   }
 
-  async init() {
+  async init(optionFilter=item=>item) {
     const repo = `${this.username}/ipfs`
-    this.node = await window.Ipfs.create({ repo })
+    this.node = await window.Ipfs.create(optionFilter({ repo }))
     this.repo = new window.datastoreLevel(repo, {prefix: '', version: 2})
     try {
       this.experiences = (await this.db.get('experiences')).map(item => new window.cids(item))
