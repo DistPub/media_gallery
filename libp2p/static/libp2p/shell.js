@@ -1,5 +1,6 @@
 import { log, AsyncFunction, AsyncGeneratorFunction, GeneratorFunction } from "./utils.js"
 import { collect } from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs'
+import { ActionHelper, proxyHandler} from "./action-helper.js"
 
 class Shell extends window.events.EventEmitter{
   constructor(userNode, soul) {
@@ -16,6 +17,9 @@ class Shell extends window.events.EventEmitter{
   }
 
   async exec(options) {
+    if ('toJSON' in options) {
+      options = options.toJSON()
+    }
     for await (const _ of this.execGenerator(options)) {}
   }
 
@@ -164,7 +168,6 @@ class Shell extends window.events.EventEmitter{
     for (const [protocol, action] of this.getAllActions()) {
       this.installAction(protocol, action)
     }
-    this.installHelper()
   }
 
   async installModule(...pathes) {
@@ -175,8 +178,16 @@ class Shell extends window.events.EventEmitter{
           if (!(typeof action === 'function')) {
             continue
           }
-          this.installAction(`/${action.name}`, action.bind(this))
-          Shell.prototype[`action${action.name}`] = action.bind(this)
+
+          let actionName = action.name
+          const first = actionName[0]
+          if (first !== first.toUpperCase()) {
+            log(`[WARN] install action(${action.name}) first letter is not upper case, auto correct!`)
+            actionName = first.toUpperCase() + actionName.slice(1)
+          }
+
+          this.installAction(`/${actionName}`, action.bind(this))
+          Shell.prototype[`action${actionName}`] = action.bind(this)
         }
 
         log(`install module(${path}) success`)
@@ -290,15 +301,54 @@ class Shell extends window.events.EventEmitter{
     return results
   }
 
-  installHelper() {
-    function helper(action) {
-      return (...args) => {
-        return {args, action}
-      }
-    }
-    window.pipe = helper('/PipeExec')
-    window.map = helper('/MapArgs')
-    window.reduce = helper('/ReduceResults')
+  /**
+   * Action helper
+   *  use helper can make pipe action more effective
+   *
+   *  example:
+   *    actionPlus = (_, a, b) => a + b
+   *    actionSum = (_, ...args) => {
+   *      let amount = 0
+   *      for (const item of args) {
+   *        amount = amount + item
+   *      }
+   *      return amount
+   *    }
+   *    await shell.exec(shell.Action.map([[1,2,3]]).plus([1]).Collect.Sum)
+   *    equal => await shell.exec({
+   *      action: '/PipeExec',
+   *      args: [
+   *        {
+   *          action: '/PipeExec',
+   *          args: [
+   *            {action: '/MapArgs', args: [[1,2,3]]},
+   *            {action: '/Plus', args: [1]}
+   *          ]
+   *        },
+   *        {action: '/ReduceResults'},
+   *        {action: '/Sum'},
+   *      ]
+   *    })
+   * @param autoPipe - If auto use pipe action when actions more than one
+   * @param pipeOption - pipe option
+   * @param actions - Actions
+   * @returns {Proxy} Proxy action helper so that it can dynamic get action from shell
+   */
+  action(autoPipe=true, pipeOption={}, actions=[]) {
+    return new Proxy(new ActionHelper(this, autoPipe, pipeOption, actions), proxyHandler)
+  }
+
+  /**
+   * Getter for action helper method
+   *  Note: **All Action** in shell can be access by two ways
+   *    1. getter with default arguments, the action name first letter is upper case
+   *      example: shell.Action.Sum or shell.Action.Plus
+   *    2. function, the action name first letter is lower case
+   *      example: shell.Action.sum(option) or shell.action.plus(option)
+   *  Note: helper contains some alias action(e.g. map/reduce/pipe) and some shortcut action(e.g. collect)
+   */
+  get Action() {
+    return this.action()
   }
 }
 

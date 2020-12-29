@@ -33,4 +33,13 @@ async function* gg() {
   yield await makePromise(1000, 2)
 }
 
-export default [a, b, c, g, gg]
+const Plus = (_, a, b) => a + b
+const Sum = (_, args) => {
+  let amount = 0
+  for (const item of args) {
+    amount = amount + item
+  }
+  return amount
+}
+
+export default [a, b, c, g, gg, Plus, Sum]
