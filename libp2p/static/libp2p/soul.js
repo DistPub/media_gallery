@@ -110,6 +110,56 @@ class Soul extends window.events.EventEmitter {
   async getMemory() {
     return new window.cids(await this.repo.get('/local/filesroot')).toString()
   }
+
+  /**
+   * Push file to ipfs
+   * @param content - data
+   * @param path - tmp path or mfs path
+   * @returns {Promise.<string>} ipfs path or mfs path
+   */
+  async push(content, path) {
+    const tmp = path.startsWith('/tmp/') || path.startsWith('/ipfs/')
+    const filename = path.substring(path.lastIndexOf("/") + 1, path.length);
+
+    const fileObject = { path: filename, content }
+    let options
+
+    if (tmp) {
+      options = {wrapWithDirectory: true}
+    }
+
+    let { cid } = await this.node.add(fileObject, options)
+
+    if (tmp) {
+      return `/ipfs/${cid}/${filename}`
+    } else {
+      await this.node.files.cp(`/ipfs/${cid}`, path, { parents: true })
+      return path
+    }
+  }
+
+  /**
+   * Pull file from ipfs
+   * @param path - cid or mfs path
+   * @returns {Promise.<uint8Array>}
+   */
+  async pull(path) {
+    let cid
+
+    if (!path.startsWith('/ipfs/')) {
+      const stats = await this.node.files.stat(path)
+      cid = stats.cid
+    }
+
+    const data = []
+    let size = 0
+    for await (const chunk of this.node.cat(cid || path)) {
+      data.push(chunk)
+      size = size + chunk.size
+    }
+
+    return window.uint8ArrayConcat(data, size)
+  }
 }
 
 export default Soul
