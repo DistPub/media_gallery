@@ -205,7 +205,7 @@ class Shell extends window.events.EventEmitter{
   }
 
   installRemoteAction(protocol, action) {
-    this.userNode.node.handle(protocol, this.userNode.createProtocolHandler(action, this.soul))
+    this.userNode.installHandler(protocol, this.userNode.createProtocolHandler(action, this.soul))
   }
 
   /**
@@ -331,6 +331,31 @@ class Shell extends window.events.EventEmitter{
    */
   get Action() {
     return this.action()
+  }
+
+  /**
+   * Fetch
+   *
+   * @param _ - unused
+   * @param api - api
+   * @param options - fetch options
+   *  Note: **CORS with Credential**, since Chrome 80, February 2020
+   *        Cookie will NOT send if it set not meet the policy condition
+   *  Note: more info => https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
+   *  Note: fix way:
+   *          1. update your server and flush client cookie
+   *          2. disable Chrome flag(chrome://flags/#same-site-by-default-cookies)
+   * @param type - body extractor:
+   *  arrayBuffer()
+   *  blob()
+   *  json()
+   *  text()
+   *  formData()
+   * @returns {Promise.<*>} response payload
+   */
+  async actionFetch(_, api, options, type='text') {
+    const response = await window.fetch(api, options)
+    return await response[type]()
   }
 }
 

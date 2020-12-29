@@ -24,7 +24,7 @@ class ActionResponse {
     return this.payloads.map(item => item.response.status).reduce((a, b) => a + b, 0) === 0
   }
 
-  txt() {
+  text() {
     return this.payloads.map(item => item.response.results).join('\n')
   }
 

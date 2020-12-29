@@ -27,6 +27,11 @@
 {% block container %}
   {% include 'includes/modal.html' %}
   {% include 'includes/modal.module' %}
+  <section>
+    <textarea id="input">芒果娱乐</textarea>
+    <input type="text" id="type" value="微博">
+    <button id="exec">Exec</button>
+  </section>
   <section class="login">
     <div class="user-login-history ui relaxed divided list">
     </div>
@@ -112,6 +117,8 @@
   <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.production.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.production.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/ipfs@0.52.2/dist/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.16.9/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script type="module">
     import {map, filter, collect, consume} from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs';
     import UserNode from '{% static "libp2p/user-node.js" %}'
@@ -120,6 +127,11 @@
     const country = '/dns4/webrtc-star.dist.pub/tcp/443/wss/p2p-webrtc-star';
     const peers = [];
     const connectionBook = {};
+
+    function log(txt) {
+      console.info(txt);
+    }
+
     window.p2pConnectionBook = connectionBook;
     const simplePeerOptions = {
       trickle: true,
@@ -200,10 +212,6 @@
           await database.put('status', false);
           await database.get('status');
         })
-      }
-
-      function log(txt) {
-        console.info(txt);
       }
 
       window.showModal(`Login ${username}`, 'Starting libp2p...', false);
@@ -297,6 +305,18 @@
       await shell.exec(shell.Action.whoami([{ help: true }]))
       await shell.exec(shell.Action.whoami([{ version: true }]))
       await shell.exec(shell.Action.Whoami)
+    }
+
+    document.querySelector('#exec').onclick = async (e) => {
+      const names = document.querySelector('#input').value.split('\n').filter(item => item.length>0)
+      const type = document.querySelector('#type').value
+      const response = await shell.exec(shell.Action.map([names]).fetch([type]).Extract.Collect.GenerateExcel.Download.Preview)
+      if (response.ok) {
+        log('success exec')
+      } else {
+        log('faied exec')
+      }
+      console.log(response.json())
     }
   </script>
 {% endblock %}

@@ -202,6 +202,10 @@ class UserNode extends window.events.EventEmitter {
     await this.db.put('id', this.id);
     await this.db.put('peerPrivateKey', await this.node.peerId.privKey.export(this.username));
   }
+
+  installHandler(protocol, handler) {
+    this.node.handle(protocol, handler)
+  }
 }
 
 export default UserNode
