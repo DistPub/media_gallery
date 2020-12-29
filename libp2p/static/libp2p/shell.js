@@ -1,6 +1,7 @@
 import { log, AsyncFunction, AsyncGeneratorFunction, GeneratorFunction } from "./utils.js"
 import { collect } from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs'
 import { ActionHelper, proxyHandler} from "./action-helper.js"
+import ActionResponse from './action-response.js'
 
 class Shell extends window.events.EventEmitter{
   constructor(userNode, soul) {
@@ -16,11 +17,17 @@ class Shell extends window.events.EventEmitter{
     this.userNode.on('handle:response', data => this.emit('action:response', data))
   }
 
-  async exec(options) {
-    if ('toJSON' in options) {
-      options = options.toJSON()
+  async exec(action) {
+    // if action is helper
+    if ('toJSON' in action) {
+      action = action.toJSON()
     }
-    for await (const _ of this.execGenerator(options)) {}
+
+    const response = new ActionResponse(action)
+    for await (const item of this.execGenerator(action)) {
+      response.add(item)
+    }
+    return response
   }
 
   execGenerator({ topic='topic', receivers=[], action='/Ping', args=[] }={}, pipe=false) {
@@ -91,9 +98,8 @@ class Shell extends window.events.EventEmitter{
           response: {status, results: result}
         }
 
-        if (pipe) {
-          yield response
-        } else {
+        yield response
+        if (!pipe) {
           this.emit('action:response', response)
         }
       }
@@ -146,9 +152,9 @@ class Shell extends window.events.EventEmitter{
           response.response.results = item
         }
 
-        if (pipe) {
-          yield window.cloneDeep(response)
-        } else {
+        yield window.cloneDeep(response)
+
+        if (!pipe) {
           this.emit('action:response', window.cloneDeep(response))
         }
       }
@@ -156,18 +162,15 @@ class Shell extends window.events.EventEmitter{
       response.response.status = 1
       response.response.results = error.toString()
 
-      if (pipe) {
-        yield response
-      } else {
+      yield response
+      if (!pipe) {
         this.emit('action:response', response)
       }
     }
   }
 
   install() {
-    for (const [protocol, action] of this.getAllActions()) {
-      this.installAction(protocol, action)
-    }
+    this.getAllActions().forEach(([protocol, action]) => this.installAction(protocol, action))
   }
 
   async installModule(...pathes) {
@@ -205,11 +208,7 @@ class Shell extends window.events.EventEmitter{
     const actions = Object.getOwnPropertyNames(Shell.prototype).filter(name => {
       return name.startsWith('action') && typeof this[name] === 'function'
     })
-    const results = []
-    for (const action of actions) {
-      results.push([Shell.translateActionNameToProtocol(action), this[action].bind(this)])
-    }
-    return results
+    return actions.map(action => [Shell.translateActionNameToProtocol(action), this[action].bind(this)])
   }
 
   static translateActionNameToProtocol(action) {
@@ -294,11 +293,7 @@ class Shell extends window.events.EventEmitter{
    * @returns {Array} - Pure results array
    */
   actionReduceResults(_, pipeResults) {
-    const results = []
-    for (const item of pipeResults) {
-      results.push(item.response.results)
-    }
-    return results
+    return pipeResults.map(item => item.response.results)
   }
 
   /**
@@ -307,13 +302,7 @@ class Shell extends window.events.EventEmitter{
    *
    *  example:
    *    actionPlus = (_, a, b) => a + b
-   *    actionSum = (_, ...args) => {
-   *      let amount = 0
-   *      for (const item of args) {
-   *        amount = amount + item
-   *      }
-   *      return amount
-   *    }
+   *    actionSum = (_, args) => args.reduce((a, b) => a + b, 0)
    *    await shell.exec(shell.Action.map([[1,2,3]]).plus([1]).Collect.Sum)
    *    equal => await shell.exec({
    *      action: '/PipeExec',

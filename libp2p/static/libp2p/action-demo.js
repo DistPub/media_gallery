@@ -34,12 +34,6 @@ async function* gg() {
 }
 
 const Plus = (_, a, b) => a + b
-const Sum = (_, args) => {
-  let amount = 0
-  for (const item of args) {
-    amount = amount + item
-  }
-  return amount
-}
+const Sum = (_, args) => args.reduce((a, b) => a + b, 0)
 
 export default [a, b, c, g, gg, Plus, Sum]
