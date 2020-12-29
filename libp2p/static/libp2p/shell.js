@@ -170,29 +170,33 @@ class Shell extends window.events.EventEmitter{
   }
 
   install() {
-    this.getAllActions().forEach(([protocol, action]) => this.installAction(protocol, action))
+    Object.getOwnPropertyNames(Shell.prototype).filter(name =>
+      name.startsWith('action') && name.length > 'action'.length && typeof this[name] === 'function'
+    ).map(action =>
+      ['/' + action.slice('action'.length), this[action].bind(this)]
+    ).forEach(([protocol, action]) =>
+      this.installRemoteAction(protocol, action)
+    )
+  }
+
+  installExternalAction(action) {
+    let actionName = action.name
+    const first = actionName[0]
+
+    if (first !== first.toUpperCase()) {
+      log(`[WARN] install external action(${action.name}) first letter is not upper case, auto correct!`)
+      actionName = first.toUpperCase() + actionName.slice(1)
+    }
+
+    Shell.prototype[`action${actionName}`] = action.bind(this)
+    this.installRemoteAction(`/${actionName}`, action.bind(this))
   }
 
   async installModule(...pathes) {
     for (const path of pathes) {
       try {
         const {default: actions} = await import(path)
-        for (const action of actions) {
-          if (!(typeof action === 'function')) {
-            continue
-          }
-
-          let actionName = action.name
-          const first = actionName[0]
-          if (first !== first.toUpperCase()) {
-            log(`[WARN] install action(${action.name}) first letter is not upper case, auto correct!`)
-            actionName = first.toUpperCase() + actionName.slice(1)
-          }
-
-          this.installAction(`/${actionName}`, action.bind(this))
-          Shell.prototype[`action${actionName}`] = action.bind(this)
-        }
-
+        actions.filter(action => typeof action === 'function').forEach(action => this.installExternalAction(action))
         log(`install module(${path}) success`)
       } catch (error) {
         log(`install module(${path}) error: ${error}`)
@@ -200,19 +204,8 @@ class Shell extends window.events.EventEmitter{
     }
   }
 
-  installAction(protocol, action) {
+  installRemoteAction(protocol, action) {
     this.userNode.node.handle(protocol, this.userNode.createProtocolHandler(action, this.soul))
-  }
-
-  getAllActions() {
-    const actions = Object.getOwnPropertyNames(Shell.prototype).filter(name => {
-      return name.startsWith('action') && typeof this[name] === 'function'
-    })
-    return actions.map(action => [Shell.translateActionNameToProtocol(action), this[action].bind(this)])
-  }
-
-  static translateActionNameToProtocol(action) {
-    return '/' + action.slice('action'.length)
   }
 
   /**

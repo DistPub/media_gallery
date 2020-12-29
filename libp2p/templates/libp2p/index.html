@@ -259,7 +259,7 @@
         }
       }
 
-      shell.installAction('/print', (_, ...args) => {
+      shell.installExternalAction(function print(_, ...args) {
         for (let msg of args) {
           log(`<< ${msg}`);
         }
