@@ -254,10 +254,6 @@
       hideModal();
 
       // logic
-      function transform(connection, stream) {
-        return (msg) => {
-        }
-      }
 
       shell.installExternalAction(function print(_, ...args) {
         for (let msg of args) {
@@ -287,10 +283,9 @@
       })
 
       window.sendText = async function () {
-        const shell = document.querySelector('#shell');
-        const context = shell.value;
-        await window.dailing(document.querySelector('.active').innerText, context);
-        shell.value = '';
+        const input = document.querySelector('#shell');
+        await shell.exec(shell.Action.echo([input.value], [document.querySelector('.active').innerText]))
+        input.value = '';
       };
 
       window.renderMessage = function (content) {
@@ -298,68 +293,10 @@
         item.querySelector('.summary').innerText = content;
         document.querySelector('.stage').appendChild(item);
       };
-
-      window.dailing = async function (id, content) {
-        await shell.exec({topic:'test', receivers:[id], action:'/Echo', args:[content]})
-      }
       soul.backwards(null, false)
-      await shell.exec({action:'/Whoami', args:[{ help: true }]})
-      await shell.exec({action:'/Whoami', args:[{ version: true }]})
-      await shell.exec({action:'/Whoami'})
-    }
-  </script>
-  <script type="text/javascripti">
-    document.addEventListener('DOMContentLoaded', async () => {
-      const node = await Ipfs.create()
-      window.ipfsNode = node
-
-      const status = node.isOnline() ? 'online' : 'offline'
-
-      console.log(`Node status: ${status}`)
-
-      window.dl = new window.datastoreLevel('ipfs', {prefix: '', version: 2})
-
-      rootCid = PeerId.createFromBytes(await dl.get('/local/filesroot')).toB58String()
-      console.log(`root cid: ${rootCid}`)
-
-      console.log(await ipfsNode.files.stat('/'))
-
-      for await (let item of ipfsNode.files.ls('/')) {
-        console.log(item)
-      }
-
-      await ipfsNode.files.touch('/a')
-      await ipfsNode.files.touch('/b')
-      await ipfsNode.files.touch('/c')
-
-      console.log(await ipfsNode.files.stat('/'))
-
-      for await (let item of ipfsNode.files.ls('/')) {
-        console.log(item)
-      }
-    })
-
-    async function addThenCPFileToMFS(content) {
-      const str = content.path
-      var last = str.substring(str.lastIndexOf("/") + 1, str.length);
-      content.path = last
-      const {cid} = await ipfsNode.add(content)
-
-      console.log('successfully stored', cid)
-      await ipfsNode.files.cp(`/ipfs/${cid}`, str, {parents: true})
-
-      console.log(await ipfsNode.files.stat('/'))
-
-    }
-
-    async function catFile(cid) {
-      for await (const data of ipfsNode.cat(cid)) {
-        console.log(data.toString())
-      }
-    }
-
-    async function updateRootCid(cid) {
-      await window.dl.put('/local/filesroot', PeerId.createFromB58String(cid).toBytes())
+      await shell.exec(shell.Action.whoami([{ help: true }]))
+      await shell.exec(shell.Action.whoami([{ version: true }]))
+      await shell.exec(shell.Action.Whoami)
     }
   </script>
 {% endblock %}
