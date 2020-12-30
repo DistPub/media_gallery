@@ -25,15 +25,31 @@ class ActionResponse {
   }
 
   text() {
+    if (!this.payloads.length) {
+      return undefined
+    }
+
     return this.payloads.map(item => item.response.results).join('\n')
   }
 
+  toString() {
+    return this.text()
+  }
+
   json() {
+    if (!this.payloads.length) {
+      return undefined
+    }
+
     let [payload, ...more] = this.payloads
     if (!more.length) {
       return payload.response.results
     }
     return this.payloads.map(item => item.response.results)
+  }
+
+  toJSON() {
+    return this.json()
   }
 }
 
