@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}ZGVG Gallery{% endblock %}
+{% block sw_url %}{% url "zgdy:sw.js" %}{% endblock %}
+{% block style %}
+  <style type="text/css">
+    .ui.header {
+      display: table;
+    }
+  </style>
+{% endblock %}
+{% block container %}
+  {% include 'includes/modal.html' %}
+  <h2 class="ui header">
+    <i class="flag checkered icon"></i>
+    <div class="content">
+      The Input
+      <div class="sub header">Input zgvg resource project name , one per line</div>
+    </div>
+  </h2>
+
+  <div class="ui form">
+    <div class="field">
+      <textarea id="project_name"></textarea>
+    </div>
+    <div class="inline three fields">
+      <div class="field">
+        <label for="product_brand">Product Brand</label>
+        <select id="product_brand">
+          <option value="微信">微信</option>
+          <option value="微博" selected>微博</option>
+          <option value="美拍">美拍</option>
+          <option value="秒拍">秒拍</option>
+          <option value="花椒">花椒</option>
+          <option value="微博直播">微博直播</option>
+          <option value="快手直播">快手直播</option>
+          <option value="一直播">一直播</option>
+          <option value="映客">映客</option>
+          <option value="抖音直播">抖音直播</option>
+          <option value="其它">其它</option>
+          <option value="B站">B站</option>
+          <option value="抖音">抖音</option>
+          <option value="快手">快手</option>
+          <option value="小红书">小红书</option>
+          <option value="传统媒体">传统媒体</option>
+          <option value="知乎">知乎</option>
+          <option value="今日头条">今日头条</option>
+          <option value="微信群">微信群</option>
+          <option value="微信朋友圈">微信朋友圈</option>
+          <option value="QQ空间">QQ空间</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="peer">DShell Host</label>
+        <select id="peer">
+          <option value="" selected>localhost</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="ui checkbox">
+          <input type="checkbox" tabindex="0" class="hidden" id="preview" name="preview">
+          <label for="preview">preview file online</label>
+        </div>
+      </div>
+    </div>
+    <button class="ui button primary right labeled icon" type="submit" id="fetch">
+      <i class="rocket icon"></i>Fetch
+    </button>
+    <button class="negative ui button  right labeled icon" id="reset">
+      <i class="eraser icon"></i>Reset
+    </button>
+  </div>
+
+  {% include 'includes/progress.html' %}
+{% endblock %}
+{% block script %}
+  {% include 'includes/modal.module' %}
+  {% include 'includes/progress.module' %}
+  <script src="{% static 'dshell/dep.bundle.js' %}"></script>
+  <script type="module" about="main">
+    import { Shell, UserNode, Soul } from '{% static "dshell/index.js" %}';
+    import { datastoreLevel } from '{% static "dshell/dep.mjs" %}';
+
+    const username = 'zgvg';
+    const db = (new datastoreLevel(`dshell/${username}`, { prefix: '' })).db;
+    const country = '/dns4/webrtc-star.dist.pub/tcp/443/wss/p2p-webrtc-star';
+    const simplePeerOptions = {
+      trickle: true,
+      config: {
+        iceServers: {{ iceServers|safe }},
+      }
+    };
+    const my = new UserNode(db, username, country, simplePeerOptions);
+    const soul = new Soul(db, username);
+    const shell = new Shell(my, soul);
+
+    function MeetPeer(id) {
+      log(`* Nice to meet ${id}`);
+    }
+    my.on('user:hi', MeetPeer);
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      await db.put('welcome', 'shell');
+      db.db.codec.opts.valueEncoding = 'json';
+      await my.init();
+      await soul.init();
+      shell.install();
+      shell.installModule(
+        '{% static "dshell/actions/network.js" %}',
+        '{% static "dshell/actions/dom.js" %}',
+        '{% static "dshell/actions/utils.js" %}',
+        '{% static "dshell/actions/soul.js" %}',
+      );
+      shell.installExternalAction(function BuildFetchPayload(_, type, name) {
+        return {
+          SearchTableName: 'Search/PRT_Product',
+          ProjectName: name,
+          Supply: '',
+          MaxCost: '',
+          Fans: '',
+          Tag: '',
+          Place: '',
+          Position: '',
+          ProductBrand: type,
+          Order: ''
+        }
+      });
+    });
+
+    function log(message) {
+      console.log(message)
+    }
+
+    document.querySelector('#reset').onclick = () => {
+      document.querySelector('#project_name').value = '';
+      document.querySelector('#preview').checked = false;
+    };
+
+    document.querySelector('#fetch').onclick = async () => {
+      if (!shell) {
+        return showModal('Init Shell', 'Please wait seconds and retry', false);
+      }
+
+      const peer = document.querySelector('#peer').value
+      const receivers = []
+
+      try {
+        window.PeerId.createFromB58String(peer)
+        receivers.push(peer)
+      } catch (error) {
+        log(error)
+      }
+
+      const names = document.querySelector('#project_name').value.split('\n').filter(item => item.length > 0)
+      log(names)
+      const brand = document.querySelector('#product_brand').value
+      log(brand)
+      const api = atob('aHR0cDovL3dvcmsudmlnbGxlLmNvbS9CYXNlVGFibGUvTGlzdA==')
+
+      let action = shell.action(true, {receivers})
+        .map([names])
+        .buildFetchPayload([brand])
+        .textFetch([api, { cors: true, bodyEncoder: 'form', method: 'POST'}])
+        .selectText([{ selector: 'div.col-sm-2 > div:nth-child(4)', killImg: true }])
+        .Collect
+        .zipArray([names])
+        .buildExcel(['data', ['name', 'vendor']])
+        .download(['vendor.xlsx'])
+
+      if (document.querySelector('#preview').checked) {
+        action = action.pushFile(['/tmp/vendor.xlsx']).PreviewOffice
+      }
+
+      await shell.exec(action)
+    };
+  </script>
+{% endblock %}

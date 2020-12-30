@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'base',
     'zgdy',
     'libp2p',
+    'zgvg',
 ]
 
 MIDDLEWARE = [
