@@ -132,15 +132,27 @@ class Soul extends window.events.EventEmitter {
 
     if (tmp) {
       return `/ipfs/${cid}/${filename}`
-    } else {
-      await this.node.files.cp(`/ipfs/${cid}`, path, { parents: true })
-      return path
     }
+
+    const copy = async () => await this.node.files.cp(`/ipfs/${cid}`, path, {parents: true})
+    const remove = async () => await this.node.files.rm(path)
+
+    try {
+      await copy()
+    } catch (error) {
+      log(`push error: ${error}`)
+
+      if (error.code === 'ERR_ALREADY_EXISTS') {
+        await remove()
+        await copy()
+      }
+    }
+    return path
   }
 
   /**
    * Pull file from ipfs
-   * @param path - cid or mfs path
+   * @param path - ipfs path or mfs path
    * @returns {Promise.<uint8Array>}
    */
   async pull(path) {

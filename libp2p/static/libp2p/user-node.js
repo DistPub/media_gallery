@@ -92,7 +92,7 @@ class UserNode extends window.events.EventEmitter {
     })
   }
 
-  createProtocolHandler(action, soul) {
+  createProtocolHandler(action, soul, exec) {
     return async ({ connection, stream, protocol }) => {
       const id = connection.remotePeer.toB58String()
       const [username, topic, ...args] = await window.itPipe(
@@ -114,7 +114,7 @@ class UserNode extends window.events.EventEmitter {
       let generator
 
       try {
-        const di = { connection, stream, id, username, topic, soul }
+        const di = { connection, stream, id, username, topic, soul, exec }
 
         if (action instanceof AsyncGeneratorFunction || action instanceof GeneratorFunction) {
           generator = action(di, ...args)

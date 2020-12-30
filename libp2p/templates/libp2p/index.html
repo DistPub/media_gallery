@@ -246,6 +246,12 @@
       await soul.init()
       const shell = new Shell(my, soul);
       shell.install()
+      shell.installModule(
+        '/static/libp2p/actions/network.js',
+        '/static/libp2p/actions/dom.js',
+        '/static/libp2p/actions/utils.js',
+        '/static/libp2p/actions/soul.js',
+      )
       window.p2pNode = my;
       window.soul = soul;
       window.shell = shell;
@@ -305,12 +311,49 @@
       await shell.exec(shell.Action.whoami([{ help: true }]))
       await shell.exec(shell.Action.whoami([{ version: true }]))
       await shell.exec(shell.Action.Whoami)
+
+      shell.installExternalAction(function BuildFetchPayload(_, type, name) {
+        return {
+          SearchTableName: 'Search/PRT_Product',
+          ProjectName: name,
+          Supply: '',
+          MaxCost: '',
+          Fans: '',
+          Tag: '',
+          Place: '',
+          Position: '',
+          ProductBrand: type,
+          Order: ''
+        }
+      })
     }
 
     document.querySelector('#exec').onclick = async (e) => {
+      const peer = document.querySelector('.active').innerText
+      const receivers = []
+      try {
+        window.PeerId.createFromB58String(peer)
+        receivers.push(peer)
+      } catch (error) {
+        log(error)
+      }
       const names = document.querySelector('#input').value.split('\n').filter(item => item.length>0)
       const type = document.querySelector('#type').value
-      const response = await shell.exec(shell.Action.map([names]).fetch([type]).Extract.Collect.GenerateExcel.Download.Preview)
+      const api = atob('aHR0cDovL3dvcmsudmlnbGxlLmNvbS9CYXNlVGFibGUvTGlzdA==')
+      const response = await shell.exec(
+        shell.action(true, {receivers})
+          .map([names])
+          .buildFetchPayload([type])
+          .textFetch([api, { cors: true, bodyEncoder: 'form', method: 'POST'}])
+          .selectText([{ selector: 'div.col-sm-2 > div:nth-child(4)', killImg: true }])
+          .Collect
+          .zipArray([names])
+          .buildExcel(['data', ['name', 'gys']])
+          .download(['demo.xlsx'])
+          .pushFile(['/my/demo.xlsx'])
+          .IpfsPath
+          .PreviewOffice
+      )
       if (response.ok) {
         log('success exec')
       } else {

@@ -18,11 +18,8 @@ class Shell extends window.events.EventEmitter{
   }
 
   async exec(action) {
-    // if action is helper
-    if ('toJSON' in action) {
-      action = action.toJSON()
-    }
-
+    // if action is helper or other args contains none `simple type` data
+    action = JSON.parse(JSON.stringify(action))
     const response = new ActionResponse(action)
     for await (const item of this.execGenerator(action)) {
       response.add(item)
@@ -41,7 +38,7 @@ class Shell extends window.events.EventEmitter{
   createPipeExecGenerator(action) {
     async function* wrapper(preActionResponses) {
       for await (const item of preActionResponses) {
-        const nextAction = Object.assign({ args: [] }, action)
+        const nextAction = Object.assign({ args: [] }, window.cloneDeep(action))
 
         if (!item.response.results.ignore) {
           nextAction.args = nextAction.args.concat([item.response.results])
@@ -133,7 +130,7 @@ class Shell extends window.events.EventEmitter{
 
     try {
       const func = this['action' + action.slice(1)]
-      const di = { topic, soul: this.soul }
+      const di = { topic, soul: this.soul, exec: this.exec.bind(this) }
 
       if (func instanceof AsyncGeneratorFunction || func instanceof GeneratorFunction) {
         generator = func.apply(this, [di, ...args])
@@ -205,7 +202,17 @@ class Shell extends window.events.EventEmitter{
   }
 
   installRemoteAction(protocol, action) {
-    this.userNode.installHandler(protocol, this.userNode.createProtocolHandler(action, this.soul))
+    this.userNode.installHandler(protocol, this.userNode.createProtocolHandler(action, this.soul, this.exec.bind(this)))
+  }
+
+  /* built-in action */
+
+  /**
+   * Ping
+   * @returns {string} pong
+   */
+  actionPing() {
+    return 'pong'
   }
 
   /**
@@ -241,6 +248,8 @@ class Shell extends window.events.EventEmitter{
     return args.join(' ')
   }
 
+  /* sugar action */
+
   /**
    * Exec action in pipe
    *
@@ -261,21 +270,15 @@ class Shell extends window.events.EventEmitter{
   }
 
   /**
-   * Ping
-   * @returns {string} pong
-   */
-  actionPing() {
-    return 'pong'
-  }
-
-  /**
    * Yield each item of iterable variable
    * @param _ - unused
-   * @param iterable - Iterator
+   * @param args - Iterators
    */
-  async *actionMapArgs(_, iterable) {
-    for await (const item of iterable) {
-      yield item
+  async *actionMapArgs(_, ...args) {
+    for (const iterable of args) {
+      for await (const item of iterable) {
+        yield item
+      }
     }
   }
 
@@ -288,6 +291,21 @@ class Shell extends window.events.EventEmitter{
   actionReduceResults(_, pipeResults) {
     return pipeResults.map(item => item.response.results)
   }
+
+  /**
+   * Flat more args and exec action
+   * @param exec - shell.exec
+   * @param action - action
+   * @param more - more args
+   * @returns {Promise.<json>} action response
+   */
+  async actionXargs({exec}, action, ...more) {
+    action.args = (action.args || []).concat(more.flat())
+    const response = await exec(action)
+    return response.json()
+  }
+
+  /* action helper */
 
   /**
    * Action helper
@@ -331,31 +349,6 @@ class Shell extends window.events.EventEmitter{
    */
   get Action() {
     return this.action()
-  }
-
-  /**
-   * Fetch
-   *
-   * @param _ - unused
-   * @param api - api
-   * @param options - fetch options
-   *  Note: **CORS with Credential**, since Chrome 80, February 2020
-   *        Cookie will NOT send if it set not meet the policy condition
-   *  Note: more info => https://blog.chromium.org/2019/10/developers-get-ready-for-new.html
-   *  Note: fix way:
-   *          1. update your server and flush client cookie
-   *          2. disable Chrome flag(chrome://flags/#same-site-by-default-cookies)
-   * @param type - body extractor:
-   *  arrayBuffer()
-   *  blob()
-   *  json()
-   *  text()
-   *  formData()
-   * @returns {Promise.<*>} response payload
-   */
-  async actionFetch(_, api, options, type='text') {
-    const response = await window.fetch(api, options)
-    return await response[type]()
   }
 }
 

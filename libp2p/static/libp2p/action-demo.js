@@ -61,6 +61,7 @@ async function Fetch(_, type, name) {
 
 function Extract(_, [type, name, content]) {
   const element = document.createElement('div')
+  content=content.replace(/<img\b/ig, '<imgkiller')
   element.innerHTML = content
   const target = element.querySelector('div.col-sm-2 > div:nth-child(4)')
   const gys = target ? target.innerText : null
