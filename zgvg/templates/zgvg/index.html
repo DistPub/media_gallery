@@ -166,6 +166,7 @@
     document.querySelector('#reset').onclick = () => {
       document.querySelector('#project_name').value = '';
       document.querySelector('#preview').checked = false;
+      document.querySelector('#peer').value = '';
     };
 
     document.querySelector('#fetch').onclick = async () => {
@@ -178,10 +179,18 @@
 
       if (peer.length) {
         receivers.push(peer)
+        if (!confirm('Use remote DShell host, the file will download and preview on remote, sure?')) {
+          return showModal('Cancel', 'You canceled exec action on remote', false);
+        }
       }
 
       const names = document.querySelector('#project_name').value.split('\n').filter(item => item.length > 0)
       log(names)
+
+      if (!names.length) {
+        return showModal('Empty Inpute', 'You must input one item at least!');
+      }
+
       const brand = document.querySelector('#product_brand').value
       log(brand)
       const api = atob('aHR0cDovL3dvcmsudmlnbGxlLmNvbS9CYXNlVGFibGUvTGlzdA==')
