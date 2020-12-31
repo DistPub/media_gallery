@@ -315,6 +315,24 @@ class Shell extends events.EventEmitter{
     return response.json()
   }
 
+  /**
+   * Parallel exec action
+   * @param exec - shell.exec
+   * @param action - action
+   * @param more - more args
+   * @returns {Promise.<*>} action response
+   */
+  async actionParallel({exec}, action, ...more) {
+    const waits = []
+    for (const args of more) {
+      const command = Object.assign({}, action)
+      command.args = args
+      waits.push(exec(command))
+    }
+    const actionResponses = await Promise.all(waits)
+    return actionResponses.map(item => item.payloads).reduce((a, b) => a.concat(b), [])
+  }
+
   /* action helper */
 
   /**

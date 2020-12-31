@@ -1,7 +1,8 @@
 class ActionResponse {
-  constructor(action, autoTripPipe=true) {
+  constructor(action, autoTripPipe=true, autoTripParallel=true) {
     this.action = action
     this.autoTripPipe = autoTripPipe
+    this.autoTripParallel = autoTripParallel
     this._payloads = []
   }
 
@@ -9,8 +10,15 @@ class ActionResponse {
     return this.action.action === '/PipeExec'
   }
 
+  get isParallelAction() {
+    return this.action.action === '/Parallel'
+  }
+
   get payloads() {
     if (this.isPipeAction && this.autoTripPipe) {
+      return this._payloads[0].response.results
+    }
+    if (this.isParallelAction && this.autoTripParallel) {
       return this._payloads[0].response.results
     }
     return this._payloads
