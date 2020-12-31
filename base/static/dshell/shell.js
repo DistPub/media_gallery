@@ -21,11 +21,20 @@ class Shell extends events.EventEmitter{
   async exec(action) {
     // if action is helper or other args contains none `simple type` data
     action = JSON.parse(JSON.stringify(action))
+
     const response = new ActionResponse(action)
     for await (const item of this.execGenerator(action)) {
       response.add(item)
     }
-    return response
+
+    // summarize action experiences
+    try {
+      await this.soul.summarize()
+    } catch (error) {
+      log(`summarize action experiences error: ${error}`)
+    } finally {
+      return response
+    }
   }
 
   execGenerator({ topic='topic', receivers=[], action='/Ping', args=[] }={}, pipe=false) {

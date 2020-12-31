@@ -29,7 +29,20 @@ class Soul extends events.EventEmitter {
   }
 
   async handleExperience(data) {
-    const cid = await this.node.dag.put(data)
+    let cid
+
+    try {
+      cid = await this.node.dag.put(data)
+    } catch (error) {
+      // response contains not supported data, try reset put again
+      if (error.message.includes('Unknown type')) {
+        data['response'] = null
+        cid = await this.node.dag.put(data)
+      } else {
+        throw error
+      }
+    }
+
     this.experiences.push(cid)
     await this.db.put('experiences', this.experiences.map(item => item.toString()));
   }

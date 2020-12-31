@@ -23,7 +23,7 @@
     <div class="field">
       <textarea id="project_name"></textarea>
     </div>
-    <div class="inline three fields">
+    <div class="inline fields">
       <div class="field">
         <label for="product_brand">Product Brand</label>
         <select id="product_brand">
@@ -93,16 +93,51 @@
     const my = new UserNode(db, username, country, simplePeerOptions);
     const soul = new Soul(db, username);
     const shell = new Shell(my, soul);
+    window.dshell = shell;
+    const peers = [];
+    const intervalCache = {};
+
+    async function beatPingPeer(id) {
+      await my.pingPeer(id)
+    }
+
+    function log(message) {
+      console.log(message)
+    }
 
     function MeetPeer(id) {
       log(`* Nice to meet ${id}`);
+
+      if (!peers.includes(id)) {
+        const element = document.createElement('option');
+        element.value = id;
+        element.innerText = id;
+        element.setAttribute('id', id)
+        document.querySelector('#peer').appendChild(element);
+        peers.push(id)
+        intervalCache[id] = window.setInterval(async () => await beatPingPeer(id), 3000);
+      }
     }
-    my.on('user:hi', MeetPeer);
+
+    function AwayPeer(id) {
+      log(`* Bay ${id}`);
+
+      const index = peers.indexOf(id);
+      if (index > -1) {
+        peers.splice(index, 1);
+        document.querySelector(`#${id}`).remove();
+        window.clearInterval(intervalCache[id]);
+        delete intervalCache[id]
+      }
+    }
+    my.on('user:online', MeetPeer);
+    my.on('user:offline', AwayPeer);
 
     document.addEventListener('DOMContentLoaded', async () => {
       await db.put('welcome', 'shell');
       db.db.codec.opts.valueEncoding = 'json';
       await my.init();
+      window.addEventListener("unload", async () => await my.vegetative());
       await soul.init();
       shell.install();
       shell.installModule(
@@ -125,11 +160,8 @@
           Order: ''
         }
       });
+      await my.awake();
     });
-
-    function log(message) {
-      console.log(message)
-    }
 
     document.querySelector('#reset').onclick = () => {
       document.querySelector('#project_name').value = '';
@@ -144,11 +176,8 @@
       const peer = document.querySelector('#peer').value
       const receivers = []
 
-      try {
-        window.PeerId.createFromB58String(peer)
+      if (peer.length) {
         receivers.push(peer)
-      } catch (error) {
-        log(error)
       }
 
       const names = document.querySelector('#project_name').value.split('\n').filter(item => item.length > 0)
@@ -171,7 +200,8 @@
         action = action.pushFile(['/tmp/vendor.xlsx']).PreviewOffice
       }
 
-      await shell.exec(action)
+      const response = await shell.exec(action)
+      log(response.json());
     };
   </script>
 {% endblock %}

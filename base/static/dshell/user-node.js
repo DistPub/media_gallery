@@ -6,21 +6,21 @@ import { PeerId, libp2pNoise, libp2pMplex, itPipe, datastoreLevel, libp2p, libp2
 const transportClassName = libp2pWebrtcStar.prototype[Symbol.toStringTag]
 
 class UserNode extends events.EventEmitter {
-  constructor(db, username, signallingServer, simplePeerOptions) {
+  constructor(db, username, signallingServer, simplePeerOptions, mode='worldly') {
     super()
     this.db = db
     this.username = username
     this.signallingServer = signallingServer
     this.simplePeerOptions = simplePeerOptions
+    this.mode = mode
     this.connectionBook = new Map()
   }
 
   async init(optionFilter=item=>item) {
     this.node = await this.createLibp2pNode(this.signallingServer, this.simplePeerOptions, optionFilter)
     this.addEventListener()
-    await this.node.start();
     this.id = this.node.peerId.toB58String()
-    log(`success start node with id ${this.id}`);
+    log(`success create node with id ${this.id}`)
     this.saveId()
   }
 
@@ -34,9 +34,25 @@ class UserNode extends events.EventEmitter {
     );
   }
 
-  async stop() {
+  async vegetative() {
+    if (!this.node.isStarted()) {
+      return
+    }
     await this.node.stop()
-    this.emit('stop')
+    this.emit('vegetative')
+  }
+
+  async awake() {
+    if (this.node.isStarted()) {
+      return
+    }
+
+    if (this.mode === 'unworldly') {
+      return
+    }
+
+    await this.node.start()
+    this.emit('awake')
   }
 
   async getStreamByConnectionProtocol(connection, protocol) {
@@ -72,18 +88,21 @@ class UserNode extends events.EventEmitter {
     return connection
   }
 
+  async pingPeer(id) {
+    try {
+      await this.node.ping(PeerId.createFromB58String(id))
+    } catch (error) {
+      log(`offline ${id} throw ping error: ${error}`)
+      this.emit('user:offline', id)
+    }
+  }
+
   addEventListener() {
     this.node.on('peer:discovery', async (peerId) => {
       const id = peerId.toB58String()
       log(`peer:discovery hi ${id}`)
       this.emit('user:hi', id)
-
-      try {
-        await this.node.ping(peerId)
-      } catch (error) {
-        log(`offline ${id} throw ping error: ${error}`)
-        this.emit('user:offline', id)
-      }
+      await this.pingPeer(id)
     })
     
     this.node.connectionManager.on('peer:connect', (connection) => {
