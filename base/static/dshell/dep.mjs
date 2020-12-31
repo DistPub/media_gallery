@@ -12,4 +12,5 @@ const uint8ArrayConcat = require('uint8arrays/concat')
 const PeerId = require('peer-id')
 const XLSX = require('xlsx')
 const IPFS = require('ipfs-core')
-export { PeerId, XLSX, IPFS, libp2pNoise, libp2pMplex, itPipe, datastoreLevel, libp2p, libp2pWebrtcStar, cryptoKeys, events, cids, cloneDeep, uint8ArrayConcat }
+const msgpack = require("msgpack-lite")
+export { msgpack, PeerId, XLSX, IPFS, libp2pNoise, libp2pMplex, itPipe, datastoreLevel, libp2p, libp2pWebrtcStar, cryptoKeys, events, cids, cloneDeep, uint8ArrayConcat }

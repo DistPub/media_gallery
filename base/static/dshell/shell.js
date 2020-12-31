@@ -85,13 +85,13 @@ class Shell extends events.EventEmitter{
       const stream = await this.getStream(receiver, action)
 
       if (!pipe) {
-        this.emit('action:request', {
+        this.emit('action:request', cloneDeep({
           topic,
           receiver: receiver,
           request: {action, args},
           sender: id,
           username
-        })
+        }))
       }
 
       const [remoteUser, status, results] = await this.userNode.pipe([username, topic].concat(args), stream)
@@ -107,7 +107,7 @@ class Shell extends events.EventEmitter{
 
         yield response
         if (!pipe) {
-          this.emit('action:response', response)
+          this.emit('action:response', cloneDeep(response))
         }
       }
     }
@@ -118,13 +118,13 @@ class Shell extends events.EventEmitter{
     const username = this.userNode.username
 
     if (!pipe) {
-      this.emit('action:request', {
+      this.emit('action:request', cloneDeep({
         topic,
         receiver: id,
         request: {action, args},
         sender: id,
         username: username
-      })
+      }))
     }
 
     let status = 0
@@ -171,7 +171,7 @@ class Shell extends events.EventEmitter{
 
       yield response
       if (!pipe) {
-        this.emit('action:response', response)
+        this.emit('action:response', cloneDeep(response))
       }
     }
   }

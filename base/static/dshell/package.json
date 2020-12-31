@@ -20,6 +20,7 @@
     "libp2p-noise": "^2.0.1",
     "libp2p-webrtc-star": "^0.20.3",
     "lodash": "^4.17.20",
+    "msgpack-lite": "^0.1.26",
     "peer-id": "^0.14.2",
     "uint8arrays": "^2.0.5",
     "xlsx": "^0.16.9"

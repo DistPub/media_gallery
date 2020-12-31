@@ -14,7 +14,9 @@ const deps = [
   'uint8arrays/concat',
   'peer-id',
   'xlsx',
-  'ipfs-core']
+  'ipfs-core',
+  'msgpack-lite',
+]
 deps.forEach(item => {
   browserify = browserify.require(item)
 })

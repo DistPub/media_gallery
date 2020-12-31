@@ -1,9 +1,11 @@
-import { encode, decode } from "./codec.js"
 import { map, collect } from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs'
 import { log, AsyncFunction, AsyncGeneratorFunction, GeneratorFunction } from './utils.js'
-import { PeerId, libp2pNoise, libp2pMplex, itPipe, datastoreLevel, libp2p, libp2pWebrtcStar, cryptoKeys, events } from './dep.mjs'
+import { cloneDeep, msgpack, PeerId, libp2pNoise, libp2pMplex, itPipe, datastoreLevel, libp2p, libp2pWebrtcStar, cryptoKeys, events } from './dep.mjs'
 
 const transportClassName = libp2pWebrtcStar.prototype[Symbol.toStringTag]
+const encode = msgpack.encode
+const decode = (bufferList) => msgpack.decode(bufferList.copy())
+
 
 class UserNode extends events.EventEmitter {
   constructor(db, username, signallingServer, simplePeerOptions, mode='worldly') {
@@ -121,13 +123,13 @@ class UserNode extends events.EventEmitter {
         collect
       )
 
-      this.emit('handle:request', {
+      this.emit('handle:request', cloneDeep({
         username,
         topic,
         receiver: this.id,
         request: { action: protocol, args },
         sender: id,
-      })
+      }))
 
       let status = 0
       let results = []
@@ -157,13 +159,13 @@ class UserNode extends events.EventEmitter {
         results = error.toString()
       }
 
-      this.emit('handle:response', {
+      this.emit('handle:response', cloneDeep({
         topic,
         sender: this.id,
         username: this.username,
         receiver: id,
         response: { status, results }
-      })
+      }))
 
       await itPipe(
         [this.username, status, results],
