@@ -75,7 +75,6 @@
 {% block script %}
   {% include 'includes/modal.module' %}
   <script type="module" about="policy">
-    window.policyCheckPass = false;
     (async () => {
       try {
         let response = await fetch(
@@ -88,9 +87,8 @@
             'Please make sure:<br>' +
             '1. already login<br>' +
             '2. disable Chrome flag(chrome://flags/#same-site-by-default-cookies)<br>' +
-            'then refresh page');
-        } else {
-          window.policyCheckPass = true;
+            'then refresh page<br>' +
+            'Or you can use remote host to exec action!');
         }
       } catch (error) {
         showModal(
@@ -98,17 +96,14 @@
           'Please make sure<br>' +
           '1. <a href="{% static 'zgvg/images/mix-content-enable.png' %}" target="_blank">mix content enable</a><br>' +
           '2. <a href="{% static 'zgvg/images/cors-options.png' %}" target="_blank">cors extension correct config</a> and <a href="{% static 'zgvg/images/cors-status-on.png' %}" target="_blank">status is on</a><br>' +
-          'then refresh page');
+          'then refresh page<br>' +
+          'Or you can use remote host to exec action!');
       }
     })();
   </script>
   {% include 'includes/progress.module' %}
   <script src="{% static 'dshell/dep.bundle.js' %}"></script>
   <script type="module" about="main">
-    if (!window.policyCheckPass) {
-      throw 'stop init'
-    }
-
     import { Shell, UserNode, Soul } from '{% static "dshell/index.js" %}';
     import { datastoreLevel } from '{% static "dshell/dep.mjs" %}';
 
