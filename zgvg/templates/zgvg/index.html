@@ -11,7 +11,6 @@
 {% endblock %}
 {% block container %}
   {% include 'includes/modal.html' %}
-  {% include 'includes/progress.html' %}
   <h2 class="ui header">
     <i class="flag checkered icon"></i>
     <div class="content">
@@ -64,6 +63,7 @@
         </div>
       </div>
     </div>
+    {% include 'includes/progress.html' %}
     <button class="ui button primary right labeled icon" type="submit" id="fetch">
       <i class="rocket icon"></i>Fetch
     </button>
@@ -71,8 +71,6 @@
       <i class="eraser icon"></i>Reset
     </button>
   </div>
-
-  {% include 'includes/progress.html' %}
 {% endblock %}
 {% block script %}
   {% include 'includes/modal.module' %}
@@ -134,6 +132,8 @@
     my.on('user:online', MeetPeer);
     my.on('user:offline', AwayPeer);
 
+    let fetchCount, fetchedCount;
+
     document.addEventListener('DOMContentLoaded', async () => {
       await db.put('welcome', 'shell');
       db.db.codec.opts.valueEncoding = 'json';
@@ -161,6 +161,11 @@
           Order: ''
         }
       });
+      shell.installExternalAction(function ParallelCallback(_, action) {
+        log(`${action.action} done +1`)
+        fetchedCount ++
+        renderProgress(fetchCount, fetchedCount)
+      });
       await my.awake();
     });
 
@@ -168,6 +173,7 @@
       document.querySelector('#project_name').value = '';
       document.querySelector('#preview').checked = false;
       document.querySelector('#peer').value = '';
+      hideProgress();
     };
 
     document.querySelector('#fetch').onclick = async () => {
@@ -192,16 +198,20 @@
         return showModal('Empty Inpute', 'You must input one item at least!');
       }
 
-      const fetchCount = names.length
-      let fetchedCount = 0
+      fetchCount = names.length
+      fetchedCount = 0
+      resetProgress()
+      showProgress()
+
       const brand = document.querySelector('#product_brand').value
       log(brand)
       const api = atob('aHR0cDovL3dvcmsudmlnbGxlLmNvbS9CYXNlVGFibGUvTGlzdA==')
 
       let action = shell.action(true, {receivers})
         .zipArray([Array(names.length).fill(brand), names]) // => [[brand, name], ...]
-        .buildFetchPayload({meta:{callbacks}}).PCollect // => [payload, ...]
-        .textFetch([api, { cors: true, bodyEncoder: 'form', method: 'POST'}]).PCollect // => [html, ...]
+        .BuildFetchPayload.PCollect // => [payload, ...]
+        .textFetch([api, { cors: true, bodyEncoder: 'form', method: 'POST'}])
+        .pCollect({callback: {action: '/ParallelCallback'}}) // => [html, ...]
         .Map.selectText([{ selector: 'div.col-sm-2 > div:nth-child(4)', killImg: true }]).Collect // => [vendor, ...]
         .zipArray([names])
         .buildExcel(['data', ['name', 'vendor']])

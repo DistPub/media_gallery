@@ -54,16 +54,17 @@ export class ActionHelper {
    * Shortcut for parallel then reduce
    *  Note: there is no action named `pCollect`
    * @param batch - how many actions to parallel
+   * @param callback - callback action
    * @param meta - action meta info
    * @param options - parallel action options
    * @returns {*} this helper
    */
-  pCollect({batch=10, meta={}, ...options}={}) {
+  pCollect({batch=10, callback=null, meta={}, ...options}={}) {
     if (!('flatPreActionResults' in meta)) {
       meta.flatPreActionResults = true
     }
-    const pAction = this.actions.pop()
-    this.actions.push({...options, meta, action: '/ParallelExec', args: [pAction, batch]})
+    const action = this.actions.pop()
+    this.actions.push({...options, meta, action: '/ParallelExec', args: [action, callback, batch]})
     this.actions.push({action: '/ReduceResults'})
     return this.clone()
   }

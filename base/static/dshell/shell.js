@@ -334,11 +334,12 @@ class Shell extends events.EventEmitter{
    * Parallel exec action
    * @param exec - shell.exec
    * @param action - action
+   * @param callbackAction - callback action
    * @param batch - how many actions to parallel exec
    * @param more - more args
    * @returns {Promise.<*>} action response
    */
-  async actionParallelExec({exec}, action, batch, ...more) {
+  async actionParallelExec({exec}, action, callbackAction, batch, ...more) {
     action = this.ensureAction(action)
     let waits = []
     let responses = []
@@ -347,10 +348,26 @@ class Shell extends events.EventEmitter{
       waits = []
     }
 
+    if (callbackAction) {
+      callbackAction = this.ensureAction(callbackAction)
+    }
+
+    const doCallbackAction = async (results) => {
+      let command = cloneDeep(callbackAction)
+      command.args = command.args.concat([action, results])
+      await exec(command)
+    }
+
     for (const args of more) {
       const command = cloneDeep(action)
       command.args = action.args.concat(args)
-      waits.push(exec(command))
+      let promise = exec(command)
+
+      if (callbackAction) {
+        promise.then(doCallbackAction).catch(doCallbackAction)
+      }
+
+      waits.push(promise)
 
       if (waits.length === batch) {
         await flushWaits()
