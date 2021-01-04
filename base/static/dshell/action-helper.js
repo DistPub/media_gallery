@@ -28,18 +28,43 @@ export class ActionHelper {
     throw 'You need use `pipe` action to aggregate multiple actions!'
   }
 
+  static ensureOptions(options) {
+    if (options instanceof Array) {
+      return {args: options}
+    }
+    return options
+  }
+
   /**
    * Shortcut for pipe then reduce
    *  Note: there is no action named `collect`
-   * @param receivers - pipe receivers
-   * @param topic - pipe topic
+   * @param options - pipe action options
    * @returns {*} this helper
    */
-  collect(receivers=[], topic='topic') {
+  collect(options={}) {
+    options = ActionHelper.ensureOptions(options)
     this.actions = [
-      {action: '/PipeExec', args: this.actions, receivers, topic},
+      {...options, action: '/PipeExec', args: this.actions},
       {action: '/ReduceResults'}
     ]
+    return this.clone()
+  }
+
+  /**
+   * Shortcut for parallel then reduce
+   *  Note: there is no action named `pCollect`
+   * @param batch - how many actions to parallel
+   * @param meta - action meta info
+   * @param options - parallel action options
+   * @returns {*} this helper
+   */
+  pCollect({batch=10, meta={}, ...options}={}) {
+    if (!('flatPreActionResults' in meta)) {
+      meta.flatPreActionResults = true
+    }
+    const pAction = this.actions.pop()
+    this.actions.push({...options, meta, action: '/ParallelExec', args: [pAction, batch]})
+    this.actions.push({action: '/ReduceResults'})
     return this.clone()
   }
 
@@ -47,11 +72,16 @@ export class ActionHelper {
     return this.collect()
   }
 
+  get PCollect() {
+    return this.pCollect()
+  }
+
   /**
    * Alias for action /ReduceResults
    */
-  reduce(args=[], receivers=[], topic='topic') {
-    this.actions.push({action: '/ReduceResults', args, receivers, topic})
+  reduce(options={}) {
+    options = ActionHelper.ensureOptions(options)
+    this.actions.push({...options, action: '/ReduceResults'})
     return this.clone()
   }
 
@@ -62,8 +92,9 @@ export class ActionHelper {
   /**
    * Alias for action /MapArgs
    */
-  map(args=[], receivers=[], topic='topic') {
-    this.actions.push({action: '/MapArgs', args, receivers, topic})
+  map(options={}) {
+    options = ActionHelper.ensureOptions(options)
+    this.actions.push({...options, action: '/MapArgs'})
     return this.clone()
   }
 
@@ -74,13 +105,30 @@ export class ActionHelper {
   /**
    * Alias for action /PipeExec
    */
-  pipe(receivers=[], topic='topic') {
-    this.actions = [{action: '/PipeExec', args: this.actions, receivers, topic}]
+  pipe(options={}) {
+    options = ActionHelper.ensureOptions(options)
+    this.actions = [{...options, action: '/PipeExec', args: this.actions}]
     return this.clone()
   }
 
   get Pipe() {
     return this.pipe()
+  }
+
+  /**
+   * Alias for action /ParallelExec
+   */
+  parallel({batch=10, meta={}, ...options}={}) {
+    if (!('flatPreActionResults' in meta)) {
+      meta.flatPreActionResults = true
+    }
+    const pAction = this.actions.pop()
+    this.actions.push({...options, meta, action: '/ParallelExec', args: [pAction, batch]})
+    return this.clone()
+  }
+
+  get Parallel() {
+    return this.parallel()
   }
 }
 
@@ -99,8 +147,9 @@ export const proxyHandler = {
     prop = prop[0].toUpperCase() + prop.slice(1)
     actionName = `action${prop}`
     if (actionName in target.shell) {
-      return (args=[], receivers=[], topic='topic') => {
-        target.actions.push({action: `/${prop}`, args, receivers, topic})
+      return (options={}) => {
+        options = ActionHelper.ensureOptions(options)
+        target.actions.push({...options, action: `/${prop}`})
         return target.clone()
       }
     }

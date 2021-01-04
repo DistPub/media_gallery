@@ -11,6 +11,7 @@
 {% endblock %}
 {% block container %}
   {% include 'includes/modal.html' %}
+  {% include 'includes/progress.html' %}
   <h2 class="ui header">
     <i class="flag checkered icon"></i>
     <div class="content">
@@ -191,16 +192,17 @@
         return showModal('Empty Inpute', 'You must input one item at least!');
       }
 
+      const fetchCount = names.length
+      let fetchedCount = 0
       const brand = document.querySelector('#product_brand').value
       log(brand)
       const api = atob('aHR0cDovL3dvcmsudmlnbGxlLmNvbS9CYXNlVGFibGUvTGlzdA==')
 
       let action = shell.action(true, {receivers})
-        .map([names])
-        .buildFetchPayload([brand])
-        .textFetch([api, { cors: true, bodyEncoder: 'form', method: 'POST'}])
-        .selectText([{ selector: 'div.col-sm-2 > div:nth-child(4)', killImg: true }])
-        .Collect
+        .zipArray([Array(names.length).fill(brand), names]) // => [[brand, name], ...]
+        .buildFetchPayload({meta:{callbacks}}).PCollect // => [payload, ...]
+        .textFetch([api, { cors: true, bodyEncoder: 'form', method: 'POST'}]).PCollect // => [html, ...]
+        .Map.selectText([{ selector: 'div.col-sm-2 > div:nth-child(4)', killImg: true }]).Collect // => [vendor, ...]
         .zipArray([names])
         .buildExcel(['data', ['name', 'vendor']])
         .download(['vendor.xlsx'])

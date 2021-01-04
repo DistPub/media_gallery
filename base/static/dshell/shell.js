@@ -18,12 +18,16 @@ class Shell extends events.EventEmitter{
     this.userNode.on('handle:response', data => this.emit('action:response', data))
   }
 
+  ensureAction({ topic='topic', receivers=[], action='/Ping', args=[], meta={} }) {
+    return {topic, receivers, action, args, meta}
+  }
+
   async exec(action) {
     // if action is helper or other args contains none `simple type` data
     action = JSON.parse(JSON.stringify(action))
 
     const response = new ActionResponse(action)
-    for await (const item of this.execGenerator(action)) {
+    for await (const item of this.execGenerator(this.ensureAction(action))) {
       response.add(item)
     }
 
@@ -37,21 +41,27 @@ class Shell extends events.EventEmitter{
     }
   }
 
-  execGenerator({ topic='topic', receivers=[], action='/Ping', args=[] }={}, pipe=false) {
+  execGenerator({ topic, receivers, action, args, meta }, pipe=false) {
     if (!receivers.length) {
-      return this.applyAction(topic, action, args, pipe)
+      return this.applyAction(topic, action, args, pipe, meta)
     } else {
-      return this.rpc(topic, receivers, action, args, pipe)
+      return this.rpc(topic, receivers, action, args, pipe, meta)
     }
   }
 
   createPipeExecGenerator(action) {
     async function* wrapper(preActionResponses) {
       for await (const item of preActionResponses) {
-        const nextAction = Object.assign({ args: [] }, cloneDeep(action))
+        const nextAction = cloneDeep(action)
 
         if (!item.response.results.ignore) {
-          nextAction.args = nextAction.args.concat([item.response.results])
+          let preActionResults = [item.response.results]
+
+          if (nextAction.meta.flatPreActionResults) {
+            preActionResults = preActionResults.flat()
+          }
+
+          nextAction.args = nextAction.args.concat(preActionResults)
         }
 
         for await (const item of this.execGenerator(nextAction, true)) {
@@ -77,7 +87,7 @@ class Shell extends events.EventEmitter{
     }
   }
 
-  async *rpc(topic, receivers, action, args, pipe) {
+  async *rpc(topic, receivers, action, args, pipe, meta) {
     const id = this.userNode.id
     const username = this.userNode.username
 
@@ -94,7 +104,7 @@ class Shell extends events.EventEmitter{
         }))
       }
 
-      const [remoteUser, status, results] = await this.userNode.pipe([username, topic].concat(args), stream)
+      const [remoteUser, status, results] = await this.userNode.pipe([username, topic, meta].concat(args), stream)
 
       for (const result of results) {
         const response = {
@@ -113,7 +123,7 @@ class Shell extends events.EventEmitter{
     }
   }
 
-  async *applyAction(topic, action, args, pipe) {
+  async *applyAction(topic, action, args, pipe, meta) {
     const id = this.userNode.id
     const username = this.userNode.username
 
@@ -140,7 +150,7 @@ class Shell extends events.EventEmitter{
 
     try {
       const func = this['action' + action.slice(1)]
-      const di = { topic, soul: this.soul, exec: this.exec.bind(this) }
+      const di = { topic, soul: this.soul, exec: this.exec.bind(this), meta }
 
       if (func instanceof AsyncGeneratorFunction || func instanceof GeneratorFunction) {
         generator = func.apply(this, [di, ...args])
@@ -230,8 +240,11 @@ class Shell extends events.EventEmitter{
    *  Note: this example use `object` type as action argument payload, so that client can pass keyword args
    *
    * @param meta -
-   *  If this is a remote action call, meta contains { connection, stream, id, username, topic, soul }
-   *  If this is a local action call, meta contains { topic, soul }
+   *  If this is a remote action call, meta contains { connection, stream, id, username, topic, soul, meta }
+   *  If this is a local action call, meta contains { topic, soul, meta }
+   *
+   *  Note: the inner `meta` is for runtime control, current contains:
+   *    - flatPreActionResults
    * @param help - Show help message
    * @param version - Show version message
    * @return {string} The username
@@ -273,7 +286,7 @@ class Shell extends events.EventEmitter{
       if (idx === 0){
         execs.push([{ response: { results: { ignore: true } } }])
       }
-      execs.push(this.createPipeExecGenerator(action))
+      execs.push(this.createPipeExecGenerator(this.ensureAction(action)))
     }
     execs.push(collect)
     return await itPipe(...execs)
@@ -293,7 +306,7 @@ class Shell extends events.EventEmitter{
   }
 
   /**
-   * Reduce pipeExec action results
+   * Reduce PipeExec or Parallel action results
    * @param _ - unused
    * @param pipeResults - ActionResponse array
    * @returns {Array} - Pure results array
@@ -304,13 +317,15 @@ class Shell extends events.EventEmitter{
 
   /**
    * Flat more args and exec action
+   *  Note: If your only have one args need flat, you can set `meta.flatPreActionResults` to a normal action
    * @param exec - shell.exec
    * @param action - action
    * @param more - more args
    * @returns {Promise.<json>} action response
    */
   async actionXargs({exec}, action, ...more) {
-    action.args = (action.args || []).concat(more.flat())
+    action = this.ensureAction(action)
+    action.args = action.args.concat(more.flat())
     const response = await exec(action)
     return response.json()
   }
@@ -319,18 +334,34 @@ class Shell extends events.EventEmitter{
    * Parallel exec action
    * @param exec - shell.exec
    * @param action - action
+   * @param batch - how many actions to parallel exec
    * @param more - more args
    * @returns {Promise.<*>} action response
    */
-  async actionParallel({exec}, action, ...more) {
-    const waits = []
-    for (const args of more) {
-      const command = Object.assign({}, action)
-      command.args = args
-      waits.push(exec(command))
+  async actionParallelExec({exec}, action, batch, ...more) {
+    action = this.ensureAction(action)
+    let waits = []
+    let responses = []
+    const flushWaits = async () => {
+      responses = responses.concat(await Promise.all(waits))
+      waits = []
     }
-    const actionResponses = await Promise.all(waits)
-    return actionResponses.map(item => item.payloads).reduce((a, b) => a.concat(b), [])
+
+    for (const args of more) {
+      const command = cloneDeep(action)
+      command.args = action.args.concat(args)
+      waits.push(exec(command))
+
+      if (waits.length === batch) {
+        await flushWaits()
+      }
+    }
+
+    if (waits.length) {
+      await flushWaits()
+    }
+
+    return responses.map(item => item.payloads).reduce((a, b) => a.concat(b), [])
   }
 
   /* action helper */

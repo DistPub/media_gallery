@@ -117,7 +117,7 @@ class UserNode extends events.EventEmitter {
   createProtocolHandler(action, soul, exec) {
     return async ({ connection, stream, protocol }) => {
       const id = connection.remotePeer.toB58String()
-      const [username, topic, ...args] = await itPipe(
+      const [username, topic, meta, ...args] = await itPipe(
         stream.source,
         source => map(decode, source),
         collect
@@ -136,7 +136,7 @@ class UserNode extends events.EventEmitter {
       let generator
 
       try {
-        const di = { connection, stream, id, username, topic, soul, exec }
+        const di = { connection, stream, id, username, topic, soul, exec, meta }
 
         if (action instanceof AsyncGeneratorFunction || action instanceof GeneratorFunction) {
           generator = action(di, ...args)
