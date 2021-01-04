@@ -182,11 +182,13 @@
       }
 
       const peer = document.querySelector('#peer').value
-      const receivers = []
+      const remoteHost = []
+      const localHost = []
 
       if (peer.length) {
-        receivers.push(peer)
-        if (!confirm('Use remote DShell host, the file will download and preview on remote, sure?')) {
+        remoteHost.push(peer)
+        localHost.push(my.id)
+        if (!confirm('Use remote DShell host, the P2P connection quality may cause action failure, sure?')) {
           return showModal('Cancel', 'You canceled exec action on remote', false);
         }
       }
@@ -207,18 +209,18 @@
       log(brand)
       const api = atob('aHR0cDovL3dvcmsudmlnbGxlLmNvbS9CYXNlVGFibGUvTGlzdA==')
 
-      let action = shell.action(true, {receivers})
+      let action = shell.action(true, {receivers: remoteHost})
         .zipArray([Array(names.length).fill(brand), names]) // => [[brand, name], ...]
         .BuildFetchPayload.PCollect // => [payload, ...]
         .textFetch([api, { cors: true, bodyEncoder: 'form', method: 'POST'}])
-        .pCollect({callback: {action: '/ParallelCallback'}}) // => [html, ...]
+        .pCollect({callback: {action: '/ParallelCallback', receivers: localHost}}) // => [html, ...]
         .Map.selectText([{ selector: 'div.col-sm-2 > div:nth-child(4)', killImg: true }]).Collect // => [vendor, ...]
         .zipArray([names])
         .buildExcel(['data', ['name', 'vendor']])
-        .download(['vendor.xlsx'])
+        .download({args: ['vendor.xlsx'], receivers: localHost})
 
       if (document.querySelector('#preview').checked) {
-        action = action.pushFile(['/tmp/vendor.xlsx']).PreviewOffice
+        action = action.pushFile(['/tmp/vendor.xlsx']).previewOffice({receivers: localHost})
       }
 
       const response = await shell.exec(action)
