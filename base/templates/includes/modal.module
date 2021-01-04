@@ -9,7 +9,7 @@
   window.showModal = (title, body, negative=true) => {
     updateModalStyle(negative);
     $title.innerText = title;
-    $body.innerText = body;
+    $body.innerHTML = body;
     if (!$modal.open) {
       $modal.showModal();
     }
