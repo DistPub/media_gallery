@@ -20,4 +20,4 @@ const deps = [
 deps.forEach(item => {
   browserify = browserify.require(item)
 })
-browserify.bundle().pipe(process.stdout)
+browserify.transform('uglifyify', { global: true  }).bundle().pipe(process.stdout)
