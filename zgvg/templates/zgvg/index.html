@@ -102,10 +102,9 @@
     })();
   </script>
   {% include 'includes/progress.module' %}
-  <script src="{% static 'dshell/dep.bundle.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dshell/dep.bundle.min.js"></script>
   <script type="module" about="main">
-    import { Shell, UserNode, Soul } from '{% static "dshell/index.js" %}';
-    import { datastoreLevel } from '{% static "dshell/dep.mjs" %}';
+    import { Shell, UserNode, Soul, datastoreLevel } from 'https://cdn.jsdelivr.net/npm/dshell/index.min.js';
 
     const username = 'zgvg';
     const db = (new datastoreLevel(`dshell/${username}`, { prefix: '' })).db;
@@ -169,10 +168,10 @@
       await soul.init();
       shell.install();
       shell.installModule(
-        '{% static "dshell/actions/network.js" %}',
-        '{% static "dshell/actions/dom.js" %}',
-        '{% static "dshell/actions/utils.js" %}',
-        '{% static "dshell/actions/soul.js" %}',
+        'https://cdn.jsdelivr.net/npm/dshell/actions/network.js',
+        'https://cdn.jsdelivr.net/npm/dshell/actions/dom.js',
+        'https://cdn.jsdelivr.net/npm/dshell/actions/utils.js',
+        'https://cdn.jsdelivr.net/npm/dshell/actions/soul.js',
       );
       shell.installExternalAction(function BuildFetchPayload(_, type, name) {
         return {
