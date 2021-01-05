@@ -14,14 +14,17 @@ const cdn = [
   'https://fonts.gstatic.com',
   {% block extendCDN %}{% endblock %}
 ];
+const skip = [
+  {% block extendSKIP %}{% endblock %}
+];
 
 registerRoute(
-  ({url}) => cdn.includes(url.origin) === false,
+  ({url}) => skip.includes(url.origin) === false && cdn.includes(url.origin) === false,
   new NetworkFirst({cacheName: 'website'})
 );
 
 registerRoute(
-  ({url}) => cdn.includes(url.origin),
+  ({url}) => skip.includes(url.origin) === false && cdn.includes(url.origin),
   new CacheFirst({
     cacheName: 'cdn',
     plugins: [
