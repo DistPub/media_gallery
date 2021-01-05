@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block title %}js-libp2p demo{% endblock %}
+{% block title %}dshell demo{% endblock %}
 {% block sw_url %}{% url "libp2p:sw.js" %}{% endblock %}
 {% block style %}
   <style type="text/css">
@@ -26,18 +26,12 @@
 {% endblock %}
 {% block container %}
   {% include 'includes/modal.html' %}
-  {% include 'includes/modal.module' %}
-  <section>
-    <textarea id="input">芒果娱乐</textarea>
-    <input type="text" id="type" value="微博">
-    <button id="exec">Exec</button>
-  </section>
   <section class="login">
     <div class="user-login-history ui relaxed divided list">
     </div>
     <div class="login ui action input">
       <input id="username" type="text" placeholder="Create New User...">
-      <button class="ui primary button" onclick="loginUser()">Login</button>
+      <button class="ui primary button" onclick="loginUser(document.querySelector('#username').value)">Login</button>
     </div>
   </section>
 
@@ -49,12 +43,6 @@
         <div class="menu" id="peers">
         </div>
       </div>
-      <a class="item">
-        User A
-      </a>
-      <a class="item active">
-        User B
-      </a>
       <div class="right menu">
         <div class="item">
           <div class="ui disabled transparent icon input">
@@ -97,7 +85,7 @@
     <div class="ui feed template">
       <div class="event">
         <div class="label">
-          <img src="/images/avatar/small/jenny.jpg">
+          <i class="icon pied piper alternate"></i>
         </div>
         <div class="content">
           <div class="date">
@@ -112,52 +100,15 @@
   </section>
 {% endblock %}
 {% block script %}
-  <script src="{% static 'libp2p/dep.bundle.js' %}"></script>
-  <script src="https://cdn.jsdelivr.net/npm/peer-id@0.14.2/dist/index.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.production.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.production.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/ipfs@0.52.2/dist/index.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.16.9/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  {% include 'includes/modal.module' %}
+  <script src="https://cdn.jsdelivr.net/npm/dshell@1.0.1/dep.bundle.min.js"></script>
   <script type="module">
-    import {map, filter, collect, consume} from 'https://cdn.jsdelivr.net/npm/streaming-iterables@5.0.3/dist/index.mjs';
-    import UserNode from '{% static "libp2p/user-node.js" %}'
-    import Shell from '{% static "libp2p/shell.js" %}'
-    import Soul from '{% static "libp2p/soul.js" %}'
-    const country = '/dns4/webrtc-star.dist.pub/tcp/443/wss/p2p-webrtc-star';
-    const peers = [];
-    const connectionBook = {};
+    import { Shell, UserNode, Soul, datastoreLevel } from 'https://cdn.jsdelivr.net/npm/dshell@1.0.1/index.min.js';
 
-    function log(txt) {
-      console.info(txt);
+    function log(msg) {
+      console.log(msg)
     }
 
-    window.p2pConnectionBook = connectionBook;
-    const simplePeerOptions = {
-      trickle: true,
-      config: {
-        iceServers: {{ iceServers|safe }},
-      }
-    };
-
-    window.logout = () => {
-      p2pNode.stop();
-      sessionStorage.removeItem('current-username');
-      location.reload();
-    };
-
-
-    // chose a peer or create new peer
-    window.loginUser = async (username, force=false) => {
-      if (!username) {
-        username = document.querySelector('#username').value;
-      }
-      await startLibp2p(username, force, () => {
-        document.querySelector('section.login').style.display = 'none';
-        document.querySelector('section.main').style.display = 'flex';
-      });
-      sessionStorage.setItem('current-username', username);
-    };
     function renderUserLoginHistory(dbs) {
       const target = document.querySelector('.login.input');
 
@@ -170,8 +121,15 @@
         target.parentNode.insertBefore(item, target);
       }
     }
-    (async () => {
-      const username = sessionStorage.getItem('current-username');
+
+    window.loginUser = async (username, force=false) => {
+      await initShell(username, force);
+      document.querySelector('section.login').style.display = 'none';
+      document.querySelector('section.main').style.display = 'flex';
+      sessionStorage.setItem('current-username', username);
+    };
+
+    (async (username) => {
       if (username) {
         await loginUser(username, true);
       } else {
@@ -179,102 +137,93 @@
         dbs = dbs.filter(item => item.name.startsWith('shell/'));
         renderUserLoginHistory(dbs);
       }
-    })();
+    })(sessionStorage.getItem('current-username'));
 
-    async function startLibp2p(username, force, cb) {
-      window.showModal(`Login ${username}`, 'check username...', false);
-      const database = (new window.datastoreLevel(`shell/${username}`, { prefix: '' })).db;
-      window.database = database;
-      const isContinue = await (async () => {
-        await database.put('welcome', 'shell');
-        database.db.codec.opts.valueEncoding = 'json';
+    async function isAlreadyLogin(database) {
+      await database.put('welcome', 'shell');
+      database.db.codec.opts.valueEncoding = 'json';
 
-        try {
-          const status = await database.get('status');
+      try {
+        const status = await database.get('status');
 
-          if (status) {
-            return false;
-          }
-        } catch (error) {
-          log('create new peer');
+        if (status) {
+          return false;
         }
+      } catch (error) {
+        log('create new peer');
+      }
 
-        await database.put('status', true);
-        return true;
-      })();
+      await database.put('status', true);
+      return true;
+    }
+
+    window.logout = async () => {
+      await dshell.userNode.vegetative();
+      sessionStorage.removeItem('current-username');
+      location.reload();
+    };
+
+    async function initShell(username, force) {
+      window.showModal(`Login ${username}`, 'check username...', false);
+      const database = (new datastoreLevel(`shell/${username}`, { prefix: '' })).db;
+      const isContinue = await isAlreadyLogin(database)
 
       if (!isContinue && !force) {
         const message = 'user already login, please use another username';
         window.showModal(`Login ${username}`, message, true);
         throw message;
-      } else {
-        window.addEventListener("unload", async () => {
-          await database.put('status', false);
-          await database.get('status');
-        })
       }
 
-      window.showModal(`Login ${username}`, 'Starting libp2p...', false);
+      const country = '/dns4/webrtc-star.dist.pub/tcp/443/wss/p2p-webrtc-star';
+      const simplePeerOptions = {
+        trickle: true,
+        config: {
+          iceServers: {{ iceServers|safe }},
+        }
+      };
+
+      async function afterVegetative() {
+        await database.put('status', false);
+        await database.get('status');
+      }
+      window.addEventListener("unload", afterVegetative)
+
+      window.showModal(`Login ${username}`, 'init dshell...', false);
       const my = new UserNode(database, username, country, simplePeerOptions);
+      const soul = new Soul(database, username)
+      const shell = new Shell(my, soul);
+      window.dshell = shell;
 
+      await my.init()
+      my.on('vegetative', afterVegetative);
 
+      const peers = [];
 
       // event
-      my.on('user:hi', (id) => {
+      my.on('user:online', (id) => {
         log(`* Nice to meet ${id}`);
-
-
-
         if (!peers.includes(id)) {
           const $li = document.createElement('div');
+          $li.setAttribute('id', id);
           $li.classList.add('item');
           $li.innerText = id;
           $li.onclick = () => openChat(id);
           document.querySelector('#peers').appendChild($li);
         }
       });
-      async function stop() {
-        await database.put('status', false);
-        await my.stop();
-        await database.get('status');
-      }
-      my.once('stop', stop);
-      window.addEventListener("unload", stop);
 
-      await my.init()
-      const soul = new Soul(database, username)
       await soul.init()
-      const shell = new Shell(my, soul);
       shell.install()
       shell.installModule(
-        '/static/libp2p/actions/network.js',
-        '/static/libp2p/actions/dom.js',
-        '/static/libp2p/actions/utils.js',
-        '/static/libp2p/actions/soul.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.0.1/actions/network.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.0.1/actions/dom.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.0.1/actions/utils.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.0.1/actions/soul.js',
       )
-      window.p2pNode = my;
-      window.soul = soul;
-      window.shell = shell;
-
-      function openChat(id) {
-        document.querySelector('.active').classList.remove('active');
-        const nav = document.createElement('a');
-        nav.classList.add('item', 'active');
-        nav.innerText = id;
-        const target = document.querySelector('.right.menu');
-        target.parentNode.insertBefore(nav, target);
-      }
-      cb();
+      await my.awake();
       hideModal();
 
       // logic
-
-      shell.installExternalAction(function print(_, ...args) {
-        for (let msg of args) {
-          log(`<< ${msg}`);
-        }
-      });
-
       shell.on('action:response', ({username, response}) => {
         renderMessage(`${username}[response]=>${response.results}`)
       })
@@ -288,78 +237,28 @@
           renderMessage(`${data.username}[response]=>${data.response.results}`)
         }
       })
-      soul.on('empathy', data=>{
-        if (data.request) {
-          renderMessage(`${data.username}[request]=>${data.request.action}(${data.request.args})`)
-        } else {
-          renderMessage(`${data.username}[response]=>${data.response.results}`)
-        }
-      })
-
-      window.sendText = async function () {
-        const input = document.querySelector('#shell');
-        await shell.exec(shell.Action.echo([input.value], [document.querySelector('.active').innerText]))
-        input.value = '';
-      };
-
-      window.renderMessage = function (content) {
-        const item = document.querySelector('.ui.feed.template').cloneNode(true);
-        item.querySelector('.summary').innerText = content;
-        document.querySelector('.stage').appendChild(item);
-      };
-      soul.backwards(null, false)
-      await shell.exec(shell.Action.whoami([{ help: true }]))
-      await shell.exec(shell.Action.whoami([{ version: true }]))
-      await shell.exec(shell.Action.Whoami)
-
-      shell.installExternalAction(function BuildFetchPayload(_, type, name) {
-        return {
-          SearchTableName: 'Search/PRT_Product',
-          ProjectName: name,
-          Supply: '',
-          MaxCost: '',
-          Fans: '',
-          Tag: '',
-          Place: '',
-          Position: '',
-          ProductBrand: type,
-          Order: ''
-        }
-      })
+      soul.backwards(soul.pre, false)
     }
 
-    document.querySelector('#exec').onclick = async (e) => {
-      const peer = document.querySelector('.active').innerText
-      const receivers = []
-      try {
-        window.PeerId.createFromB58String(peer)
-        receivers.push(peer)
-      } catch (error) {
-        log(error)
-      }
-      const names = document.querySelector('#input').value.split('\n').filter(item => item.length>0)
-      const type = document.querySelector('#type').value
-      const api = atob('aHR0cDovL3dvcmsudmlnbGxlLmNvbS9CYXNlVGFibGUvTGlzdA==')
-      const response = await shell.exec(
-        shell.action(true, {receivers})
-          .map([names])
-          .buildFetchPayload([type])
-          .textFetch([api, { cors: true, bodyEncoder: 'form', method: 'POST'}])
-          .selectText([{ selector: 'div.col-sm-2 > div:nth-child(4)', killImg: true }])
-          .Collect
-          .zipArray([names])
-          .buildExcel(['data', ['name', 'gys']])
-          .download(['demo.xlsx'])
-          .pushFile(['/my/demo.xlsx'])
-          .IpfsPath
-          .PreviewOffice
-      )
-      if (response.ok) {
-        log('success exec')
-      } else {
-        log('faied exec')
-      }
-      console.log(response.json())
+    function openChat(id) {
+      const nav = document.createElement('a');
+      nav.classList.add('item', 'active');
+      nav.innerText = id;
+      const target = document.querySelector('.right.menu');
+      target.parentNode.insertBefore(nav, target);
     }
+
+    function renderMessage(content) {
+      const item = document.querySelector('.ui.feed.template').cloneNode(true);
+      item.querySelector('.summary').innerText = content;
+      document.querySelector('.stage').appendChild(item);
+    }
+
+    window.sendText = async function () {
+      const input = document.querySelector('#shell');
+      await dshell.exec(dshell.Action
+        .echo({args: [input.value], receivers:[document.querySelector('.active').innerText]}))
+      input.value = '';
+    };
   </script>
 {% endblock %}
