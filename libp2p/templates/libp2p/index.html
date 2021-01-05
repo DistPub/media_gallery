@@ -101,9 +101,9 @@
 {% endblock %}
 {% block script %}
   {% include 'includes/modal.module' %}
-  <script src="https://cdn.jsdelivr.net/npm/dshell@1.0.1/dep.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dshell@1.0.3/dep.bundle.min.js"></script>
   <script type="module">
-    import { Shell, UserNode, Soul, datastoreLevel } from 'https://cdn.jsdelivr.net/npm/dshell@1.0.1/index.min.js';
+    import { Shell, UserNode, Soul, datastoreLevel } from 'https://cdn.jsdelivr.net/npm/dshell@1.0.3/index.min.js';
 
     function log(msg) {
       console.log(msg)
@@ -215,10 +215,10 @@
       await soul.init()
       shell.install()
       shell.installModule(
-        'https://cdn.jsdelivr.net/npm/dshell@1.0.1/actions/network.js',
-        'https://cdn.jsdelivr.net/npm/dshell@1.0.1/actions/dom.js',
-        'https://cdn.jsdelivr.net/npm/dshell@1.0.1/actions/utils.js',
-        'https://cdn.jsdelivr.net/npm/dshell@1.0.1/actions/soul.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/network.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/dom.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/utils.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/soul.js',
       )
       await my.awake();
       hideModal();
@@ -237,7 +237,7 @@
           renderMessage(`${data.username}[response]=>${data.response.results}`)
         }
       })
-      soul.backwards(soul.pre, false)
+      soul.backwards(null, false)
     }
 
     function openChat(id) {
