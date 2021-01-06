@@ -45,13 +45,9 @@
           <i class="icon trash alternate outline"></i>
           Clear
         </button>
-        <button class="mini positive ui basic button" id="export">
-          <i class="icon cloud download"></i>
-          Export CSV
-        </button>
         <button class="mini positive ui basic button" id="preview">
           <i class="icon cloud download"></i>
-          Export & Preview Excel(beta)
+          Export & Preview Excel
         </button>
       </div>
     </div>
@@ -79,59 +75,13 @@
 {% block script %}
   {% include 'includes/modal.module' %}
   {% include 'includes/progress.module' %}
-  <script src="https://cdn.jsdelivr.net/npm/ipfs@0.52.2/dist/index.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.16.9/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dshell@1.1.0/dep.bundle.min.js"></script>
   <script type="module" about="utils">
     import dayjs from 'https://cdn.jsdelivr.net/npm/dayjs@1.9.6/esm/index.js/+esm';
-
-    (async () => {
-      window.ipfsNode = await Ipfs.create()
-      const status = ipfsNode.isOnline() ? 'online' : 'offline'
-      console.log(`Node status: ${status}`)
-    })();
 
     window.generateFileName = (suffix) => {
       const time = dayjs().format('YYYY_MM_DD@HH_mm_ss');
       return `signature_export@${time}.${suffix}`;
-    };
-
-    window.downloadFile = (blob, name) => {
-      const filename = name || generateFileName('csv');
-      const url = URL.createObjectURL(blob);
-      const $stub = document.createElement("a");
-      $stub.style.display = "none";
-      document.body.appendChild($stub);
-      $stub.href = url;
-      $stub.download = filename;
-      $stub.click();
-      $stub.remove();
-      URL.revokeObjectURL(url);
-    };
-
-    window.previewExcelFile = async (tableElement) => {
-      const workbook = XLSX.utils.table_to_book(tableElement, { sheet:"zgdy" });
-      const options = { bookType: 'xlsx', bookSST: true, type: 'array' };
-      const workbookOut = XLSX.write(workbook, options);
-      const fileBlob = new Blob([workbookOut], {type:"application/octet-stream"})
-
-      const filename = generateFileName('xlsx')
-      downloadFile(fileBlob, filename)
-
-      const fileDetails = { path: filename, content: fileBlob }
-      const ipfsOptions = { wrapWithDirectory: true }
-      const { cid } = await window.ipfsNode.add(fileDetails, ipfsOptions)
-
-      while (1) {
-        try {
-          let response = await fetch(`https://ipfs.io/ipfs/${cid}`)
-          await response.text()
-          const url = `https://view.officeapps.live.com/op/view.aspx?src=https://ipfs.io/ipfs/${cid}/${filename}`
-          window.open(url, '_blank')
-          break
-        } catch(error) {
-          console.log(`wait file upload to ipfs.io, ${error}`)
-        }
-      }
     };
 
     window.orderTable = ($body, key, keys) => {
@@ -172,6 +122,8 @@
     };
   </script>
   <script type="module" about="main">
+    import shell from 'https://cdn.jsdelivr.net/npm/dshell@1.1.0/dshell.js';
+    import { XLSX } from 'https://cdn.jsdelivr.net/npm/dshell@1.1.0/dep.js'
     let fetchCount = 0;
     let fetchedCount = 0;
     const $tbody = document.querySelector('#output > tbody');
@@ -208,11 +160,6 @@
     const channel = connect(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/zgdy/`);
 
     channel.onmessage = function (event) {
-      if (event.data instanceof Blob) {
-        downloadFile(event.data);
-        return;
-      }
-
       const [type, status, data] = JSON.parse(event.data);
       console.log(data);
 
@@ -248,7 +195,11 @@
       updateFetchedCount(0);
     };
 
-    document.querySelector('#export').onclick = function (e) {
+    document.querySelector('#reset').onclick = function (e) {
+      $uniqueId.value = '';
+    };
+
+    document.querySelector('#preview').onclick = async function (e) {
       let rows = Array.from($tbody.querySelectorAll('tr'), item => {
         let tds = item.querySelectorAll('td');
         return [tds[0].innerText, tds[1].innerText];
@@ -258,23 +209,12 @@
         return showModal('Empty Table!', 'Please fetch first.');
       }
 
-      channel.send(JSON.stringify(['export', [['unique_id', 'signature']].concat(rows)]));
-    };
-
-    document.querySelector('#reset').onclick = function (e) {
-      $uniqueId.value = '';
-    };
-
-    document.querySelector('#preview').onclick = function (e) {
-      let rows = Array.from($tbody.querySelectorAll('tr'));
-
-      if (!rows.length) {
-        return showModal('Empty Table!', 'Please fetch first.');
-      }
-
-      let table = document.querySelector('#output').cloneNode(true);
-      table.querySelector('tfoot').remove();
-      previewExcelFile(table);
+      const filename = generateFileName('xlsx');
+      await shell.exec(shell.Action
+        .buildExcel(['export', ['unique_id', 'signature'], rows])
+        .download([filename])
+        .pushFile([`/tmp/${filename}`])
+        .PreviewOffice)
     }
   </script>
 {% endblock %}

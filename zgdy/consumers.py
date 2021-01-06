@@ -1,11 +1,9 @@
-import io
 import json
 
 import asyncio
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from services.zgdy import get_signature
-from utils.csv import generate_file
 from utils.exceptions import Resource404
 
 
@@ -65,8 +63,3 @@ class Index(AsyncWebsocketConsumer):
     @staticmethod
     async def do_get(unique_id):
         return [unique_id, await get_signature(unique_id)]
-
-    async def do_export(self, rows):
-        file = generate_file(io.BytesIO(), rows)
-        file.seek(0)
-        await self.send(bytes_data=file.read())
