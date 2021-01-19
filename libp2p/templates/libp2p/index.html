@@ -26,6 +26,10 @@
 {% endblock %}
 {% block container %}
   {% include 'includes/modal.html' %}
+  <section>
+    <video id="local-view"></video>
+    <video id="remote-view"></video>
+  </section>
   <section class="login">
     <div class="user-login-history ui relaxed divided list">
     </div>
@@ -101,13 +105,13 @@
 {% endblock %}
 {% block script %}
   {% include 'includes/modal.module' %}
-  <script src="https://cdn.jsdelivr.net/npm/dshell@1.0.3/dep.bundle.min.js"></script>
+{#  <script src="https://cdn.jsdelivr.net/npm/dshell@1.0.3/dep.bundle.min.js"></script>#}
+  <script src="https://local.dev:4433/dep.bundle.min.js"></script>
   <script type="module">
-    import { Shell, UserNode, Soul, datastoreLevel } from 'https://cdn.jsdelivr.net/npm/dshell@1.0.3/index.min.js';
-
-    function log(msg) {
-      console.log(msg)
-    }
+{#    import { Shell, UserNode, Soul, datastoreLevel } from 'https://cdn.jsdelivr.net/npm/dshell@1.0.3/index.min.js';#}
+{#    import { log } from 'https://cdn.jsdelivr.net/npm/dshell@1.0.3/utils.js';#}
+    import { Shell, UserNode, Soul, datastoreLevel } from 'https://local.dev:4433/index.js';
+    import {log, sleep} from 'https://local.dev:4433/utils.js';
 
     function renderUserLoginHistory(dbs) {
       const target = document.querySelector('.login.input');
@@ -214,12 +218,52 @@
 
       await soul.init()
       shell.install()
+{#      shell.installModule(#}
+{#        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/network.js',#}
+{#        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/dom.js',#}
+{#        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/utils.js',#}
+{#        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/soul.js',#}
+{#      )#}
       shell.installModule(
-        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/network.js',
-        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/dom.js',
-        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/utils.js',
-        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/soul.js',
+        'https://local.dev:4433/actions/network.js',
+        'https://local.dev:4433/actions/dom.js',
+        'https://local.dev:4433/actions/utils.js',
+        'https://local.dev:4433/actions/soul.js',
       )
+      shell.installExternalAction(async function Kan({meta}, who){
+        const localVideo = document.getElementById('local-view');
+        const remoteVideo = document.getElementById('remote-view');
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
+        localVideo.srcObject = mediaStream
+        localVideo.play()
+
+        const channel = this.userNode.getRTCChannel(who)
+        channel.on('stream', stream => {
+          remoteVideo.srcObject = stream
+          remoteVideo.play()
+        })
+        channel.addStream(mediaStream)
+        return this.userNode.id
+      })
+      shell.installExternalAction(async function* Yield({meta}){
+        log(`yield meta=>${JSON.stringify(meta)}`)
+        let number = 1
+        this.on(`uuid:${meta.downstream.uuid}:++`, ()=>number++)
+        this.on(`uuid:${meta.downstream.uuid}:--`, ()=>number--)
+
+        while (number) {
+          yield number
+
+          if (number===3){
+            throw 'error'
+          }
+          await sleep(3*1000)
+        }
+      })
+      shell.installExternalAction(function Print({meta}, msg){
+        log(`print meta=>${JSON.stringify(meta)}`)
+        log(msg)
+      })
       await my.awake();
       hideModal();
 
