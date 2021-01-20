@@ -236,13 +236,19 @@
         const channel = this.userNode.getRTCChannel(toWho)
         const localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
         let deal
+        const toggleTrack = (kind) => {
+          localStream.getTracks().filter(track => track.kind === kind).map(track => track.enabled = !track.enabled)
+        }
         const hangUp = () => {
           if (deal) {
             channel.removeStream(localStream)
           }
           localStream.getTracks().map(track => track.stop())
         }
-        channel.on('stream', stream => this.emit('VideoChat:stream', {who: toWho, stream, hangUp}))
+        channel.on('stream', stream => {
+          stream.onremovetrack = hangUp
+          this.emit('VideoChat:stream', {who: toWho, stream, hangUp, toggleTrack})
+        })
         const response = await exec({action: '/OnVideoChat', receivers: [toWho], args: [this.userNode.id, waitTime]})
         deal = response.json()
 
@@ -257,6 +263,9 @@
         const channel = this.userNode.getRTCChannel(fromWho)
         const localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
         let agree = null
+        const toggleTrack = (kind) => {
+          localStream.getTracks().filter(track => track.kind === kind).map(track => track.enabled = !track.enabled)
+        }
         const hangUp = () => {
           if (agree) {
             channel.removeStream(localStream)
@@ -274,7 +283,10 @@
           agree = false
           hangUp()
         }
-        channel.on('stream', stream => this.emit('OnVideoChat:stream', {who: fromWho, stream, hangUp}))
+        channel.on('stream', stream => {
+          stream.onremovetrack = hangUp
+          this.emit('OnVideoChat:stream', {who: fromWho, stream, hangUp, toggleTrack})
+        })
         this.emit('OnVideoChat:call', {who: fromWho, accept, refuse})
 
         while (waitTime) {
@@ -287,15 +299,17 @@
         }
         return agree
       })
-      shell.on('VideoChat:stream', ({who, stream, hangUp}) => {
+      shell.on('VideoChat:stream', ({who, stream, hangUp, toggleTrack}) => {
         document.querySelector('#remote-view').srcObject = stream
         document.querySelector('#remote-view').play()
         window.hangUp = hangUp
+        window.toggleTrack = toggleTrack
       })
-      shell.on('OnVideoChat:stream', ({who, stream, hangUp}) => {
+      shell.on('OnVideoChat:stream', ({who, stream, hangUp, toggleTrack}) => {
         document.querySelector('#remote-view').srcObject = stream
         document.querySelector('#remote-view').play()
         window.hangUp = hangUp
+        window.toggleTrack = toggleTrack
       })
       shell.on('OnVideoChat:call', ({who, accept, refuse})=>{
         log(`${who} wants take video chat with your, agree?`)
