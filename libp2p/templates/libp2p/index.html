@@ -229,92 +229,18 @@
         'https://local.dev:4433/actions/dom.js',
         'https://local.dev:4433/actions/utils.js',
         'https://local.dev:4433/actions/soul.js',
+        'https://local.dev:4433/actions/chat.js',
       )
-      shell.installExternalAction(async function VideoChat({exec}, toWho, waitTime=60){
-        await exec({action: '/Ping', receivers: [toWho]})
-
-        const channel = this.userNode.getRTCChannel(toWho)
-        const localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-        let deal
-        const toggleTrack = (kind) => {
-          localStream.getTracks().filter(track => track.kind === kind).map(track => track.enabled = !track.enabled)
-        }
-        const hangUp = () => {
-          if (deal) {
-            channel.removeStream(localStream)
-          }
-          localStream.getTracks().map(track => track.stop())
-        }
-        channel.on('stream', stream => {
-          stream.onremovetrack = hangUp
-          this.emit('VideoChat:stream', {who: toWho, localStream, stream, hangUp, toggleTrack})
-        })
-        const response = await exec({action: '/OnVideoChat', receivers: [toWho], args: [this.userNode.id, waitTime]})
-        deal = response.json()
-
-        if (deal) {
-          channel.addStream(localStream)
-        } else {
-          hangUp()
-        }
-        return deal
-      })
-      shell.installExternalAction(async function OnVideoChat(_, fromWho, waitTime){
-        const channel = this.userNode.getRTCChannel(fromWho)
-        const localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-        let agree = null
-        const toggleTrack = (kind) => {
-          localStream.getTracks().filter(track => track.kind === kind).map(track => track.enabled = !track.enabled)
-        }
-        const hangUp = () => {
-          if (agree) {
-            channel.removeStream(localStream)
-          }
-          localStream.getTracks().map(track => track.stop())
-        }
-        const accept = async () => {
-          if (!waitTime) {
-            throw 'other side already hang up'
-          }
-          agree = true
-          channel.addStream(localStream)
-        }
-        const refuse = () => {
-          agree = false
-          hangUp()
-        }
-        channel.on('stream', stream => {
-          stream.onremovetrack = hangUp
-          this.emit('OnVideoChat:stream', {who: fromWho, stream, localStream, hangUp, toggleTrack})
-        })
-        this.emit('OnVideoChat:call', {who: fromWho, accept, refuse})
-
-        while (waitTime) {
-          await sleep(1000)
-          waitTime --
-
-          if (agree !== null) {
-            break
-          }
-        }
-        return agree
-      })
-      shell.on('VideoChat:stream', ({who, stream, localStream, hangUp, toggleTrack}) => {
+      const streamHandler = ({who, stream, localStream, hangUp, toggle}) => {
         document.querySelector('#local-view').srcObject = localStream
         document.querySelector('#local-view').play()
         document.querySelector('#remote-view').srcObject = stream
         document.querySelector('#remote-view').play()
         window.hangUp = hangUp
-        window.toggleTrack = toggleTrack
-      })
-      shell.on('OnVideoChat:stream', ({who, stream, localStream, hangUp, toggleTrack}) => {
-        document.querySelector('#local-view').srcObject = localStream
-        document.querySelector('#local-view').play()
-        document.querySelector('#remote-view').srcObject = stream
-        document.querySelector('#remote-view').play()
-        window.hangUp = hangUp
-        window.toggleTrack = toggleTrack
-      })
+        window.toggle = toggle
+      }
+      shell.on('VideoChat:stream', streamHandler)
+      shell.on('OnVideoChat:stream', streamHandler)
       shell.on('OnVideoChat:call', ({who, accept, refuse})=>{
         log(`${who} wants take video chat with your, agree?`)
         window.accept = accept
