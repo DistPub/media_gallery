@@ -247,7 +247,7 @@
         }
         channel.on('stream', stream => {
           stream.onremovetrack = hangUp
-          this.emit('VideoChat:stream', {who: toWho, stream, hangUp, toggleTrack})
+          this.emit('VideoChat:stream', {who: toWho, localStream, stream, hangUp, toggleTrack})
         })
         const response = await exec({action: '/OnVideoChat', receivers: [toWho], args: [this.userNode.id, waitTime]})
         deal = response.json()
@@ -285,7 +285,7 @@
         }
         channel.on('stream', stream => {
           stream.onremovetrack = hangUp
-          this.emit('OnVideoChat:stream', {who: fromWho, stream, hangUp, toggleTrack})
+          this.emit('OnVideoChat:stream', {who: fromWho, stream, localStream, hangUp, toggleTrack})
         })
         this.emit('OnVideoChat:call', {who: fromWho, accept, refuse})
 
@@ -299,13 +299,17 @@
         }
         return agree
       })
-      shell.on('VideoChat:stream', ({who, stream, hangUp, toggleTrack}) => {
+      shell.on('VideoChat:stream', ({who, stream, localStream, hangUp, toggleTrack}) => {
+        document.querySelector('#local-view').srcObject = localStream
+        document.querySelector('#local-view').play()
         document.querySelector('#remote-view').srcObject = stream
         document.querySelector('#remote-view').play()
         window.hangUp = hangUp
         window.toggleTrack = toggleTrack
       })
-      shell.on('OnVideoChat:stream', ({who, stream, hangUp, toggleTrack}) => {
+      shell.on('OnVideoChat:stream', ({who, stream, localStream, hangUp, toggleTrack}) => {
+        document.querySelector('#local-view').srcObject = localStream
+        document.querySelector('#local-view').play()
         document.querySelector('#remote-view').srcObject = stream
         document.querySelector('#remote-view').play()
         window.hangUp = hangUp
