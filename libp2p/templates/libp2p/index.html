@@ -27,6 +27,8 @@
 {% block container %}
   {% include 'includes/modal.html' %}
   <section>
+    <input type="text" id="to-who" />
+    <button onclick="makeVideoCall()">video call</button>
     <video id="local-view"></video>
     <video id="remote-view"></video>
   </section>
@@ -105,13 +107,13 @@
 {% endblock %}
 {% block script %}
   {% include 'includes/modal.module' %}
-{#  <script src="https://cdn.jsdelivr.net/npm/dshell@1.0.3/dep.bundle.min.js"></script>#}
-  <script src="https://local.dev:4433/dep.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dshell@1.2.0/dep.bundle.min.js"></script>
+{#  <script src="https://local.dev:4433/dep.bundle.min.js"></script>#}
   <script type="module">
-{#    import { Shell, UserNode, Soul, datastoreLevel } from 'https://cdn.jsdelivr.net/npm/dshell@1.0.3/index.min.js';#}
-{#    import { log } from 'https://cdn.jsdelivr.net/npm/dshell@1.0.3/utils.js';#}
-    import { Shell, UserNode, Soul, datastoreLevel } from 'https://local.dev:4433/index.js';
-    import {log, sleep} from 'https://local.dev:4433/utils.js';
+    import { Shell, UserNode, Soul, datastoreLevel } from 'https://cdn.jsdelivr.net/npm/dshell@1.2.0/index.min.js';
+    import { log } from 'https://cdn.jsdelivr.net/npm/dshell@1.2.0/utils.js';
+{#    import { Shell, UserNode, Soul, datastoreLevel } from 'https://local.dev:4433/index.js';#}
+{#    import {log, sleep} from 'https://local.dev:4433/utils.js';#}
 
     function renderUserLoginHistory(dbs) {
       const target = document.querySelector('.login.input');
@@ -218,19 +220,24 @@
 
       await soul.init()
       shell.install()
-{#      shell.installModule(#}
-{#        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/network.js',#}
-{#        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/dom.js',#}
-{#        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/utils.js',#}
-{#        'https://cdn.jsdelivr.net/npm/dshell@1.0.3/actions/soul.js',#}
-{#      )#}
       shell.installModule(
-        'https://local.dev:4433/actions/network.js',
-        'https://local.dev:4433/actions/dom.js',
-        'https://local.dev:4433/actions/utils.js',
-        'https://local.dev:4433/actions/soul.js',
-        'https://local.dev:4433/actions/chat.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.2.0/actions/network.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.2.0/actions/dom.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.2.0/actions/utils.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.2.0/actions/soul.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.2.0/actions/chat.js',
       )
+{#      shell.installModule(#}
+{#        'https://local.dev:4433/actions/network.js',#}
+{#        'https://local.dev:4433/actions/dom.js',#}
+{#        'https://local.dev:4433/actions/utils.js',#}
+{#        'https://local.dev:4433/actions/soul.js',#}
+{#        'https://local.dev:4433/actions/chat.js',#}
+{#      )#}
+      window.makeVideoCall = async () => {
+        const toWho = document.querySelector('#to-who').value
+        await dshell.exec(dshell.Action.videoChat({args:[toWho]}))
+      }
       const streamHandler = ({who, stream, localStream, hangUp, toggle}) => {
         document.querySelector('#local-view').srcObject = localStream
         document.querySelector('#local-view').play()
@@ -289,6 +296,7 @@
       const nav = document.createElement('a');
       nav.classList.add('item', 'active');
       nav.innerText = id;
+      document.querySelector('#to-who').value = id;
       const target = document.querySelector('.right.menu');
       target.parentNode.insertBefore(nav, target);
     }
