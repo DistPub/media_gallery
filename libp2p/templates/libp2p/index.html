@@ -254,12 +254,18 @@
         document.querySelector('#local-view').play()
         document.querySelector('#remote-view').srcObject = stream
         document.querySelector('#remote-view').play()
-        window.hangUp = hangUp
+        const doHangUp = () => {
+          hangUp()
+          window.showModal('Call Ended', 'Bye', false)
+        }
+        window.hangUp = doHangUp
+        stream.onremovetrack = doHangUp
         window.toggle = toggle
       }
       shell.on('VideoChat:stream', streamHandler)
       shell.on('OnVideoChat:stream', streamHandler)
       shell.on('OnVideoChat:call', ({who, accept, refuse})=>{
+        document.querySelector('#to-who').value = who
         window.accept = () => {
           accept()
           hideModal()
