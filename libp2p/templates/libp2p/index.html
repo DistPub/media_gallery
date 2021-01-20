@@ -110,11 +110,11 @@
 {% endblock %}
 {% block script %}
   {% include 'includes/modal.module' %}
-  <script src="https://cdn.jsdelivr.net/npm/dshell@1.2.0/dep.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dshell@1.2.1/dep.bundle.min.js"></script>
 {#  <script src="https://local.dev:4433/dep.bundle.min.js"></script>#}
   <script type="module">
-    import { Shell, UserNode, Soul, datastoreLevel } from 'https://cdn.jsdelivr.net/npm/dshell@1.2.0/index.min.js';
-    import { log } from 'https://cdn.jsdelivr.net/npm/dshell@1.2.0/utils.js';
+    import { Shell, UserNode, Soul, datastoreLevel } from 'https://cdn.jsdelivr.net/npm/dshell@1.2.1/index.min.js';
+    import { log } from 'https://cdn.jsdelivr.net/npm/dshell@1.2.1/utils.js';
 {#    import { Shell, UserNode, Soul, datastoreLevel } from 'https://local.dev:4433/index.js';#}
 {#    import {log, sleep} from 'https://local.dev:4433/utils.js';#}
 
@@ -206,12 +206,13 @@
       await my.init()
       my.on('vegetative', afterVegetative);
 
-      const peers = [];
+      const peers = new Set();
 
       // event
-      my.on('user:online', (id) => {
+      const niceSee = (id) => {
         log(`* Nice to meet ${id}`);
-        if (!peers.includes(id)) {
+        if (!peers.has(id)) {
+          peers.add(id)
           const $li = document.createElement('div');
           $li.setAttribute('id', id);
           $li.classList.add('item');
@@ -219,16 +220,25 @@
           $li.onclick = () => openChat(id);
           document.querySelector('#peers').appendChild($li);
         }
+      }
+      my.on('user:hi', niceSee);
+      my.on('user:online', niceSee);
+      my.on('user:offline', (id) => {
+        log(`* Bye to ${id}`);
+        if (peers.has(id)) {
+          peers.delete(id)
+          Array.from(document.querySelectorAll(`#${id}`)).map(item => item.remove())
+        }
       });
 
       await soul.init()
       shell.install()
       shell.installModule(
-        'https://cdn.jsdelivr.net/npm/dshell@1.2.0/actions/network.js',
-        'https://cdn.jsdelivr.net/npm/dshell@1.2.0/actions/dom.js',
-        'https://cdn.jsdelivr.net/npm/dshell@1.2.0/actions/utils.js',
-        'https://cdn.jsdelivr.net/npm/dshell@1.2.0/actions/soul.js',
-        'https://cdn.jsdelivr.net/npm/dshell@1.2.0/actions/chat.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.2.1/actions/network.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.2.1/actions/dom.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.2.1/actions/utils.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.2.1/actions/soul.js',
+        'https://cdn.jsdelivr.net/npm/dshell@1.2.1/actions/chat.js',
       )
 {#      shell.installModule(#}
 {#        'https://local.dev:4433/actions/network.js',#}
