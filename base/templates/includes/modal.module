@@ -1,6 +1,13 @@
 <script type="module" about="modal">
   const $modal = document.querySelector('#modal');
   $modal.querySelector('.close').onclick = () => $modal.close();
+  $modal.addEventListener("click", event => {
+      const rect = $modal.getBoundingClientRect();
+      if (event.clientY < rect.top || event.clientY > rect.bottom ||
+          event.clientX < rect.left || event.clientX > rect.right) {
+          $modal.close();
+      }
+  });
 
   const $message = $modal.querySelector('.message');
   const $title = $modal.querySelector('.modal-message-title');
