@@ -29,6 +29,9 @@
   <section>
     <input type="text" id="to-who" />
     <button onclick="makeVideoCall()">video call</button>
+    <button onclick="hangUp()">hangup</button>
+    <button onclick="toggle('video')">toggle Video</button>
+    <button onclick="toggle('audio')">toggle Audio</button>
     <video id="local-view"></video>
     <video id="remote-view"></video>
   </section>
@@ -236,7 +239,15 @@
 {#      )#}
       window.makeVideoCall = async () => {
         const toWho = document.querySelector('#to-who').value
-        await dshell.exec(dshell.Action.videoChat({args:[toWho]}))
+        const response = await dshell.exec(dshell.Action.videoChat({args:[toWho]}))
+        const deal = response.json()
+        if (!response.ok) {
+          window.showModal('Call Failed', deal, true)
+        } else if (!deal) {
+          window.showModal('Call Refused', `${toWho} refused`, false)
+        } else {
+          window.showModal('Call Success', `${toWho} accepted`, false)
+        }
       }
       const streamHandler = ({who, stream, localStream, hangUp, toggle}) => {
         document.querySelector('#local-view').srcObject = localStream
@@ -249,9 +260,19 @@
       shell.on('VideoChat:stream', streamHandler)
       shell.on('OnVideoChat:stream', streamHandler)
       shell.on('OnVideoChat:call', ({who, accept, refuse})=>{
-        log(`${who} wants take video chat with your, agree?`)
-        window.accept = accept
-        window.refuse = refuse
+        window.accept = () => {
+          accept()
+          hideModal()
+        }
+        window.refuse = () => {
+          refuse()
+          hideModal()
+        }
+        window.showModal('On Calling',
+          `<p>${who} wants take video chat with your, agree?</p><br>` +
+          `<button onclick="accept()">yes</button><button onclick="refuse()">no</button>`,
+          false
+        )
       })
       shell.installExternalAction(async function* Yield({meta}){
         log(`yield meta=>${JSON.stringify(meta)}`)
