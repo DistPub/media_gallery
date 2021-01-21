@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'zgdy',
     'libp2p',
     'zgvg',
+    'avideo_chat',
 ]
 
 MIDDLEWARE = [
