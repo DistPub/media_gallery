@@ -21,14 +21,17 @@ function Welcome(props) {
 }
 
 function Root() {
-  const [show2, setShow2] = React.useState(true)
-  window.toggle2 = () => setShow2(v=>!v)
-  const [show3, setShow3] = React.useState(true)
-  window.toggle3 = () => setShow3(v=>!v)
+  const [show, setShow] = React.useState({1: true, 2: false, 3: false})
+  window.toggle = (n) => setShow(v=>{
+    const update = {}
+    update[n] = !v[n]
+    return {...v, ...update}
+  })
+  console.log(`render root ${JSON.stringify(show)}`)
   return <div>
-    <Welcome id={1}/>
-    {show2 && <Welcome id={2}/>}
-    {show3 && <Welcome id={3}/>}
+    {show[1] && <Welcome id={1}/>}
+    {show[2] && <Welcome id={2}/>}
+    {show[3] && <Welcome id={3}/>}
   </div>
 }
 
