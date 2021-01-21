@@ -1,19 +1,8 @@
-function formatName(user) {
-  return user.firstName + ' ' + user.lastName;
+const root = document.getElementById('root')
+
+function Welcome(props) {
+  console.log(props)
+  return <h1>Hello, {props.name.toLocaleTimeString()}</h1>
 }
 
-const user = {
-  firstName: 'Harper',
-  lastName: 'Perez'
-};
-
-const element = (
-  <h1>
-    Hello, {formatName(user)}!
-  </h1>
-);
-
-ReactDOM.render(
-  element,
-  document.getElementById('root')
-);
+setInterval(()=>ReactDOM.render(<Welcome name={new Date()}/>, root), 1000)
