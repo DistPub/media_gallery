@@ -83,6 +83,27 @@ function Root() {
     <HardInput/>
     <WrongHardInput/>
     <NormalInput/>
+    <Room value={'hi'}/>
+  </div>
+}
+
+function MyInput(props) {
+  return <input value={props.value} onChange={props.updateValue}/>
+}
+
+function YourInput(props) {
+  return <input value={props.value} onChange={props.updateValue}/>
+}
+
+function reverse(value) {
+  return Array.from(value).reverse().join('')
+}
+
+function Room(props) {
+  const [value, setValue] = React.useState(props.value)
+  return <div>
+    <MyInput value={value} updateValue={(event)=>setValue(event.target.value)}/>
+    <YourInput value={reverse(value)} updateValue={(event)=>setValue(reverse(event.target.value))}/>
   </div>
 }
 
