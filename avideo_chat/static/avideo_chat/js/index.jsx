@@ -43,6 +43,20 @@ function Input(props) {
   return <input value={value} onChange={(event)=>setValue(event.target.value)}/>
 }
 
+function HardInput() {
+  // without implement onChang handler
+  return <input value={'123'}/>
+}
+
+function WrongHardInput() {
+  // without implement onChang handler but value is null or undefined
+  return <input value={null}/> // equal => NormalInput <input/>
+}
+
+function NormalInput() {
+  return <input/>
+}
+
 function Select(props) {
   const [value, setValue] = React.useState(props.value)
   return <select name={props.name} value={value} onChange={(event)=>{
@@ -66,6 +80,9 @@ function Root() {
     <List list={'abcdefg'}/>
     <Input value={'hello smite'}/>
     <Select value={'hi3'} name={'selectWidget'}/>
+    <HardInput/>
+    <WrongHardInput/>
+    <NormalInput/>
   </div>
 }
 
