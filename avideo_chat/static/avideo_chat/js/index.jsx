@@ -43,6 +43,15 @@ function Input(props) {
   return <input value={value} onChange={(event)=>setValue(event.target.value)}/>
 }
 
+function Select(props) {
+  const [value, setValue] = React.useState(props.value)
+  return <select value={value} onChange={(event)=>setValue(event.target.value)}>
+    <option value={'hi0'}>hi</option>
+    <option value={'hi1'}>hi</option>
+    <option value={'hi2'}>hi</option>
+  </select>
+}
+
 function Root() {
   const [show, setShow] = React.useState({1: true, 2: false, 3: false})
   window.toggle = (n) => setShow(v=>{
@@ -57,6 +66,7 @@ function Root() {
     {show[3] && <Welcome id={3}/>}
     <List list={'abcdefg'}/>
     <Input value={'hello smite'}/>
+    <Select value={'hi3'}/>
   </div>
 }
 
