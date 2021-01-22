@@ -89,7 +89,7 @@ function Root() {
 }
 
 function Mama(props) {
-  return <div>{props.children}</div>
+  return <>{props.children}</>
 }
 
 function MyInput(props) {
