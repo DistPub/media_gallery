@@ -30,6 +30,14 @@ function Welcome(props) {
   return <h1 onClick={(event)=>handler(props.id, event)}>Hello, {time.toLocaleTimeString()}</h1>
 }
 
+function List(props) {
+  return <ul>
+    {Array.from(props.list).map(item =>
+      <li key={item}>{item}</li>
+    )}
+  </ul>
+}
+
 function Root() {
   const [show, setShow] = React.useState({1: true, 2: false, 3: false})
   window.toggle = (n) => setShow(v=>{
@@ -42,6 +50,7 @@ function Root() {
     {show[1] && <Welcome id={1}/>}
     {show[2] && <Welcome id={2}/>}
     {show[3] && <Welcome id={3}/>}
+    <List list={'abcdefg'}/>
   </div>
 }
 
