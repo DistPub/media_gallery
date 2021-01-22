@@ -1,3 +1,5 @@
+import {a} from '../utils.jsx'
+
 export function NestChild(props) {
-  return <p>ok nest</p>
+  return <span>ok nest</span>
 }
