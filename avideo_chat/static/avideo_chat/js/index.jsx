@@ -69,8 +69,10 @@ function Select(props) {
   </select>
 }
 
+import {Child} from './child.jsx'
+
 function Root() {
-  const [show, setShow] = React.useState({1: true, 2: false, 3: false})
+  const [show, setShow] = React.useState({1: true, 2: false, 3: false, 4: false})
   window.toggle = (n) => setShow(v=>{return {...v, [n]: !v[n]}})
   console.log(`render root ${JSON.stringify(show)}`)
   return <>
@@ -85,6 +87,7 @@ function Root() {
     <NormalInput/>
     <Room value={'hi'}/>
     <Mama><p>child</p></Mama>
+    {show[4] && <Child/>}
   </>
 }
 
