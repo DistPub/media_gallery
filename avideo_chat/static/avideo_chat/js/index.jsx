@@ -73,7 +73,7 @@ function Root() {
   const [show, setShow] = React.useState({1: true, 2: false, 3: false})
   window.toggle = (n) => setShow(v=>{return {...v, [n]: !v[n]}})
   console.log(`render root ${JSON.stringify(show)}`)
-  return <div>
+  return <>
     {show[1] && <Welcome id={1}/>}
     {show[2] && <Welcome id={2}/>}
     {show[3] && <Welcome id={3}/>}
@@ -85,7 +85,7 @@ function Root() {
     <NormalInput/>
     <Room value={'hi'}/>
     <Mama><p>child</p></Mama>
-  </div>
+  </>
 }
 
 function Mama(props) {
