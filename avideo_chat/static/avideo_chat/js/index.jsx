@@ -38,6 +38,11 @@ function List(props) {
   </ul>
 }
 
+function Input(props) {
+  const [value, setValue] = React.useState(props.value)
+  return <input value={value} onChange={(event)=>setValue(event.target.value)}/>
+}
+
 function Root() {
   const [show, setShow] = React.useState({1: true, 2: false, 3: false})
   window.toggle = (n) => setShow(v=>{
@@ -51,6 +56,7 @@ function Root() {
     {show[2] && <Welcome id={2}/>}
     {show[3] && <Welcome id={3}/>}
     <List list={'abcdefg'}/>
+    <Input value={'hello smite'}/>
   </div>
 }
 
