@@ -72,7 +72,7 @@ function Select(props) {
 import {Child} from './child.jsx'
 
 function Root() {
-  const [show, setShow] = React.useState({1: true, 2: false, 3: false, 4: false})
+  const [show, setShow] = React.useState({1: true, 2: false, 3: false, 4: true})
   window.toggle = (n) => setShow(v=>{return {...v, [n]: !v[n]}})
   console.log(`render root ${JSON.stringify(show)}`)
   return <>

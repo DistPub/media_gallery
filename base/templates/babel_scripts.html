@@ -1,0 +1,7 @@
+{% load static %}
+{% for path in files %}
+<script type="text/babel"
+        data-plugins="transform-modules-umd"
+        data-type="module"
+        src="{% static path %}"></script>
+{% endfor %}
