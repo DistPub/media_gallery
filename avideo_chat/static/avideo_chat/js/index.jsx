@@ -1,5 +1,11 @@
 const root = document.getElementById('root')
 
+function handler(id, event) {
+  console.log(id)
+  console.log(event)
+  console.log(this)
+}
+
 function Welcome(props) {
   const [time, setTime] = React.useState(new Date())
 
@@ -17,7 +23,11 @@ function Welcome(props) {
   }, [])
 
   console.log(`${props.id} render`)
-  return <h1>Hello, {time.toLocaleTimeString()}</h1>
+
+  if (time.toLocaleString().slice(-1) === '1') {
+    return null
+  }
+  return <h1 onClick={(event)=>handler(props.id, event)}>Hello, {time.toLocaleTimeString()}</h1>
 }
 
 function Root() {
