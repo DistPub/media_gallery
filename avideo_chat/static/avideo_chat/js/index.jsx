@@ -84,7 +84,12 @@ function Root() {
     <WrongHardInput/>
     <NormalInput/>
     <Room value={'hi'}/>
+    <Mama><p>child</p></Mama>
   </div>
+}
+
+function Mama(props) {
+  return <div>{props.children}</div>
 }
 
 function MyInput(props) {
