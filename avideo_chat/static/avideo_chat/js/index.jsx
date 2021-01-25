@@ -1,4 +1,5 @@
 const root = document.getElementById('root')
+const modalContainer = document.getElementById('modal')
 
 function handler(id, event) {
   console.log(id)
@@ -94,10 +95,11 @@ function Root() {
     <NormalInput/>
     <Room value={'hi'}/>
     <LangContext.Provider value={show.lang}>
-          <Mama><p>child</p></Mama>
-    {show[4] && <Child changeLang={toggleLang}/>}
+      <Mama><p>child</p></Mama>
+      {show[4] && <Child changeLang={toggleLang}/>}
     </LangContext.Provider>
-          <Mama><p>child</p></Mama>
+    <Mama><p>child</p></Mama>
+    <Modal><div onClick={toggleLang}>{show.lang}</div></Modal>
   </>
 }
 
@@ -127,6 +129,12 @@ function Room(props) {
     <MyInput value={value} updateValue={(event)=>setValue(event.target.value)}/>
     <YourInput value={reverse(value)} updateValue={(event)=>setValue(reverse(event.target.value))}/>
   </div>
+}
+
+function Modal(props) {
+  return ReactDOM.createPortal(
+    props.children, modalContainer
+  )
 }
 
 ReactDOM.render(<Root/>, root)
