@@ -41,12 +41,17 @@ function List(props) {
 
 function Input(props) {
   const [value, setValue] = React.useState(props.value)
-  return <input value={value} onChange={(event)=>setValue(event.target.value)}/>
+  const ref = React.useRef(null)
+  const focus = () => ref.current.focus()
+  return <>
+    <input ref={ref} value={value} onChange={(event)=>setValue(event.target.value)}/>
+    <button onClick={focus}>focus</button>
+  </>
 }
 
 function HardInput() {
   // without implement onChang handler
-  return <input value={'123'}/>
+  return <input style={{color: 'red'}} id={'hiid'} className="abc" value={'123'}/>
 }
 
 function WrongHardInput() {
