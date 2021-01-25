@@ -74,7 +74,12 @@ import {NotUsed} from './child.jsx'
 import {a} from './utils.jsx'
 
 function Root() {
-  const [show, setShow] = React.useState({1: true, 2: false, 3: false, 4: true})
+  const [show, setShow] = React.useState({1: true, 2: false, 3: false, 4: true, lang:'en'})
+  const toggleLang = () => {
+    setShow(v=>{
+      return {...v, lang: v.lang==='en'?'zh-cn':'en'}
+    })
+  }
   window.toggle = (n) => setShow(v=>{return {...v, [n]: !v[n]}})
   console.log(`render root ${JSON.stringify(show)}`)
   return <>
@@ -88,13 +93,20 @@ function Root() {
     <WrongHardInput/>
     <NormalInput/>
     <Room value={'hi'}/>
-    <Mama><p>child</p></Mama>
-    {show[4] && <Child/>}
+    <LangContext.Provider value={show.lang}>
+          <Mama><p>child</p></Mama>
+    {show[4] && <Child changeLang={toggleLang}/>}
+    </LangContext.Provider>
+          <Mama><p>child</p></Mama>
   </>
 }
 
+const LangContext = React.createContext('zh-cn')
+
 function Mama(props) {
-  return <>{props.children}</>
+  const value = React.useContext(LangContext)
+  console.log(`render in Mama ${value}`)
+  return <>{props.children}=>{value}</>
 }
 
 function MyInput(props) {
