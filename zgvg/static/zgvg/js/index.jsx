@@ -1,9 +1,17 @@
-function installAction() {
-  console.log(`installed`)
-}
+async function exportActiveOrder() {
+  let action = dshell.Action
+    .SelectActiveOrder // => order
+    .SelectOrderDetail // => account
+    .SelectPaymentDetail // => account with payment
+    .Collect // => [row, ...]
+    .buildExcel(['data',
+      ["序号", "执行单", "项目名称", "平台", "账号名称", "ID", "位置", "支出", "成本", "供应商", "方式",
+        "发布日期", "付款", "收款人", "开户行", "银行账号"]
+    ])
+    .download({args: ['active_order.xlsx']})
 
-function exportActiveOrder() {
-  console.log(`exported`)
+  const response = await dshell.exec(action)
+  console.log(response.json())
 }
 
 function Root(props) {
@@ -19,10 +27,11 @@ function Root(props) {
   </div>
 
   React.useEffect(() => {
-    const timer = setInterval(() => {
+    const timer = setInterval(async () => {
       try {
         if(dshell.userNode.node.isStarted()) {
           clearInterval(timer)
+          await dshell.installModule(`${appStaticURL}js/actions.js`)
           setDepStatus(true)
         }
       } catch {
@@ -35,12 +44,10 @@ function Root(props) {
     return notReadyUI
   }
 
-  installAction()
-
   return <button className="ui green button" onClick={exportActiveOrder}>
     <i className="eye icon"></i>
     执行单导出
   </button>
 }
 
-ReactDOM.render(<Root/>, root)
+ReactDOM.render(<Root/>, document.querySelector('#root'))

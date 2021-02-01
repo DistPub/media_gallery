@@ -30,8 +30,11 @@ def search_static_files(app, suffix='.jsx'):
                 compose[path] = get_depends(path)
 
     def sum_priority(path):
-        return functools.reduce(
-            lambda priority, depend: priority + sum_priority(depend), compose[path], len(compose[path]))
+        try:
+            return functools.reduce(
+                lambda priority, depend: priority + sum_priority(depend), compose[path], len(compose[path]))
+        except:
+            return 0
 
     results = [[path, sum_priority(path)] for path in compose]
     results.sort(key=lambda result: result[1])
