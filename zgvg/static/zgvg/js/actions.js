@@ -10,10 +10,15 @@ async function* SelectActiveOrder(di, api, callbackAction) {
   const element = document.createElement('div')
   element.innerHTML = await dshell.actionTextFetch(di, api, { cors: true })
   const rows = element.querySelectorAll('#rwd tbody tr')
+  const nextApi = element.querySelector('.pagination [aria-label="Next"]').getAttribute('href')
 
   if (callbackAction) {
     let command = this.ensureAction(callbackAction)
-    command.args = command.args.concat([rows.length])
+    let size = rows.length
+    if (nextApi !== '#') {
+      size++
+    }
+    command.args = command.args.concat([size])
     await di.exec(command)
   }
 
@@ -27,9 +32,14 @@ async function* SelectActiveOrder(di, api, callbackAction) {
       dataset[3], // 项目名称
     ]
   }
-  const nextApi = element.querySelector('.pagination [aria-label="Next"]').getAttribute('href')
   if (nextApi !== '#') {
     yield* SelectActiveOrder.apply(this, [di, nextApi, callbackAction])
+
+    if (callbackAction) {
+      let command = this.ensureAction(callbackAction)
+      command.args = command.args.concat([-1])
+      await di.exec(command)
+    }
   }
 }
 
@@ -97,14 +107,14 @@ async function SelectPaymentDetail(di, riseCompleteCallback, orderDetail) {
   }
 }
 
-/* port progress to action */
+/* port progress bar to action */
 
 function RiseTotalProgress(_, offset) {
-  window.riseTotalProgress(offset)
+  window.riseTotalProgressBar(offset)
 }
 
 function RiseCompleteProgress(_, offset=1) {
-  window.riseCompleteProgress(offset)
+  window.riseCompleteProgressBar(offset)
 }
 
 export default [SelectActiveOrder, SelectOrderDetail, SelectPaymentDetail, RiseTotalProgress, RiseCompleteProgress]

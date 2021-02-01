@@ -4,14 +4,14 @@ export function ProgressBar(props) {
   const ref = React.useRef(null)
 
   React.useEffect(() => {
-    window.showProgress = () => ref.current.classList.remove('hidden')
-    window.hideProgress = () => ref.current.classList.add('hidden')
-    window.resetProgress = () => {
+    window.showProgressBar = () => ref.current.classList.remove('hidden')
+    window.hideProgressBar = () => ref.current.classList.add('hidden')
+    window.resetProgressBar = () => {
       setTotal(0)
       setComplete(0)
     }
-    window.riseTotalProgress = offset => setTotal((old) => old + offset)
-    window.riseCompleteProgress = offset => setComplete((old) => old + offset)
+    window.riseTotalProgressBar = offset => setTotal((old) => old + offset)
+    window.riseCompleteProgressBar = offset => setComplete((old) => old + offset)
   }, [])
 
   React.useEffect(() => {

@@ -260,8 +260,8 @@
     import actions from '{% static "zgvg/js/actions.js" %}'
     window.actions = actions
     window.exportActiveOrder = async () => {
-      resetProgress()
-      showProgress()
+      resetProgressBar()
+      showProgressBar()
       let action = dshell.Action
         .selectActiveOrder([undefined, {action: '/RiseTotalProgress'}]) // => order
         .selectOrderDetail([{action: '/RiseTotalProgress'}, {action: '/RiseCompleteProgress'}]) // => account
