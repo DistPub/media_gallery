@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static babel_scripts %}
 {% block title %}ZGVG Gallery{% endblock %}
 {% block sw_url %}{% url "zgvg:sw.js" %}{% endblock %}
 {% block style %}
@@ -71,6 +71,8 @@
       <i class="eraser icon"></i>Reset
     </button>
   </div>
+  <div class="ui divider"></div>
+  <div id="root"></div>
 {% endblock %}
 {% block script %}
   {% include 'includes/modal.module' %}
@@ -253,4 +255,8 @@
       log(response.json());
     };
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.development.js" crossorigin></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.12.12/babel.min.js" crossorigin></script>
+  {% render_babel_scripts 'zgvg' %}
 {% endblock %}
