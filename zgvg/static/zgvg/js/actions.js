@@ -2,10 +2,10 @@ const apiActiveOrderList = atob("aHR0cDovL3dvcmsudmlnbGxlLmNvbS9CYXNlVGFibGUvSW5
 
 async function* SelectActiveOrder(_, api=apiActiveOrderList) {
   const element = document.createElement('div')
-  element.innerHTML = await dshell.actionTextFetch([api, { cors: true }])
+  element.innerHTML = await dshell.actionTextFetch(_, api, { cors: true })
   for (const row of element.querySelectorAll('#rwd tbody tr')) {
     const id = row.getAttribute('id')
-    const dataset = Array.from(row.querySelectorAll('td')).map(item=>item.innerText)
+    const dataset = Array.from(row.querySelectorAll('td')).map(item=>item.innerText.trim())
     yield [
       id, // meta id
       dataset[0], // 序号
@@ -25,11 +25,11 @@ async function* SelectOrderDetail(_, order) {
   const [orderID, ...rest] = order
   const api = `${apiOrderDetail}&ID=${orderID}`
   const element = document.createElement('div')
-  element.innerHTML = await dshell.actionTextFetch([api, { cors: true }])
+  element.innerHTML = await dshell.actionTextFetch(_, api, { cors: true })
   for (const row of element.querySelectorAll('#PLN_ProjectItem tbody tr.table-item')) {
     const id = row.getAttribute('id')
     const planDate = row.querySelector('.PlanDate input').value
-    const dataset = Array.from(row.querySelectorAll('td')).map(item=>item.innerText)
+    const dataset = Array.from(row.querySelectorAll('td')).map(item=>item.innerText.trim())
     yield [
       id, // meta id
       ...rest, // order info
@@ -53,7 +53,7 @@ async function SelectPaymentDetail(_, orderDetail) {
   const [id, ...rest] = orderDetail
   const api = `${apiPaymentDetail}&ID=${id}`
   const element = document.createElement('div')
-  element.innerHTML = await dshell.actionTextFetch([api, { cors: true }])
+  element.innerHTML = await dshell.actionTextFetch(_, api, { cors: true })
   try {
     const receiver = element.querySelector('input[name="Payee"]').value
     const bank = element.querySelector('input[name="Bank"]').value
