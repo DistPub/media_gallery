@@ -1,3 +1,5 @@
+import {ProgressBar} from '../../base/js/progress_bar.jsx'
+
 function Root(props) {
   const [depStatus, setDepStatus] = React.useState(false)
   const notReadyUI = <div className="ui icon message">
@@ -28,10 +30,13 @@ function Root(props) {
     return notReadyUI
   }
 
-  return <button className="ui green button" onClick={props.export}>
+  return <>
+  <button className="ui green button" onClick={props.export}>
     <i className="eye icon"></i>
     执行单导出
   </button>
+  <ProgressBar/>
+  </>
 }
 
 ReactDOM.render(<Root actions={window.actions} export={window.exportActiveOrder}/>, document.querySelector('#root'))

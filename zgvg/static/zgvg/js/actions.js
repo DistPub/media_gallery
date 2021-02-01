@@ -1,9 +1,23 @@
+import { cloneDeep } from "https://cdn.jsdelivr.net/npm/dshell@1.3.1/dep.js"
+
 const apiActiveOrderList = atob("aHR0cDovL3dvcmsudmlnbGxlLmNvbS9CYXNlVGFibGUvSW5kZXgvSW5kZXg/VGFibGVOYW1lPVBMTi9QTE5fUHJvamVjdA==")
 
-async function* SelectActiveOrder(_, api=apiActiveOrderList) {
+async function* SelectActiveOrder(di, api, callbackAction) {
+  if (!api) {
+    api = apiActiveOrderList
+  }
+
   const element = document.createElement('div')
-  element.innerHTML = await dshell.actionTextFetch(_, api, { cors: true })
-  for (const row of element.querySelectorAll('#rwd tbody tr')) {
+  element.innerHTML = await dshell.actionTextFetch(di, api, { cors: true })
+  const rows = element.querySelectorAll('#rwd tbody tr')
+
+  if (callbackAction) {
+    let command = this.ensureAction(callbackAction)
+    command.args = command.args.concat([rows.length])
+    await di.exec(command)
+  }
+
+  for (const row of rows) {
     const id = row.getAttribute('id')
     const dataset = Array.from(row.querySelectorAll('td')).map(item=>item.innerText.trim())
     yield [
@@ -15,18 +29,32 @@ async function* SelectActiveOrder(_, api=apiActiveOrderList) {
   }
   const nextApi = element.querySelector('.pagination [aria-label="Next"]').getAttribute('href')
   if (nextApi !== '#') {
-    yield* SelectActiveOrder(null, nextApi)
+    yield* SelectActiveOrder.apply(this, [di, nextApi, callbackAction])
   }
 }
 
 const apiOrderDetail = atob("aHR0cDovL3dvcmsudmlnbGxlLmNvbS9CYXNlVGFibGUvRWRpdC8/VGFibGVOYW1lPVBMTi9QTE5fUHJvamVjdCZFeHRlbmQ9JlNlYXJjaEZpZWxkPQ==")
 
-async function* SelectOrderDetail(_, order) {
+async function* SelectOrderDetail(di, riseTotalCallback, riseCompleteCallback, order) {
   const [orderID, ...rest] = order
   const api = `${apiOrderDetail}&ID=${orderID}`
   const element = document.createElement('div')
-  element.innerHTML = await dshell.actionTextFetch(_, api, { cors: true })
-  for (const row of element.querySelectorAll('#PLN_ProjectItem tbody tr.table-item')) {
+  element.innerHTML = await dshell.actionTextFetch(di, api, { cors: true })
+
+  if (riseCompleteCallback) {
+    let command = this.ensureAction(riseCompleteCallback)
+    await di.exec(command)
+  }
+
+  const rows = element.querySelectorAll('#PLN_ProjectItem tbody tr.table-item')
+
+  if (riseTotalCallback) {
+    let command = this.ensureAction(riseTotalCallback)
+    command.args = command.args.concat([rows.length])
+    await di.exec(command)
+  }
+
+  for (const row of rows) {
     const id = row.getAttribute('id')
     const planDate = row.querySelector('.PlanDate input').value
     const dataset = Array.from(row.querySelectorAll('td')).map(item=>item.innerText.trim())
@@ -49,11 +77,11 @@ async function* SelectOrderDetail(_, order) {
 
 const apiPaymentDetail = atob("aHR0cDovL3dvcmsudmlnbGxlLmNvbS9QSlRfUGF5bWVudC9Hb1BheU1lbnREZXRhaWw/VGFibGVOYW1lPVBMTi9QTE5fUHJvamVjdEl0ZW0=")
 
-async function SelectPaymentDetail(_, orderDetail) {
+async function SelectPaymentDetail(di, riseCompleteCallback, orderDetail) {
   const [id, ...rest] = orderDetail
   const api = `${apiPaymentDetail}&ID=${id}`
   const element = document.createElement('div')
-  element.innerHTML = await dshell.actionTextFetch(_, api, { cors: true })
+  element.innerHTML = await dshell.actionTextFetch(di, api, { cors: true })
   try {
     const receiver = element.querySelector('input[name="Payee"]').value
     const bank = element.querySelector('input[name="Bank"]').value
@@ -61,7 +89,22 @@ async function SelectPaymentDetail(_, orderDetail) {
     return [...rest, receiver, bank, account]
   } catch {
     return [...rest, 'N/A', 'N/A', 'N/A']
+  } finally {
+    if (riseCompleteCallback) {
+      let command = this.ensureAction(riseCompleteCallback)
+      await di.exec(command)
+    }
   }
 }
 
-export default [SelectActiveOrder, SelectOrderDetail, SelectPaymentDetail]
+/* port progress to action */
+
+function RiseTotalProgress(_, offset) {
+  window.riseTotalProgress(offset)
+}
+
+function RiseCompleteProgress(_, offset=1) {
+  window.riseCompleteProgress(offset)
+}
+
+export default [SelectActiveOrder, SelectOrderDetail, SelectPaymentDetail, RiseTotalProgress, RiseCompleteProgress]
