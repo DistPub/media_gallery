@@ -16,3 +16,18 @@ export function ExportButton(props) {
     {props.children}
   </button>
 }
+
+export function ProgressBar(props) {
+  const {total, complete, display} = props
+  const percent = total === 0 ? 0 : Math.min(Number((complete * 100 / total).toFixed(2)), 100)
+  return <div className={`ui transition small indicating progress ${
+    !display && 'hidden'
+  } ${
+    percent === 0 ? 'active' : 'success'
+  }`} data-percent={percent}>
+    <div className="bar" style={{width: `${percent}%`}}>
+      <div className="progress">{`${percent}%`}</div>
+    </div>
+    <div className="label">fetching with ❤️️</div>
+  </div>
+}

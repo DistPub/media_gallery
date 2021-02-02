@@ -1,5 +1,4 @@
-import {ProgressBar} from '../../base/js/progress_bar.jsx'
-import {LoadingMessage, ExportButton} from "./components.jsx"
+import {ProgressBar, LoadingMessage, ExportButton} from "./components.jsx"
 
 export function ExportActiveOrderButton(props) {
   const [loading, setLoading] = React.useState(true)
@@ -22,7 +21,7 @@ export function ExportActiveOrderButton(props) {
   }
 
   return <>
-    <ProgressBar/>
+    <ProgressBar display={false} total={0} complete={0}/>
     <ExportButton onClick={window.exportActiveOrder.click}>执行单导出</ExportButton>
   </>
 }
