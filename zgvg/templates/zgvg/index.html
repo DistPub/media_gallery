@@ -83,7 +83,7 @@
           atob('aHR0cDovL3dvcmsudmlnbGxlLmNvbS9JbmRleC9JbmRleA=='),
           {mode: 'cors', credentials: 'include'});
 
-        if (response.redirected) {
+        if (response.redirected || !response.ok) {
           showModal(
             'Website Connectivity Error',
             'Please make sure:<br>' +
