@@ -258,23 +258,25 @@
   <script type="module" about="export active order">
     // jsx responsibility only to react, other part logic follow normal esm
     import actions from '{% static "zgvg/js/actions.js" %}'
-    window.actions = actions
-    window.exportActiveOrder = async () => {
-      resetProgressBar()
-      showProgressBar()
-      let action = dshell.Action
-        .selectActiveOrder([undefined, {action: '/RiseTotalProgress'}]) // => order
-        .selectOrderDetail([{action: '/RiseTotalProgress'}, {action: '/RiseCompleteProgress'}]) // => account
-        .selectPaymentDetail([{action: '/RiseCompleteProgress'}]) // => account with payment
-        .Collect // => [row, ...]
-        .buildExcel(['data',
-          ["序号", "执行单", "项目名称", "平台", "账号名称", "ID", "位置", "支出", "成本", "供应商", "方式",
-            "发布日期", "付款", "收款人", "开户行", "银行账号"]
-        ])
-        .download({args: ['active_order.xlsx']})
+    window.exportActiveOrder = {
+      actions,
+      async click() {
+        window.resetProgressBar()
+        window.showProgressBar()
+        let action = window.dshell.Action
+          .selectActiveOrder([undefined, {action: '/RiseTotalProgress'}]) // => order
+          .selectOrderDetail([{action: '/RiseTotalProgress'}, {action: '/RiseCompleteProgress'}]) // => account
+          .selectPaymentDetail([{action: '/RiseCompleteProgress'}]) // => account with payment
+          .Collect // => [row, ...]
+          .buildExcel(['data',
+            ["序号", "执行单", "项目名称", "平台", "账号名称", "ID", "位置", "支出", "成本", "供应商", "方式",
+              "发布日期", "付款", "收款人", "开户行", "银行账号"]
+          ])
+          .download({args: ['active_order.xlsx']})
 
-      const response = await dshell.exec(action)
-      console.log(response.json())
+        const response = await window.dshell.exec(action)
+        console.log(response.json())
+      }
     }
   </script>
   <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.development.js" crossorigin></script>
