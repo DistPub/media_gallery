@@ -126,5 +126,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = '/static/'
-STATICFILES_STORAGE = 'base.storage.CustomCompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = 'zgvg.storage.ReactJSXTranspilingStorage'
 STATICFILES_DIRS = [BASE_DIR / 'vendor']

@@ -70,8 +70,6 @@ class ReactJSXTranspilingMiddleware(MiddlewareMixin):
         # transpiling on the fly
         result = self.ctx.call('Babel.transform', get_file_content(file_path), {
             "presets": ["react"],
-            "sourceMaps": 'inline',
-            "minified": True,
-            "comments": False
+            "sourceMaps": 'inline'
         })
         return HttpResponse(content=result['code'], content_type='application/javascript')
