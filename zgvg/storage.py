@@ -39,6 +39,7 @@ class ReactJSXTranspilingStorage(CompressedManifestStaticFilesStorage):
             "comments": False
         })
         file.seek(0)
+        file.truncate()
         file.write(result['code'])
         file.close()
         return origin
