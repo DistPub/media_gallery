@@ -55,12 +55,13 @@ class ReactJSXTranspilingMiddleware(MiddlewareMixin):
         self.ctx.eval(get_file_content(babel))
 
     def process_response(self, request, response):
-        if not settings.DEBUG:
-            return response
-
         _, file_suffix = os.path.splitext(request.path)
 
         if file_suffix != '.jsx':
+            return response
+
+        if not settings.DEBUG:
+            response['Content-Type'] = 'application/javascript'
             return response
 
         file_path = get_absolute_path(request.path, is_request_path=True)
