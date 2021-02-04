@@ -107,14 +107,4 @@ async function SelectPaymentDetail(di, riseCompleteCallback, orderDetail) {
   }
 }
 
-/* port progress bar to action */
-
-function RiseTotalProgress(_, offset) {
-  window.riseTotalProgressBar(offset)
-}
-
-function RiseCompleteProgress(_, offset=1) {
-  window.riseCompleteProgressBar(offset)
-}
-
-export default [SelectActiveOrder, SelectOrderDetail, SelectPaymentDetail, RiseTotalProgress, RiseCompleteProgress]
+export default [SelectActiveOrder, SelectOrderDetail, SelectPaymentDetail]
