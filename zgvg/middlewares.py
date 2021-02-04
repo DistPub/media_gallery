@@ -32,6 +32,8 @@ class ReactJSXTranspilingMiddleware(MiddlewareMixin):
     Transpiling react .jsx file when DEBUG=True
     for production:
         file storage will transpiling when execute `collectstatic` command
+
+    Note: `runserver` command **MUST** add `--nostatic` option
     """
     def __init__(self, get_response=None):
         super().__init__(get_response)
