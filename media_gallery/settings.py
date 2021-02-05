@@ -42,11 +42,12 @@ INSTALLED_APPS = [
     'libp2p',
     'zgvg',
     'avideo_chat',
+    'babel_transpiling',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'zgvg.middlewares.ReactJSXTranspilingMiddleware',
+    'babel_transpiling.middlewares.StaticFilesTranspilingMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -126,5 +127,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = '/static/'
-STATICFILES_STORAGE = 'zgvg.storage.ReactJSXTranspilingStorage'
+STATICFILES_STORAGE = 'base.storage.CustomManifestStaticFilesStorage'
 STATICFILES_DIRS = [BASE_DIR / 'vendor']
