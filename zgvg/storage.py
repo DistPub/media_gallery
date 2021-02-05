@@ -35,8 +35,11 @@ class ReactJSXTranspilingStorage(CompressedManifestStaticFilesStorage):
         file = open(self.path(name), 'r+')
         result = self.ctx.call('Babel.transform', file.read(), {
             "presets": ["react"],
-            "minified": True,
-            "comments": False
+            "generatorOpts": {
+                "jsescOption": {
+                    "minimal": True,
+                },
+            }
         })
         file.seek(0)
         file.truncate()
