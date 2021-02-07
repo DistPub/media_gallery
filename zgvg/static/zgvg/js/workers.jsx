@@ -1,16 +1,17 @@
 import actions from './actions.js'
 import {ProgressBar, LoadingMessage, ExportButton} from "./components.jsx"
+import {generateID} from './utils.js'
 
-async function click(setDisplay, setTotal, setComplete) {
+async function click(setDisplay, setTotal, setComplete, riseTotalCallbackName, riseCompleteCallbackName) {
   // reset and show progress bar
   setComplete(0)
   setTotal(0)
   setDisplay(true)
 
   let action = window.dshell.Action
-    .selectActiveOrder([undefined, {action: '/RiseTotalProgress'}]) // => order
-    .selectOrderDetail([{action: '/RiseTotalProgress'}, {action: '/RiseCompleteProgress'}]) // => account
-    .selectPaymentDetail([{action: '/RiseCompleteProgress'}]) // => account with payment
+    .selectActiveOrder([undefined, {action: `/${riseTotalCallbackName}`}]) // => order
+    .selectOrderDetail([{action: `/${riseTotalCallbackName}`}, {action: `/${riseCompleteCallbackName}`}]) // => account
+    .selectPaymentDetail([{action: `/${riseCompleteCallbackName}`}]) // => account with payment
     .Collect // => [row, ...]
     .buildExcel(['data',
       ["序号", "执行单", "项目名称", "平台", "账号名称", "ID", "位置", "支出", "成本", "供应商", "方式",
@@ -24,30 +25,12 @@ async function click(setDisplay, setTotal, setComplete) {
 
 export function ExportActiveOrderButton(props) {
   const [loading, setLoading] = React.useState(true)
-  React.useEffect(() => {
-    const timer = setInterval(async () => {
-      try {
-        if(window.dshell.userNode.id) {
-          clearInterval(timer)
-
-          actions.push(RiseCompleteProgress)
-          actions.push(RiseTotalProgress)
-          await window.dshell.installModule(actions)
-
-          setLoading(false)
-        }
-      } catch {
-        // dep not resolved
-      }
-    }, 500)
-  }, [])
-
   const [display, setDisplay] = React.useState(false)
   const [total, setTotal] = React.useState(0)
   const [complete, setComplete] = React.useState(0)
+  const [riseTotalCallbackName, setRiseTotalCallbackName] = React.useState('RiseTotalProgress')
+  const [riseCompleteCallbackName, setRiseCompleteCallbackName] = React.useState('RiseCompleteProgress')
 
-  // todo: action name is global unique
-  // but this is temporary for callback, need dynamic generate a random name
   function RiseTotalProgress(_, offset) {
     setTotal(old => old + offset)
   }
@@ -56,12 +39,36 @@ export function ExportActiveOrderButton(props) {
     setComplete(old => old + offset)
   }
 
+  React.useEffect(() => {
+    const timer = setInterval(async () => {
+      if(window.dshell?.userNode?.id) {
+        clearInterval(timer)
+
+        let value = generateID('RiseTotalProgress')
+        Object.defineProperty(RiseTotalProgress, 'name', { value })
+        setRiseTotalCallbackName(value)
+
+        value = generateID('RiseCompleteProgress')
+        Object.defineProperty(RiseCompleteProgress, 'name', { value })
+        setRiseCompleteCallbackName(value)
+
+        actions.push(RiseCompleteProgress)
+        actions.push(RiseTotalProgress)
+        await window.dshell.installModule(actions)
+
+        setLoading(false)
+      }
+    }, 500)
+  }, [])
+
   if (loading) {
     return <LoadingMessage title={'请稍等'}>执行单导出功能加载中...</LoadingMessage>
   }
 
   return <>
     <ProgressBar display={display} total={total} complete={complete}/>
-    <ExportButton onClick={async () => await click(setDisplay, setTotal, setComplete)}>执行单导出</ExportButton>
+    <ExportButton onClick={async () => await click(
+      setDisplay, setTotal, setComplete, riseTotalCallbackName, riseCompleteCallbackName
+    )}>执行单导出</ExportButton>
   </>
 }
