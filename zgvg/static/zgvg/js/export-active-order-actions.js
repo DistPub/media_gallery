@@ -1,10 +1,7 @@
 const apiActiveOrderList = atob("aHR0cDovL3dvcmsudmlnbGxlLmNvbS9CYXNlVGFibGUvSW5kZXgvSW5kZXg/VGFibGVOYW1lPVBMTi9QTE5fUHJvamVjdA==")
 
 async function* SelectActiveOrder(di, api, callbackAction) {
-  if (!api) {
-    api = apiActiveOrderList
-  }
-
+  api = api ?? apiActiveOrderList
   const element = document.createElement('div')
   element.innerHTML = await dshell.actionTextFetch(di, api, { cors: true })
   const rows = element.querySelectorAll('#rwd tbody tr')

@@ -11,67 +11,6 @@
 {% endblock %}
 {% block container %}
   {% include 'includes/modal.html' %}
-  <h2 class="ui header">
-    <i class="flag checkered icon"></i>
-    <div class="content">
-      The Input
-      <div class="sub header">Input zgvg resource project name , one per line</div>
-    </div>
-  </h2>
-
-  <div class="ui form">
-    <div class="field">
-      <textarea id="project_name"></textarea>
-    </div>
-    <div class="inline fields">
-      <div class="field">
-        <label for="product_brand">Product Brand</label>
-        <select id="product_brand">
-          <option value="微信">微信</option>
-          <option value="微博" selected>微博</option>
-          <option value="美拍">美拍</option>
-          <option value="秒拍">秒拍</option>
-          <option value="花椒">花椒</option>
-          <option value="微博直播">微博直播</option>
-          <option value="快手直播">快手直播</option>
-          <option value="一直播">一直播</option>
-          <option value="映客">映客</option>
-          <option value="抖音直播">抖音直播</option>
-          <option value="其它">其它</option>
-          <option value="B站">B站</option>
-          <option value="抖音">抖音</option>
-          <option value="快手">快手</option>
-          <option value="小红书">小红书</option>
-          <option value="传统媒体">传统媒体</option>
-          <option value="知乎">知乎</option>
-          <option value="今日头条">今日头条</option>
-          <option value="微信群">微信群</option>
-          <option value="微信朋友圈">微信朋友圈</option>
-          <option value="QQ空间">QQ空间</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="peer">DShell Host</label>
-        <select id="peer">
-          <option value="" selected>localhost</option>
-        </select>
-      </div>
-      <div class="field">
-        <div class="ui checkbox">
-          <input type="checkbox" tabindex="0" class="hidden" id="preview" name="preview">
-          <label for="preview">preview file online</label>
-        </div>
-      </div>
-    </div>
-    {% include 'includes/progress.html' %}
-    <button class="ui button primary right labeled icon" type="submit" id="fetch">
-      <i class="rocket icon"></i>Fetch
-    </button>
-    <button class="negative ui button  right labeled icon" id="reset">
-      <i class="eraser icon"></i>Reset
-    </button>
-  </div>
-  <div class="ui divider"></div>
   <div id="root"></div>
 {% endblock %}
 {% block script %}
@@ -89,8 +28,7 @@
             'Please make sure:<br>' +
             '1. already login<br>' +
             '2. disable Chrome flag(chrome://flags/#same-site-by-default-cookies)<br>' +
-            'then refresh page<br>' +
-            'Or you can use remote host to exec action!');
+            'then refresh page');
         }
       } catch (error) {
         showModal(
@@ -98,169 +36,17 @@
           'Please make sure<br>' +
           '1. <a href="{% static 'zgvg/images/mix-content-enable.png' %}" target="_blank">mix content enable</a><br>' +
           '2. <a href="{% static 'zgvg/images/cors-options.png' %}" target="_blank">cors extension correct config</a> and <a href="{% static 'zgvg/images/cors-status-on.png' %}" target="_blank">status is on</a><br>' +
-          'then refresh page<br>' +
-          'Or you can use remote host to exec action!');
+          'then refresh page');
       }
     })();
   </script>
-  {% include 'includes/progress.module' %}
-  <script src="https://cdn.jsdelivr.net/npm/dshell@1.3.1/dep.bundle.min.js"></script>
-  <script type="module" about="main">
-    import { Shell, UserNode, Soul, datastoreLevel } from 'https://cdn.jsdelivr.net/npm/dshell@1.3.1/index.min.js';
-
-    const username = 'zgvg';
-    const db = (new datastoreLevel(`dshell/${username}`, { prefix: '' })).db;
-    const country = '/dns4/webrtc-star.dist.pub/tcp/443/wss/p2p-webrtc-star';
-    const simplePeerOptions = {
-      trickle: true,
-      config: {
-        iceServers: {{ iceServers|safe }},
-      }
-    };
-    const my = new UserNode(db, username, country, simplePeerOptions);
-    const soul = new Soul(db, username);
-    const shell = new Shell(my, soul);
-    window.dshell = shell;
-    const peers = [];
-    const intervalCache = {};
-
-    async function beatPingPeer(id) {
-      await my.pingPeer(id)
-    }
-
-    function log(message) {
-      console.log(message)
-    }
-
-    function MeetPeer(id) {
-      log(`* Nice to meet ${id}`);
-
-      if (!peers.includes(id)) {
-        const element = document.createElement('option');
-        element.value = id;
-        element.innerText = id;
-        element.setAttribute('id', id)
-        document.querySelector('#peer').appendChild(element);
-        peers.push(id)
-        intervalCache[id] = window.setInterval(async () => await beatPingPeer(id), 3000);
-      }
-    }
-
-    function AwayPeer(id) {
-      log(`* Bay ${id}`);
-
-      const index = peers.indexOf(id);
-      if (index > -1) {
-        peers.splice(index, 1);
-        document.querySelector(`#${id}`).remove();
-        window.clearInterval(intervalCache[id]);
-        delete intervalCache[id]
-      }
-    }
-    my.on('user:online', MeetPeer);
-    my.on('user:offline', AwayPeer);
-
-    let fetchCount, fetchedCount;
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      await db.put('welcome', 'shell');
-      db.db.codec.opts.valueEncoding = 'json';
-      await my.init();
-      window.addEventListener("unload", async () => await my.vegetative());
-      await soul.init();
-      shell.install();
-      shell.installModule(
-        'https://cdn.jsdelivr.net/npm/dshell@1.3.1/actions/network.js',
-        'https://cdn.jsdelivr.net/npm/dshell@1.3.1/actions/dom.js',
-        'https://cdn.jsdelivr.net/npm/dshell@1.3.1/actions/utils.js',
-        'https://cdn.jsdelivr.net/npm/dshell@1.3.1/actions/soul.js',
-      );
-      shell.installExternalAction(function BuildFetchPayload(_, type, name) {
-        return {
-          SearchTableName: 'Search/PRT_Product',
-          ProjectName: name,
-          Supply: '',
-          MaxCost: '',
-          Fans: '',
-          Tag: '',
-          Place: '',
-          Position: '',
-          ProductBrand: type,
-          Order: ''
-        }
-      });
-      shell.installExternalAction(function ParallelCallback(_, action) {
-        log(`${action.action} done +1`)
-        fetchedCount ++
-        renderProgress(fetchCount, fetchedCount)
-      });
-      await my.awake();
-    });
-
-    document.querySelector('#reset').onclick = () => {
-      document.querySelector('#project_name').value = '';
-      document.querySelector('#preview').checked = false;
-      document.querySelector('#peer').value = '';
-      hideProgress();
-    };
-
-    document.querySelector('#fetch').onclick = async () => {
-      if (!shell) {
-        return showModal('Init Shell', 'Please wait seconds and retry', false);
-      }
-
-      const peer = document.querySelector('#peer').value
-      const remoteHost = []
-      const localHost = []
-
-      if (peer.length) {
-        remoteHost.push(peer)
-        localHost.push(my.id)
-        if (!confirm('Use remote DShell host, the P2P connection quality may cause action failure, sure?')) {
-          return showModal('Cancel', 'You canceled exec action on remote', false);
-        }
-      }
-
-      const names = document.querySelector('#project_name').value.split('\n').filter(item => item.length > 0)
-      log(names)
-
-      if (!names.length) {
-        return showModal('Empty Inpute', 'You must input one item at least!');
-      }
-
-      fetchCount = names.length
-      fetchedCount = 0
-      resetProgress()
-      showProgress()
-
-      const brand = document.querySelector('#product_brand').value
-      log(brand)
-      const api = atob('aHR0cDovL3dvcmsudmlnbGxlLmNvbS9CYXNlVGFibGUvTGlzdA==')
-
-      let action = shell.action(true, {receivers: remoteHost})
-        .zipArray([Array(names.length).fill(brand), names]) // => [[brand, name], ...]
-        .BuildFetchPayload.PCollect // => [payload, ...]
-        .textFetch([api, { cors: true, bodyEncoder: 'form', method: 'POST'}])
-        .pCollect({callback: {action: '/ParallelCallback', receivers: localHost}}) // => [html, ...]
-        .Map.selectText([{ selector: 'div.col-sm-2 > div:nth-child(4)', killImg: true }]).Collect // => [vendor, ...]
-        .zipArray([names])
-        .buildExcel(['data', ['name', 'vendor']])
-        .download({args: ['vendor.xlsx'], receivers: localHost})
-
-      if (document.querySelector('#preview').checked) {
-        action = action.pushFile(['/tmp/vendor.xlsx']).previewOffice({receivers: localHost})
-      }
-
-      const response = await shell.exec(action)
-      log(response.json());
-    };
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/dshell@1.4.0/dep.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.development.js" crossorigin></script>
   <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.development.js" crossorigin></script>
   <script type="module">
     {% transpiling %}
-      import {ExportActiveOrderButton} from '{% static 'zgvg/js/workers.jsx' %}'
-      ReactDOM.render(<ExportActiveOrderButton/>, document.querySelector('#root'))
+      import App from '{% static 'zgvg/js/index.jsx' %}'
+      ReactDOM.render(<App/>, document.querySelector('#root'))
     {% endtranspiling %}
   </script>
 {% endblock %}
