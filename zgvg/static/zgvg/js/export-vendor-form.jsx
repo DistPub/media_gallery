@@ -5,9 +5,10 @@ import {
   ResetButton,
   SelectOne,
   SubmitButton,
-  TextArea
+  TextArea,
+  ModalDialog
 } from "./components.jsx"
-import {InitedShellContext, ShellContext} from './context.js'
+import {InitedShellContext, ShellContext, ModalContainer} from './context.js'
 import {generateID} from './utils.js'
 
 
@@ -50,11 +51,13 @@ function makeFlow(shell, names, brand, checked, CallbackName) {
 export default function ExportVendorForm(props) {
   const inited = React.useContext(InitedShellContext)
   const shell = React.useContext(ShellContext)
+  const modalContainer = React.useContext(ModalContainer)
   const [loading, setLoading] = React.useState(true)
   const [display, setDisplay] = React.useState(false)
   const [total, setTotal] = React.useState(0)
   const [complete, setComplete] = React.useState(0)
   const [checked, setChecked] = React.useState(false)
+  const [error, setError] = React.useState(false)
   const [resource, setResource] = React.useState('')
   const [brand, setBrand] = React.useState(brandOptions[0])
   const [riseCompleteCallbackName, setRiseCompleteCallbackName] = React.useState('RiseCompleteProgress')
@@ -102,7 +105,7 @@ export default function ExportVendorForm(props) {
       <SubmitButton onClick={async ()=>{
         const names = resource.split('\n').filter(item => item.length > 0)
         if (!names.length) {
-          return showModal('Empty Inpute', 'You must input one item at least!')
+          return setError(true)
         }
 
         setComplete(0)
@@ -118,6 +121,9 @@ export default function ExportVendorForm(props) {
         setBrand(brandOptions[0])
         setDisplay(false)
       }}/>
+      { error && <ModalDialog title={'错误'} body={'请输入至少一个资源项目名称！'} container={modalContainer} onClose={
+        ()=>setError(false)
+      }/>}
     </div>
   }
 

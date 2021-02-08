@@ -7,15 +7,18 @@
     .ui.header {
       display: table;
     }
+    dialog {
+      padding: 0;
+      border: 0;
+    }
   </style>
 {% endblock %}
 {% block container %}
-  {% include 'includes/modal.html' %}
   <div id="root"></div>
+  <div id="modal"></div>
 {% endblock %}
 {% block script %}
-  {% include 'includes/modal.module' %}
-  <script type="module" about="policy">
+  <script type="modulex" about="policy">
     (async () => {
       try {
         let response = await fetch(

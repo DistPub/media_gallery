@@ -85,3 +85,32 @@ export function ResetButton(props) {
     <i className="eraser icon"></i>{props.children ?? '重置'}
   </button>
 }
+
+export function ModalDialog(props) {
+  const ref = React.useRef(null)
+  React.useEffect(()=>{
+    ref.current.showModal()
+  }, [])
+  function close() {
+    ref.current.close()
+    props.onClose()
+  }
+  const negative = props.negative ?? true
+
+  return ReactDOM.createPortal(<dialog ref={ref} onClick={(event)=>{
+    const rect = ref.current.getBoundingClientRect()
+    if (event.clientY < rect.top || event.clientY > rect.bottom ||
+      event.clientX < rect.left || event.clientX > rect.right) {
+      close()
+    }
+  }}>
+    <div className={`ui icon ${negative && 'negative'} large message`}>
+      <i className="close icon" onClick={()=>close()}></i>
+      <i className="bullhorn icon"></i>
+      <div className="content">
+        <div className="header modal-message-title">{props.title}</div>
+        <p className="modal-message-body">{props.body}</p>
+      </div>
+    </div>
+  </dialog>, props.container)
+}
