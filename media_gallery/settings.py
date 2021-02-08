@@ -24,7 +24,7 @@ SECRET_KEY = 'dnrh80@=e8o+4)3+d036^e$g*&7h-3vfcy%ig$bcf$no^n4qwe'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
+INTERNAL_IPS = ['127.0.0.1']
 ALLOWED_HOSTS = ['*']
 
 
