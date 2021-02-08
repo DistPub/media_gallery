@@ -30,9 +30,12 @@ export default function App(props) {
   }, [loading])
 
   React.useEffect(async () => {
+    if (loading || chromeError || connectError) {
+      return
+    }
     await shell.init()
     setInited(true)
-  }, [])
+  }, [loading, chromeError, connectError])
 
   function reCheck() {
     setLoading(true)
