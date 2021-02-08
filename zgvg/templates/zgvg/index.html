@@ -18,31 +18,6 @@
   <div id="modal"></div>
 {% endblock %}
 {% block script %}
-  <script type="modulex" about="policy">
-    (async () => {
-      try {
-        let response = await fetch(
-          atob('aHR0cDovL3dvcmsudmlnbGxlLmNvbS9JbmRleC9JbmRleA=='),
-          {mode: 'cors', credentials: 'include'});
-
-        if (response.redirected || !response.ok) {
-          showModal(
-            'Website Connectivity Error',
-            'Please make sure:<br>' +
-            '1. already login<br>' +
-            '2. disable Chrome flag(chrome://flags/#same-site-by-default-cookies)<br>' +
-            'then refresh page');
-        }
-      } catch (error) {
-        showModal(
-          'Chrome Policy Error',
-          'Please make sure<br>' +
-          '1. <a href="{% static 'zgvg/images/mix-content-enable.png' %}" target="_blank">mix content enable</a><br>' +
-          '2. <a href="{% static 'zgvg/images/cors-options.png' %}" target="_blank">cors extension correct config</a> and <a href="{% static 'zgvg/images/cors-status-on.png' %}" target="_blank">status is on</a><br>' +
-          'then refresh page');
-      }
-    })();
-  </script>
   <script src="https://cdn.jsdelivr.net/npm/dshell@1.4.0/dep.bundle.min.js"></script>
   {% if debug %}
     <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.development.js" crossorigin></script>

@@ -1,3 +1,23 @@
+export function CheckListForm(props) {
+  return <IconMessage title={props.title ?? '检查清单'} icon={props.icon ?? 'tasks'}>
+    <ol className="ui list">{props.children}</ol>
+    <button className="ui green button" onClick={props.onClick}>{props.label ?? '完成'}</button>
+    {props.ignore && <button className="negative ui button" onClick={props.onIgnore}>{props.ignoreLabel ?? '忽略'}</button>}
+  </IconMessage>
+}
+
+export function IconMessage(props) {
+  return <div className="ui icon message">
+    <i className={`${props.icon} icon`}></i>
+    <div className="content">
+      <div className="header">
+        {props.title}
+      </div>
+      {props.children}
+    </div>
+  </div>
+}
+
 export function LoadingMessage(props) {
   return <div className="ui icon message">
     <i className="notched circle loading icon"></i>
