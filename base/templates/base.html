@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{% if lang %}{{ lang }}{% else %}en{% endif %}">
 <head>
     <meta charset="utf-8"/>
     <meta content='width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,minimal-ui' name='viewport'/>
