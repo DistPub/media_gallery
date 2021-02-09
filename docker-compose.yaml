@@ -12,7 +12,7 @@ services:
           - TZ=Asia/Shanghai
           - DJANGO_SETTINGS_MODULE=media_gallery.settings_deploy
       command: >
-          bash -c "pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple
+          bash -c "pip install -r requirements.txt
           && ./manage.py collectstatic --noinput
           && daphne -b 0.0.0.0 -p 7000 media_gallery.asgi:application"
       ports:
