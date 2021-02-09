@@ -8,7 +8,7 @@ import {
   TextArea,
   ModalDialog
 } from "./components.jsx"
-import {InitedShellContext, ShellContext, ModalContainer} from './context.js'
+import {ShellContext, ModalContainer} from './context.js'
 import {generateID} from './utils.js'
 
 
@@ -49,7 +49,6 @@ function makeFlow(shell, names, brand, checked, CallbackName) {
 }
 
 export default function ExportVendorForm(props) {
-  const inited = React.useContext(InitedShellContext)
   const shell = React.useContext(ShellContext)
   const modalContainer = React.useContext(ModalContainer)
   const [loading, setLoading] = React.useState(true)
@@ -68,7 +67,7 @@ export default function ExportVendorForm(props) {
   }
 
   React.useEffect(async () => {
-    if (!inited) {
+    if (!shell) {
       return
     }
 
@@ -79,7 +78,7 @@ export default function ExportVendorForm(props) {
     shell.installExternalAction(RiseCompleteProgress)
 
     setLoading(false)
-  }, [inited])
+  }, [shell])
 
   let view = null
 

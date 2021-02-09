@@ -23,9 +23,9 @@ export function LoadingMessage(props) {
     <i className="notched circle loading icon"></i>
     <div className="content">
       <div className="header">
-        {props.title}
+        {props.title ?? '加载组件'}
       </div>
-      <p>{props.children}</p>
+      <p>{props.children ?? '动态加载组件中...'}</p>
     </div>
   </div>
 }

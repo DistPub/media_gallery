@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static babel_transpiling %}
-{% block title %}ZGVG Gallery{% endblock %}
+{% block title %}ZGVG画廊{% endblock %}
 {% block sw_url %}{% url "zgvg:sw.js" %}{% endblock %}
 {% block style %}
   <style type="text/css">
@@ -26,29 +26,5 @@
     <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.production.min.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.production.min.js" crossorigin></script>
   {% endif %}
-  <script type="module">
-  (async () => {
-    const root = document.querySelector('#root')
-    const fallback = async (error) => {
-      if (root.children.length) {
-        return
-      }
-      // 白屏
-      const AppHelper = (await import('{% static "zgvg/js/app-helper.jsx" %}')).default
-    {% transpiling %}
-      ReactDOM.render(<AppHelper error={error}/>, root)
-    {% endtranspiling %}
-    }
-    window.onerror = (message, file, line, column, error) => fallback(error)
-
-    try {
-      const App = (await import('{% static "zgvg/js/index.jsx" %}')).default
-    {% transpiling %}
-      ReactDOM.render(<App/>, root)
-    {% endtranspiling %}
-    } catch (error) {
-      fallback(error)
-    }
-  })()
-  </script>
+  <script type="module" src="{% static 'zgvg/js/index.jsx' %}"></script>
 {% endblock %}

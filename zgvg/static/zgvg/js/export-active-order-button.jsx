@@ -4,7 +4,7 @@ import {
   ExportButton,
   Header
 } from "./components.jsx"
-import {InitedShellContext, ShellContext} from './context.js'
+import {ShellContext} from './context.js'
 import {generateID} from './utils.js'
 
 function makeFlow(shell, riseTotalCallbackName, riseCompleteCallbackName) {
@@ -23,7 +23,6 @@ function makeFlow(shell, riseTotalCallbackName, riseCompleteCallbackName) {
 }
 
 export default function ExportActiveOrderButton(props) {
-  const inited = React.useContext(InitedShellContext)
   const shell = React.useContext(ShellContext)
   const [loading, setLoading] = React.useState(true)
   const [display, setDisplay] = React.useState(false)
@@ -41,7 +40,7 @@ export default function ExportActiveOrderButton(props) {
   }
 
   React.useEffect(async () => {
-    if (!inited) {
+    if (!shell) {
       return
     }
 
@@ -58,7 +57,7 @@ export default function ExportActiveOrderButton(props) {
     shell.installExternalAction(RiseCompleteProgress)
 
     setLoading(false)
-  }, [inited])
+  }, [shell])
 
   let view = null
 
