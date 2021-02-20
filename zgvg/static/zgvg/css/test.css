@@ -1,0 +1,9 @@
+.ui {
+  background-color: red;
+}
+
+exported {
+  --json: {
+  "ui": "ui", "hi": "hi"
+  }
+}

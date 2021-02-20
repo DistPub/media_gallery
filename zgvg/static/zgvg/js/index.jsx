@@ -1,3 +1,9 @@
+import StyleSheet from '../css/test.css'
+console.log(StyleSheet)
+document.adoptedStyleSheets = [...document.adoptedStyleSheets, StyleSheet]
+const style=JSON.parse(StyleSheet.cssRules[StyleSheet.cssRules.length - 1].style.getPropertyValue('--json'))
+console.log(style)
+
 const root = document.querySelector('#root')
 const fallback = (error) => {
   setTimeout(async () => {
