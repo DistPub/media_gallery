@@ -43,10 +43,12 @@ INSTALLED_APPS = [
     'zgvg',
     'avideo_chat',
     'babel_transpiling',
+    'postcss_modules',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'postcss_modules.middlewares.PostCSSModulesMiddleware',
     'babel_transpiling.middlewares.StaticFilesTranspilingMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

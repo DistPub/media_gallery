@@ -1,4 +1,4 @@
-import StyleSheet from '../css/test.css'
+import StyleSheet from '../css/styles.cssm'
 console.log(StyleSheet)
 document.adoptedStyleSheets = [...document.adoptedStyleSheets, StyleSheet]
 const style=JSON.parse(StyleSheet.cssRules[StyleSheet.cssRules.length - 1].style.getPropertyValue('--json'))
