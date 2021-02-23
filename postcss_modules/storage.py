@@ -13,18 +13,18 @@ class PostCSSModulesStorage(StaticFilesStorage):
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.options = get_options()
-        self.ctx = get_transpiler(self.options)
+        self.css_options = get_options()
+        self.css_ctx = get_transpiler(self.css_options)
 
     def _save(self, name, content):
         origin = super()._save(name, content)
         _, file_suffix = os.path.splitext(name)
 
-        if file_suffix not in self.options['extensions']:
+        if file_suffix not in self.css_options['extensions']:
             return origin
 
         file = open(self.path(name), 'r+')
-        css = Handler(self.ctx, self.options, f'{settings.STATIC_URL}{name}', file.read()).process()
+        css = Handler(self.css_ctx, self.css_options, f'{settings.STATIC_URL}{name}', file.read()).process()
         file.seek(0)
         file.truncate()
         file.write(css)
