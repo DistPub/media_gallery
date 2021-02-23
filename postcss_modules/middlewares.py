@@ -1,12 +1,11 @@
 import os
 
-import time
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
-from postcss_modules.utils import get_options, get_absolute_path, get_file_content, get_transpiler, get_composes, \
-    MaxTimeout
+from postcss_modules.handler import Handler
+from postcss_modules.utils import get_options, get_absolute_path, get_file_content, get_transpiler
 
 
 class PostCSSModulesMiddleware(MiddlewareMixin):
@@ -48,48 +47,9 @@ class PostCSSModulesMiddleware(MiddlewareMixin):
             return response
 
         source = get_file_content(path)
-        self.populate_vfs(request.path, source)
-        css = self.ctx.call('postcssModules', request.path)
-        max_time = self.options['max_time'] * 10
-        while css is None and max_time:
-            css = self.ctx.call('getResult', request.path)
-            if css is not None:
-                break
-            time.sleep(0.1)
-            max_time -= 0.1
-
-        if css is None:
-            raise MaxTimeout('transpiling css timeout!')
-
+        css = Handler(self.ctx, self.options, request.path, source).process()
         _, file_suffix = os.path.splitext(path)
         return HttpResponse(content=css, content_type=self.options['mimetypes'][file_suffix])
-
-    def write_vfs(self, path, source):
-        cursor = 0
-        while 1:
-            try:
-                index = path.index('/', cursor + 1)
-            except ValueError:
-                break
-
-            cursor = index
-            sub_dir = path[:index]
-
-            if self.ctx.call('fs.existsSync', sub_dir):
-                continue
-            self.ctx.call('fs.mkdirSync', sub_dir)
-
-        self.ctx.call('fs.writeFileSync', path, source)
-
-    def populate_vfs(self, path, source):
-        self.write_vfs(path, source)
-        dir_path, _ = os.path.split(path)
-        composes = get_composes(dir_path, source)
-        for depend in composes:
-            path = get_absolute_path(depend[len(settings.STATIC_URL):])
-            if not path:
-                continue
-            self.write_vfs(depend, get_file_content(path))
 
     def fixup_content_type(self, request, response):
         if response.status_code != 200:
