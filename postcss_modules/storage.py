@@ -1,5 +1,6 @@
 import os
 
+from django.conf import settings
 from django.contrib.staticfiles.storage import StaticFilesStorage
 
 from postcss_modules.handler import Handler
@@ -23,7 +24,7 @@ class PostCSSModulesStorage(StaticFilesStorage):
             return origin
 
         file = open(self.path(name), 'r+')
-        css = Handler(self.ctx, self.options, self.path(name), file.read()).process()
+        css = Handler(self.ctx, self.options, f'{settings.STATIC_URL}{name}', file.read()).process()
         file.seek(0)
         file.truncate()
         file.write(css)
