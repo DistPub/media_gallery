@@ -46,6 +46,10 @@ class PostCSSModulesMiddleware(MiddlewareMixin):
         if not path:
             return response
 
+        # force use new transpiler when debug
+        if self.ctx.call('fs.existsSync', settings.STATIC_URL):
+            self.ctx = get_transpiler(self.options)
+
         source = get_file_content(path)
         css = Handler(self.ctx, self.options, request.path, source).process()
         _, file_suffix = os.path.splitext(path)

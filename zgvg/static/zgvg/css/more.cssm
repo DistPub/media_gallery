@@ -1,0 +1,4 @@
+@value hi: red;
+.ok {
+  text-align: center;
+}

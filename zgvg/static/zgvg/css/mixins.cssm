@@ -1,8 +1,10 @@
+@value hi from './more.cssm';
+
 .title {
   color: black;
   font-size: 40px;
 }
 
 .title:hover {
-  color: red;
+  color: hi;
 }

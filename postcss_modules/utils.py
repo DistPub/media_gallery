@@ -61,5 +61,5 @@ def get_transpiler(options):
 
 
 def get_composes(dir_path, source):
-    composes = set(re.findall('composes:.+from\s+[\'\"](.+)[\'\"];', source))
+    composes = set(re.findall('.+from\s+[\'\"](.+)[\'\"];', source))
     return [str(pathlib.Path(dir_path, depend).resolve()) for depend in composes]

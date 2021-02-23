@@ -64,4 +64,4 @@ class Handler:
             path = get_absolute_path(depend[len(settings.STATIC_URL):])
             if not path:
                 continue
-            self.write_vfs(depend, get_file_content(path))
+            self.populate_vfs(depend, get_file_content(path))
