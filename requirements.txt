@@ -7,3 +7,4 @@ daphne==3.0.1
 whitenoise==5.2.0
 py_mini_racer==0.4.0
 django-babel-transpiling==0.3.0
+django-postcss-modules==0.1.0
