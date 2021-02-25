@@ -2,37 +2,6 @@
 {% load static babel_transpiling postcss_modules %}
 {% block title %}ZGVG画廊{% endblock %}
 {% block sw_url %}{% url "zgvg:sw.js" %}{% endblock %}
-{% block style %}
-  <style type="text/css">
-    .ui.header {
-      display: table;
-    }
-    dialog {
-      padding: 0;
-      border: 0;
-    }
-  </style>
-  <style id="indexStyles">
-    {% postcssmodules %}
-    :global .page {
-      padding: 20px;
-    }
-
-    @value hi from '{% static "zgvg/css/more.cssm" %}';
-
-    .title {
-      composes: title from "{% static "zgvg/css/mixins.cssm" %}";
-      color: green;
-    }
-
-    .article {
-      composes: ok from '{% static "zgvg/css/more.cssm" %}';
-      font-size: 16px;
-      color: hi;
-    }
-    {% endpostcssmodules %}
-  </style>
-{% endblock %}
 {% block container %}
   <div id="root"></div>
   <div id="modal"></div>

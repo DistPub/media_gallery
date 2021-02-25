@@ -1,6 +1,3 @@
-import styles from '../css/styles.cssm'
-console.log(styles)
-
 const root = document.querySelector('#root')
 const fallback = (error) => {
   setTimeout(async () => {

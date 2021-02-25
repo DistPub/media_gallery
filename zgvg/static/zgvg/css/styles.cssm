@@ -1,16 +1,4 @@
-:global .page {
-  padding: 20px;
-}
-
-@value hi from './more.cssm';
-
-.title {
-  composes: title from "./mixins.cssm";
-  color: green;
-}
-
-.article {
-  composes: ok from './more.cssm';
-  font-size: 16px;
-  color: hi;
+.dialog {
+  padding: 0;
+  border: 0;
 }

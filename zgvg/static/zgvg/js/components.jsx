@@ -1,3 +1,5 @@
+import styles from '../css/styles.cssm'
+
 export function CheckListForm(props) {
   return <IconMessage title={props.title ?? '检查清单'} icon={props.icon ?? 'tasks'}>
     <ol className="ui list">{props.children}</ol>
@@ -117,7 +119,7 @@ export function ModalDialog(props) {
   }
   const negative = props.negative ?? true
 
-  return ReactDOM.createPortal(<dialog ref={ref} onClick={(event)=>{
+  return ReactDOM.createPortal(<dialog className={styles.dialog} ref={ref} onClick={(event)=>{
     const rect = ref.current.getBoundingClientRect()
     if (event.clientY < rect.top || event.clientY > rect.bottom ||
       event.clientX < rect.left || event.clientX > rect.right) {
