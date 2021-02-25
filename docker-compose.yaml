@@ -1,10 +1,9 @@
 version: '2'
 
 services:
-  meida_gallery:
+  media_gallery:
       image: python:3.6
-      container_name: meida_gallery
-      restart: always
+      container_name: media_gallery
       volumes:
         - .:/workspace
       working_dir: /workspace
@@ -23,6 +22,5 @@ services:
   webrtc-star:
       image: libp2p/js-libp2p-webrtc-star
       container_name: webrtc-star
-      restart: always
       ports:
           - 7890:9090
