@@ -72,6 +72,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'base.context_processors.base_context',
             ],
         },
     },
@@ -131,3 +132,5 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATIC_URL = '/static/'
 STATICFILES_STORAGE = 'base.storage.CustomManifestStaticFilesStorage'
 STATICFILES_DIRS = [BASE_DIR / 'vendor']
+
+ENVIRONMENT = 'develop'
