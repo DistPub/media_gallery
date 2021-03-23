@@ -30,6 +30,21 @@ function BuildFetchPayload(_, type, name) {
   }
 }
 
+function GetVendor(_, data) {
+  let [name, html] = data
+  html = html.replace(/<img\b/ig, '<imgkiller')
+
+  const element = document.createElement('div')
+  element.innerHTML = html
+  const rows = element.querySelectorAll('.contact-box')
+  const index = [...rows].map(row=>row.querySelector('strong').innerText).indexOf(name)
+
+  if (index === -1) {
+    return 'N/A'
+  }
+  return [...rows][index].querySelector('div.col-sm-2 > div:nth-child(4)').innerText
+}
+
 function makeFlow(shell, names, brand, checked, CallbackName) {
   const api = atob('aHR0cDovL3dvcmsudmlnbGxlLmNvbS9CYXNlVGFibGUvTGlzdA==')
   let action = shell.Action
@@ -37,7 +52,8 @@ function makeFlow(shell, names, brand, checked, CallbackName) {
     .BuildFetchPayload.PCollect // => [payload, ...]
     .textFetch([api, { cors: true, bodyEncoder: 'form', method: 'POST'}])
     .pCollect({callback: {action: `/${CallbackName}`}}) // => [html, ...]
-    .Map.selectText([{ selector: 'div.col-sm-2 > div:nth-child(4)', killImg: true }]).Collect // => [vendor, ...]
+    .zipArray([names]) // => [[name, html], ...]
+    .Map.GetVendor.Collect // => [vendor, ...]
     .zipArray([names])
     .buildExcel(['data', ['name', 'vendor']])
     .download(['vendor.xlsx'])
@@ -72,6 +88,7 @@ export default function ExportVendorForm(props) {
     }
 
     shell.installExternalAction(BuildFetchPayload)
+    shell.installExternalAction(GetVendor)
     let value = generateID('RiseCompleteProgress')
     Object.defineProperty(RiseCompleteProgress, 'name', { value })
     setRiseCompleteCallbackName(value)
