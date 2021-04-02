@@ -1,14 +1,42 @@
 {% extends 'base.html' %}
-{% load static babel_scripts %}
+{% load static %}
 {% block title %}Avideo Chat{% endblock %}
 {% block sw_url %}{% url "avideo_chat:sw.js" %}{% endblock %}
 {% block container %}
-  <div id="root"></div>
+  <div id="root">
+    <my-element/>
+  </div>
   <div id="modal"></div>
 {% endblock %}
 {% block script %}
-  <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.development.js" crossorigin></script>
-  <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.development.js" crossorigin></script>
-  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.12.12/babel.min.js" crossorigin></script>
-  {% render_babel_scripts 'avideo_chat' %}
+  <script type="module">
+    import {LitElement, html, property, customElement} from 'https://unpkg.com/lit-element/lit-element.js?module';
+    import styles from '{% static "avideo_chat/css/index.css" %}';
+    class MyElement extends LitElement {
+      constructor() {
+        super()
+        this.mood = 'good'
+      }
+      static get styles() {
+        return styles;
+      }
+
+      static get properties() {
+        return {
+          mood: {type: String}
+        }
+      }
+
+      render() {
+        return html`<div>Web Components are <span class="title" @click="${this.clicked}">${this.mood}</span>!</div>`;
+      }
+
+      clicked(e) {
+        console.log(e)
+      }
+    }
+
+    customElements.define('my-element', MyElement);
+  </script>
+    <my-element mood="hello"/>
 {% endblock %}
