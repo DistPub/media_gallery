@@ -1,4 +1,4 @@
-import styles from '../css/styles.cssm'
+import styles from '../css/styles.cssm' assert { type: "css" }
 
 export function CheckListForm(props) {
   return <IconMessage title={props.title ?? '检查清单'} icon={props.icon ?? 'tasks'}>
