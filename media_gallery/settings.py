@@ -136,3 +136,15 @@ STATICFILES_DIRS = [BASE_DIR / 'vendor']
 ENVIRONMENT = 'develop'
 ROLLBAR_ACCESS_TOKEN_FRONTEND = "9e6df2fb30e14ead8455d440a819bcef"
 ROLLBAR_ACCESS_TOKEN_BACKEND = "36d8894d35d449fcbd39f7fd2c980be5"
+
+BABEL_TRANSPILING = {
+    'options': {
+        'plugins': ['transform-import-cssm', 'syntax-import-assertions'],
+        "presets": ["react"],
+        "generatorOpts": {
+            "jsescOption": {
+                "minimal": True
+            }
+        }
+    },
+}
