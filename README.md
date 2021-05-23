@@ -6,6 +6,7 @@ for develop reason, all external resources defined by codename in codebase.
 
 * `zgdy` => `♀dδùγìnɡ♂`
 * `zgvg` => `圝◤zɡひɡ◥圝`
+* `zgwb` => `┕ωéιьǒ┕`
 
 ### Encrypt Endpoint
 

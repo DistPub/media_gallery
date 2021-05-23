@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'avideo_chat',
     'babel_transpiling',
     'postcss_modules',
+    'zgwb',
 ]
 
 MIDDLEWARE = [
