@@ -141,7 +141,6 @@ export default function ExportFensiForm(props) {
       <ResetButton onClick={()=>{
         setResource('')
         setChecked(false)
-        setBrand(brandOptions[0])
         setDisplay(false)
       }}/>
       { error && <ModalDialog title={'错误'} body={'请输入至少一个用户名称！'} container={modalContainer} onClose={
