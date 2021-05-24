@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'postcss_modules',
     'zgwb',
     'zgtt',
+    'zyms',
 ]
 
 MIDDLEWARE = [

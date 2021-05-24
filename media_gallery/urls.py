@@ -21,5 +21,6 @@ urlpatterns = [
     path('zgvg/', include(('zgvg.urls', 'zgvg'))),
     path('zgwb/', include(('zgwb.urls', 'zgwb'))),
     path('zgtt/', include(('zgtt.urls', 'zgtt'))),
+    path('zyms/', include(('zyms.urls', 'zyms'))),
     path('avideo-chat/', include(('avideo_chat.urls', 'avideo_chat'))),
 ]
