@@ -5,8 +5,9 @@ media tools for advertisement industry worker
 for develop reason, all external resources defined by codename in codebase.
 
 * `zgdy` => `♀dδùγìnɡ♂`
-* `zgvg` => `圝◤zɡひɡ◥圝`
+* `zgvg` => `ぷひíɡζζé`
 * `zgwb` => `┕ωéιьǒ┕`
+* `zgtt` => `o﹎τòùτＩαò┌↘`
 
 ### Encrypt Endpoint
 

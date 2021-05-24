@@ -20,5 +20,6 @@ urlpatterns = [
     path('libp2p/', include(('libp2p.urls', 'libp2p'))),
     path('zgvg/', include(('zgvg.urls', 'zgvg'))),
     path('zgwb/', include(('zgwb.urls', 'zgwb'))),
+    path('zgtt/', include(('zgtt.urls', 'zgtt'))),
     path('avideo-chat/', include(('avideo_chat.urls', 'avideo_chat'))),
 ]

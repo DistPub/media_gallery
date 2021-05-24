@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'babel_transpiling',
     'postcss_modules',
     'zgwb',
+    'zgtt',
 ]
 
 MIDDLEWARE = [
