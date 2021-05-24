@@ -23,21 +23,23 @@ function GetFensi(_, data) {
   const index = [...rows].map(row=>row.querySelector('.name').innerText).indexOf(name)
 
   if (index === -1) {
-    return 'N/A'
+    return [name, 'N/A', 'N/A']
   }
 
   let value
+    let desc = 'N/A'
 
   try {
       value = [...rows][index].querySelector('div.info > p:nth-child(3) > span:nth-child(2) > a').innerText
   } catch (error) {
     value = [...rows][index].querySelector('div.info > p:nth-child(4) > span:nth-child(2) > a').innerText
+      desc = [...rows][index].querySelector('div.info > p:nth-child(3)').innerText
   }
 
     if (value.endsWith('万')) {
-      return value.slice(0,-1) + '0000'
+      value = value.slice(0,-1) + '0000'
     }
-    return value
+    return [name, value, desc]
 }
 
 async function CTextFetch({exec}, api, { cors=false, bodyEncoder=null, headers={}, ...options }={}, body=undefined) {
@@ -68,9 +70,8 @@ function makeFlow(shell, names, checked, CallbackName) {
     .CTextFetch // html
     .Collect // [html, html, ...]
     .zipArray([names]) // [[name, html], ...]
-    .Map.GetFensi.Collect // [fensi, ...]
-    .zipArray([names]) // [[name, fensi], ...]
-    .buildExcel(['data', ['name', 'fensi']])
+    .Map.GetFensi.Collect // [[name, fensi, desc], ...]
+    .buildExcel(['data', ['name', 'fensi', 'desc']])
     .download(['fensi.xlsx'])
 
   if (checked) {
