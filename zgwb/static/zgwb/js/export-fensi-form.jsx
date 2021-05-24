@@ -20,7 +20,7 @@ function GetFensi(_, data) {
   const element = document.createElement('div')
   element.innerHTML = html
   const rows = element.querySelectorAll('#pl_user_feedList .card')
-  const index = [...rows].map(row=>row.querySelector('.name').innerText).indexOf(name)
+  const index = [...rows].map(row=>row.querySelector('.name').innerText.toUpperCase()).indexOf(name.toUpperCase())
 
   if (index === -1) {
     return [name, 'N/A', 'N/A']
