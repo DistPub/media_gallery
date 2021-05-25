@@ -18,6 +18,10 @@ export default function ZYTable(props) {
   const [navs, setNavs] = React.useState([]);
   const [total, setTotal] = React.useState(0);
 
+  const [searchKey, setSearchKey] = React.useState('');
+  const [search, setSearch] = React.useState('');
+  const [needSync, setNeedSync] = React.useState(false);
+
   React.useEffect(() => {
     let navs = [];
     for (let page=1;page<=pages;page++) {
@@ -31,34 +35,82 @@ export default function ZYTable(props) {
     setNavs(navs);
   }, [pages, currentPage])
 
-  function showDocs() {
-    db.allDocs({include_docs: true, descending: true, limit: size, skip}, function(err, doc) {
-      setTotal(doc.total_rows);
-      setPages(getPages(doc.total_rows, size));
-      setDocs(doc.rows);
-    });
+  async function showDocs() {
+    let result;
+
+    if (search) {
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+        return;
+      }
+
+      result = await db.find({
+        selector: {
+          $or: [{name: {$regex: search}},{id: {$regex: search}}]
+        },
+        limit: size,
+        skip
+      });
+      result.total_rows = result.docs.length;
+    } else {
+      result = await db.allDocs({include_docs: true, descending: true, limit: size, skip});
+      result.rows = result.rows.map(item=>{
+        return {...item.doc};
+      });
+    }
+
+    setTotal(result.total_rows);
+    setPages(getPages(result.total_rows, size));
+    setDocs(result.rows ?? result.docs);
   }
 
   React.useEffect(()=>{
     setSkip((currentPage-1)*size)
   }, [currentPage]);
 
-  React.useEffect(showDocs, [skip]);
+  React.useEffect(showDocs, [skip, search]);
 
   React.useEffect(() => {
-    showDocs();
-
     let sync = db.changes({
       since: 'now',
       live: true
-    }).on('change', showDocs);
+    }).on('change', () => {
+      setNeedSync(true);
+    });
 
     return () => {
       sync.cancel();
     }
   }, [])
 
-  return <div className="ui segment">
+  return <>
+  {needSync && <div className="ui segment">
+    <div className="ui message">
+      <i className="close icon" onClick={() => setNeedSync(false)}></i>
+      <div className="header">
+        有新数据，<a href="#" onClick={() => {
+          showDocs();
+          setNeedSync(false);
+      }}>立即刷新</a>？
+      </div>
+      <p>检测到数据有更新，你可以选择立即刷新或者关闭消息。</p>
+    </div>
+  </div>}
+  <div className="ui segment">
+    <div className="ui action input">
+      <input tabIndex="0" type="text" placeholder="Search..." value={searchKey}
+             onChange={event => setSearchKey(event.target.value)}
+             onKeyPress={event => {
+               if (event.key === 'Enter') {
+                 setSearch(searchKey)
+               }
+             }}/>
+  <button className="ui icon button" onClick={() => setSearch(searchKey)}>
+    <i className="search icon"></i>
+  </button>
+</div>
+  </div>
+  <div className="ui segment">
     { addDoc && <ModalDialog title={'添加资源'} body={<AddDocForm closeForm={() => setAddDoc(false)}/>} container={modalContainer} onClose={
         ()=>setAddDoc(false)
       } negative={false} showIcon={false} blurClose={false}/>}
@@ -82,23 +134,23 @@ export default function ZYTable(props) {
   </tr></thead>
   <tbody>
   {docs.map((item, idx) =>
-    <tr key={item.key}>
+    <tr key={item._id}>
       <td className="center aligned">{idx+1}</td>
-      <td className="center aligned">{item.doc.platform}</td>
-      <td className="center aligned">{item.doc.name}</td>
-      <td className="center aligned">{item.doc.id}</td>
-      <td className="center aligned">{item.doc.category}</td>
-      <td className="center aligned">{item.doc.follow_number}</td>
-      <td className="center aligned">{item.doc.activate}</td>
-      <td className="center aligned">{item.doc.accounting_period}</td>
-      <td className="center aligned">{item.doc.pay_category}</td>
-      <td className="center aligned">{item.doc.vendor}</td>
-      <td>{item.doc.vendor_account}</td>
+      <td className="center aligned">{item.platform}</td>
+      <td className="center aligned">{item.name}</td>
+      <td className="center aligned">{item.id}</td>
+      <td className="center aligned">{item.category}</td>
+      <td className="center aligned">{item.follow_number}</td>
+      <td className="center aligned">{item.activate}</td>
+      <td className="center aligned">{item.accounting_period}</td>
+      <td className="center aligned">{item.pay_category}</td>
+      <td className="center aligned">{item.vendor}</td>
+      <td>{item.vendor_account}</td>
       <td className="center aligned">
           <div className="ui small basic icon buttons">
-            <button className="ui button" onClick={() => setEditDoc(item.doc) }><i className="edit icon"></i></button>
+            <button className="ui button" onClick={() => setEditDoc(item) }><i className="edit icon"></i></button>
             <button className="ui button" onClick={() => {
-              db.remove(item.doc);
+              db.remove(item);
               let pages = getPages(total - 1, size);
               if (currentPage>pages) {
                 setCurrentPage(1);
@@ -137,5 +189,5 @@ export default function ZYTable(props) {
     </th>
   </tr></tfoot>
 </table>
-  </div>
+  </div></>
 }
