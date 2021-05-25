@@ -21,7 +21,7 @@ function initDBContext(name) {
   }
 
   let remoteCouch = `https://${username}:${password}@relax.smitechow.com/${name}`;
-  let opts = {live: true};
+  let opts = {live: true, retry: true};
   db.replicate.to(remoteCouch, opts, console.error);
   db.replicate.from(remoteCouch, opts, console.error);
   db.createIndex({
