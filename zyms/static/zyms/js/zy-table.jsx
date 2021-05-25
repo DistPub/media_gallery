@@ -1,34 +1,15 @@
-import {ShellContext, PouchDBContext} from "./context.js";
+import {ShellContext, PouchDBContext, ModalContainer} from "./context.js";
+import {ModalDialog} from './components.jsx';
+import AddDocForm from './add-doc-form.jsx';
 
 export default function ZYTable(props) {
   const db = React.useContext(PouchDBContext);
   const shell = React.useContext(ShellContext);
+  const modalContainer = React.useContext(ModalContainer)
 
   const [docs, setDocs] = React.useState([]);
-  const [title, setTitle] = React.useState(`{
-      "platform": "微博",
-      "name": "张三分",
-      "id": "545616812",
-      "category": "种草",
-      "follow_number": 4564654,
-      "activate": "45%",
-      "accounting_period": "30天",
-      "pay_category": "对公",
-      "vendor": "文档问号",
-      "vendor_account": "苏州铃铛文化传播有限公司\
-银行：中国银行股份有限公司昆山衡山路支行 \
-账号：459871549669"
-    }`);
-
-  function addTodo(text) {
-    var todo = JSON.parse(text);
-    todo._id = `${todo.platform}|${todo.name}`
-    db.put(todo, function callback(err, result) {
-      if (!err) {
-        console.log('Successfully posted a todo!');
-      }
-    });
-  }
+  const [addDoc, setAddDoc] = React.useState(false);
+  const [editDoc, setEditDoc] = React.useState(null);
 
   function showTodos() {
     db.allDocs({include_docs: true, descending: true}, function(err, doc) {
@@ -50,6 +31,12 @@ export default function ZYTable(props) {
   }, [])
 
   return <div className="ui segment">
+    { addDoc && <ModalDialog title={'添加资源'} body={<AddDocForm closeForm={() => setAddDoc(false)}/>} container={modalContainer} onClose={
+        ()=>setAddDoc(false)
+      } negative={false} showIcon={false}/>}
+      { editDoc && <ModalDialog title={'编辑资源'} body={<AddDocForm closeForm={() => setEditDoc(null)} doc={editDoc}/>} container={modalContainer} onClose={
+        ()=>setEditDoc(null)
+      } negative={false} showIcon={false}/>}
     <table className="ui celled padded table">
   <thead>
     <tr><th className="single line">平台</th>
@@ -79,7 +66,7 @@ export default function ZYTable(props) {
       <td>{item.doc.vendor_account}</td>
       <td className="center aligned">
           <div className="ui small basic icon buttons">
-            <button className="ui button"><i className="edit icon"></i></button>
+            <button className="ui button" onClick={() => setEditDoc(item.doc) }><i className="edit icon"></i></button>
             <button className="ui button" onClick={() => db.remove(item.doc)}><i className="remove icon"></i></button>
           </div>
       </td>
@@ -99,11 +86,9 @@ export default function ZYTable(props) {
           <i className="right chevron icon"></i>
         </a>
       </div>
+          <div className="ui left floated"><button className="positive ui button" onClick={() => setAddDoc(true)}>新增</button></div>
     </th>
   </tr></tfoot>
 </table>
-    <textarea value={title} onChange={(event)=>setTitle(event.target.value)}/>
-    <br/>
-    <button onClick={() => addTodo(title)}>add</button>
   </div>
 }

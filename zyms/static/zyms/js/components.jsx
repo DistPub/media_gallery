@@ -117,7 +117,8 @@ export function ModalDialog(props) {
     ref.current.close()
     props.onClose()
   }
-  const negative = props.negative ?? true
+  const negative = props.negative ?? true;
+  const showIcon = props.showIcon ?? true;
 
   return ReactDOM.createPortal(<dialog className={styles.dialog} ref={ref} onClick={(event)=>{
     const rect = ref.current.getBoundingClientRect()
@@ -128,10 +129,10 @@ export function ModalDialog(props) {
   }}>
     <div className={`ui icon ${negative && 'negative'} large message`}>
       <i className="close icon" onClick={()=>close()}></i>
-      <i className="bullhorn icon"></i>
+      {showIcon && <i className="bullhorn icon"></i>}
       <div className="content">
         <div className="header modal-message-title">{props.title}</div>
-        <p className="modal-message-body">{props.body}</p>
+        <div className="modal-message-body">{props.body}</div>
       </div>
     </div>
   </dialog>, props.container)
