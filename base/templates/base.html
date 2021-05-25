@@ -15,7 +15,7 @@
 </script>
 {% block style %}{% endblock %}
 </head>
-<body class="ui container">
+<body class="{% if remove_body_class %}{% else %}ui container{% endif %}">
 {% block container %}{% endblock %}
 <script src="https://cdn.jsdelivr.net/npm/fastclick@1.0.6/lib/fastclick.min.js"></script>
 <script>
