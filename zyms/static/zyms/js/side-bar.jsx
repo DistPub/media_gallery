@@ -1,6 +1,16 @@
 import styles from '../css/side-bar.cssm' assert { type: "css" }
 
 export default function SideBar(props) {
+  let tabs = []
+  for (let item in props.tabs) {
+    tabs.push(
+      <a key={item} className={`${props.tabName === item && 'active'} item`} onClick={() => {
+        props.showTab(item)
+      }}>
+        <b>{props.tabs[item]}</b>
+      </a>
+    )
+  }
   return <div id={styles.wrapper}>
     <div className={`${styles['side-bar']} ui vertical inverted menu`}>
       <div className="item">
@@ -11,16 +21,7 @@ export default function SideBar(props) {
           </div>
         </h2>
       </div>
-      <a className={`${props.tabName === 'table' && 'active'} item`} onClick={() => {
-        props.showTab('table')
-      }}>
-        <b>资源管理</b>
-      </a>
-      <a className={`${props.tabName === 'batch' && 'active'} item`} onClick={() => {
-        props.showTab('batch')
-      }}>
-        <b>批量操作</b>
-      </a>
+      { tabs }
     </div>
   </div>
 }
