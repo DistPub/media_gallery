@@ -10,20 +10,49 @@ export default function ZYTable(props) {
   const [docs, setDocs] = React.useState([]);
   const [addDoc, setAddDoc] = React.useState(false);
   const [editDoc, setEditDoc] = React.useState(null);
+  const [size, setSize] = React.useState(50);
+  const [skip, setSkip] = React.useState(0);
+  const [pages, setPages] = React.useState(1);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [navs, setNavs] = React.useState([]);
 
-  function showTodos() {
-    db.allDocs({include_docs: true, descending: true}, function(err, doc) {
+  React.useEffect(() => {
+    let navs = [];
+    for (let page=1;page<=pages;page++) {
+      navs.push(<a key={page} className={`${currentPage === page && 'active'} item`} onClick={() => {
+        if (currentPage === page) {
+          return;
+        }
+        setCurrentPage(page);
+      }}>{page}</a>)
+    }
+    setNavs(navs);
+  }, [pages, currentPage])
+
+  function showDocs() {
+    db.allDocs({include_docs: true, descending: true, limit: size, skip}, function(err, doc) {
+      let pages = parseInt(doc.total_rows / size);
+      if (doc.total_rows % size !== 0) {
+        pages ++;
+      }
+      setPages(pages);
       setDocs(doc.rows);
     });
   }
 
+  React.useEffect(()=>{
+    setSkip((currentPage-1)*size)
+  }, [currentPage]);
+
+  React.useEffect(showDocs, [skip]);
+
   React.useEffect(() => {
-    showTodos();
+    showDocs();
 
     let sync = db.changes({
       since: 'now',
       live: true
-    }).on('change', showTodos);
+    }).on('change', showDocs);
 
     return () => {
       sync.cancel();
@@ -75,14 +104,25 @@ export default function ZYTable(props) {
   <tfoot>
     <tr><th colSpan="11">
       <div className="ui right floated pagination menu">
-        <a className="icon item">
+        <a className={`icon ${
+          currentPage===1 && 'disabled'
+          } item`} onClick={() => {
+            if (currentPage===1) {
+              return;
+            }
+            setCurrentPage(currentPage-1);
+        }}>
           <i className="left chevron icon"></i>
         </a>
-        <a className="item">1</a>
-        <a className="item">2</a>
-        <a className="item">3</a>
-        <a className="item">4</a>
-        <a className="icon item">
+        { navs }
+        <a className={`icon ${
+          currentPage === pages && 'disabled'
+          } item`} onClick={()=>{
+            if(currentPage===pages){
+              return;
+            }
+            setCurrentPage(currentPage+1);
+        }}>
           <i className="right chevron icon"></i>
         </a>
       </div>
