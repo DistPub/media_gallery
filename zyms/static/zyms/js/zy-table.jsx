@@ -29,10 +29,14 @@ export default function ZYTable(props) {
   React.useEffect(() => {
     showTodos();
 
-    db.changes({
+    let sync = db.changes({
       since: 'now',
       live: true
     }).on('change', showTodos);
+
+    return () => {
+      sync.cancel();
+    }
   }, [])
 
   return <>
