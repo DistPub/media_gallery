@@ -20,7 +20,9 @@ export default function AddDocForm(props) {
   })
 
   function addDoc() {
-    data._id = `${data.platform}|${data.name}`
+    if (!data._id) {
+      data._id = `${data.platform}|${data.name}`
+    }
     db.put(data, function callback(err, result) {
       if (!err) {
         console.log('Successfully posted a data!');
@@ -110,7 +112,7 @@ export default function AddDocForm(props) {
     <div className="ui buttons">
       <button className="positive ui button" type="submit" onClick={() => {
         addDoc();
-        props.closeForm();
+        props.closeForm(data);
       }}>保存
       </button>
       <div className="or"></div>

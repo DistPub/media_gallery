@@ -55,13 +55,14 @@ export default function ZYTable(props) {
     } else {
       result = await db.allDocs({include_docs: true, descending: true, limit: size, skip});
       result.rows = result.rows.map(item=>{
-        return {...item.doc};
+        return {...item.doc, _id: item.id, _rev: item.value.rev};
       });
     }
 
     setTotal(result.total_rows);
     setPages(getPages(result.total_rows, size));
     setDocs(result.rows ?? result.docs);
+    setNeedSync(false);
   }
 
   React.useEffect(()=>{
@@ -88,7 +89,7 @@ export default function ZYTable(props) {
     <div className="ui message">
       <i className="close icon" onClick={() => setNeedSync(false)}></i>
       <div className="header">
-        有新数据，<a href="#" onClick={() => {
+        数据已更新，<a href="#" onClick={() => {
           showDocs();
           setNeedSync(false);
       }}>立即刷新</a>？
@@ -114,7 +115,17 @@ export default function ZYTable(props) {
     { addDoc && <ModalDialog title={'添加资源'} body={<AddDocForm closeForm={() => setAddDoc(false)}/>} container={modalContainer} onClose={
         ()=>setAddDoc(false)
       } negative={false} showIcon={false} blurClose={false}/>}
-      { editDoc && <ModalDialog title={'编辑资源'} body={<AddDocForm closeForm={() => setEditDoc(null)} doc={editDoc}/>} container={modalContainer} onClose={
+      { editDoc && <ModalDialog title={'编辑资源'} body={<AddDocForm closeForm={(doc) => {
+        for (let key in doc) {
+          if (doc[key] !== docs[editDoc - 1][key]) {
+            doc[`${key}_isEdit`] = true;
+          }
+        }
+        doc.isEdit = true;
+
+        docs[editDoc-1] = doc;
+        setEditDoc(null);
+      }} doc={docs[editDoc-1]}/>} container={modalContainer} onClose={
         ()=>setEditDoc(null)
       } negative={false} showIcon={false} blurClose={false}/>}
     <table className="ui selectable celled padded table">
@@ -134,27 +145,25 @@ export default function ZYTable(props) {
   </tr></thead>
   <tbody>
   {docs.map((item, idx) =>
-    <tr key={item._id}>
+    <tr key={item._id} className={item.isEdit && 'positive'}>
       <td className="center aligned">{idx+1}</td>
       <td className="center aligned">{item.platform}</td>
       <td className="center aligned">{item.name}</td>
-      <td className="center aligned">{item.id}</td>
-      <td className="center aligned">{item.category}</td>
-      <td className="center aligned">{item.follow_number}</td>
-      <td className="center aligned">{item.activate}</td>
-      <td className="center aligned">{item.accounting_period}</td>
-      <td className="center aligned">{item.pay_category}</td>
-      <td className="center aligned">{item.vendor}</td>
-      <td>{item.vendor_account}</td>
+      <td className="center aligned">{item.id_isEdit && <i className="attention icon"></i>}{item.id}</td>
+      <td className="center aligned">{item.category_isEdit && <i className="attention icon"></i>}{item.category}</td>
+      <td className="center aligned">{item.follow_number_isEdit && <i className="attention icon"></i>}{item.follow_number}</td>
+      <td className="center aligned">{item.activate_isEdit && <i className="attention icon"></i>}{item.activate}</td>
+      <td className="center aligned">{item.accounting_period_isEdit && <i className="attention icon"></i>}{item.accounting_period}</td>
+      <td className="center aligned">{item.pay_category_isEdit && <i className="attention icon"></i>}{item.pay_category}</td>
+      <td className="center aligned">{item.vendor_isEdit && <i className="attention icon"></i>}{item.vendor}</td>
+      <td>{item.vendor_account_isEdit && <i className="attention icon"></i>}{item.vendor_account}</td>
       <td className="center aligned">
           <div className="ui small basic icon buttons">
-            <button className="ui button" onClick={() => setEditDoc(item) }><i className="edit icon"></i></button>
-            <button className="ui button" onClick={() => {
+            <button className="ui button" onClick={() => setEditDoc(idx+1) }><i className="edit icon"></i></button>
+            <button className="ui button" onClick={(event) => {
+              event.target.closest('tr').classList.add('negative');
+              event.target.closest('td').style.display = 'none';
               db.remove(item);
-              let pages = getPages(total - 1, size);
-              if (currentPage>pages) {
-                setCurrentPage(1);
-              }
             }}><i className="remove icon"></i></button>
           </div>
       </td>
@@ -175,7 +184,7 @@ export default function ZYTable(props) {
         </a>
         { navs }
         <a className={`icon ${
-          currentPage === pages && 'disabled'
+        (currentPage === pages || pages === 0) && 'disabled'
           } item`} onClick={()=>{
             if(currentPage===pages){
               return;
