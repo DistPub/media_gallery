@@ -25,7 +25,17 @@ export default function AddDocForm(props) {
         console.log('Successfully posted a data!');
       }
     });
-    props.closeForm();
+  }
+
+  window.batchAdd = () => {
+    for (let idx=0; idx < 300; idx ++) {
+      data._id = `${data.platform}|${data.name}${idx}`
+    db.put(data, function callback(err, result) {
+      if (!err) {
+        console.log('Successfully posted a data!');
+      }
+    });
+    }
   }
 
   return <form className="ui form">
@@ -96,6 +106,9 @@ export default function AddDocForm(props) {
         ...old, follow_number: event.target.value
       }})}/>
   </div>
-  <button className="ui button" type="submit" onClick={() => addDoc()}>保存</button>
+  <button className="ui button" type="submit" onClick={() => {
+    addDoc();
+    props.closeForm();
+  }}>保存</button>
 </form>
 }
