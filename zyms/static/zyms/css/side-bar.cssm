@@ -1,0 +1,19 @@
+#wrapper .side-bar {
+  position: fixed;
+  z-index: 1;
+  background-color: #1b1c1d;
+  width: 250px;
+  -webkit-box-flex: 0;
+  -webkit-flex: 0 0 auto;
+  -ms-flex: 0 0 auto;
+  flex: 0 0 auto;
+  border-radius: 0;
+  border-width: 0 1px 0 0;
+  box-shadow: none;
+  margin: 0;
+  will-change: transform;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
