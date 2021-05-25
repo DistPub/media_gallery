@@ -1,6 +1,7 @@
 import {ShellContext, PouchDBContext, ModalContainer} from "./context.js";
 import {ModalDialog} from './components.jsx';
 import AddDocForm from './add-doc-form.jsx';
+import {getPages} from "./utils.js";
 
 export default function ZYTable(props) {
   const db = React.useContext(PouchDBContext);
@@ -15,6 +16,7 @@ export default function ZYTable(props) {
   const [pages, setPages] = React.useState(1);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [navs, setNavs] = React.useState([]);
+  const [total, setTotal] = React.useState(0);
 
   React.useEffect(() => {
     let navs = [];
@@ -31,11 +33,8 @@ export default function ZYTable(props) {
 
   function showDocs() {
     db.allDocs({include_docs: true, descending: true, limit: size, skip}, function(err, doc) {
-      let pages = parseInt(doc.total_rows / size);
-      if (doc.total_rows % size !== 0) {
-        pages ++;
-      }
-      setPages(pages);
+      setTotal(doc.total_rows);
+      setPages(getPages(doc.total_rows, size));
       setDocs(doc.rows);
     });
   }
@@ -66,9 +65,10 @@ export default function ZYTable(props) {
       { editDoc && <ModalDialog title={'编辑资源'} body={<AddDocForm closeForm={() => setEditDoc(null)} doc={editDoc}/>} container={modalContainer} onClose={
         ()=>setEditDoc(null)
       } negative={false} showIcon={false}/>}
-    <table className="ui celled padded table">
+    <table className="ui selectable celled padded table">
   <thead>
-    <tr><th className="single line">平台</th>
+    <tr><th>#</th>
+    <th>平台</th>
     <th>账号名称</th>
     <th>ID/链接</th>
     <th>类别</th>
@@ -81,8 +81,9 @@ export default function ZYTable(props) {
     <th>操作</th>
   </tr></thead>
   <tbody>
-  {docs.map(item =>
+  {docs.map((item, idx) =>
     <tr key={item.key}>
+      <td className="center aligned">{idx+1}</td>
       <td className="center aligned">{item.doc.platform}</td>
       <td className="center aligned">{item.doc.name}</td>
       <td className="center aligned">{item.doc.id}</td>
@@ -96,13 +97,19 @@ export default function ZYTable(props) {
       <td className="center aligned">
           <div className="ui small basic icon buttons">
             <button className="ui button" onClick={() => setEditDoc(item.doc) }><i className="edit icon"></i></button>
-            <button className="ui button" onClick={() => db.remove(item.doc)}><i className="remove icon"></i></button>
+            <button className="ui button" onClick={() => {
+              db.remove(item.doc);
+              let pages = getPages(total - 1, size);
+              if (currentPage>pages) {
+                setCurrentPage(1);
+              }
+            }}><i className="remove icon"></i></button>
           </div>
       </td>
     </tr>)}
   </tbody>
   <tfoot>
-    <tr><th colSpan="11">
+    <tr><th colSpan="12">
       <div className="ui right floated pagination menu">
         <a className={`icon ${
           currentPage===1 && 'disabled'

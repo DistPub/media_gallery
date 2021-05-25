@@ -106,7 +106,7 @@ export default function AddDocForm(props) {
         ...old, follow_number: event.target.value
       }})}/>
   </div>
-  <button className="ui button" type="submit" onClick={() => {
+  <button className="positive ui button" type="submit" onClick={() => {
     addDoc();
     props.closeForm();
   }}>保存</button>
