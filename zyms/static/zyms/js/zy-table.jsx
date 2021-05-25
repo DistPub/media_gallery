@@ -4,15 +4,25 @@ export default function ZYTable(props) {
   const db = React.useContext(PouchDBContext);
   const shell = React.useContext(ShellContext);
 
-  const [todos, setTodos] = React.useState([]);
-  const [title, setTitle] = React.useState('');
+  const [docs, setDocs] = React.useState([]);
+  const [title, setTitle] = React.useState(`{
+      "platform": "微博",
+      "name": "张三分",
+      "id": "545616812",
+      "category": "种草",
+      "follow_number": 4564654,
+      "activate": "45%",
+      "accounting_period": "30天",
+      "pay_category": "对公",
+      "vendor": "文档问号",
+      "vendor_account": "苏州铃铛文化传播有限公司\
+银行：中国银行股份有限公司昆山衡山路支行 \
+账号：459871549669"
+    }`);
 
   function addTodo(text) {
-    var todo = {
-      _id: new Date().toISOString(),
-      title: text,
-      completed: false
-    };
+    var todo = JSON.parse(text);
+    todo._id = `${todo.platform}|${todo.name}`
     db.put(todo, function callback(err, result) {
       if (!err) {
         console.log('Successfully posted a todo!');
@@ -22,7 +32,7 @@ export default function ZYTable(props) {
 
   function showTodos() {
     db.allDocs({include_docs: true, descending: true}, function(err, doc) {
-      setTodos(doc.rows);
+      setDocs(doc.rows);
     });
   }
 
@@ -55,24 +65,25 @@ export default function ZYTable(props) {
     <th>操作</th>
   </tr></thead>
   <tbody>
-    <tr>
-      <td className="center aligned">微博</td>
-      <td className="center aligned">张三分</td>
-      <td className="center aligned">545616812</td>
-      <td className="center aligned">种草</td>
-      <td className="center aligned">4564654</td>
-      <td className="center aligned">45%</td>
-      <td className="center aligned">30天</td>
-      <td className="center aligned">对公</td>
-      <td className="center aligned">文档问号</td>
-      <td>Creatine supplementation is the reference compound for increasing muscular creatine levels; there is variability in this increase, however, with some nonresponders.</td>
+  {docs.map(item =>
+    <tr key={item.key}>
+      <td className="center aligned">{item.doc.platform}</td>
+      <td className="center aligned">{item.doc.name}</td>
+      <td className="center aligned">{item.doc.id}</td>
+      <td className="center aligned">{item.doc.category}</td>
+      <td className="center aligned">{item.doc.follow_number}</td>
+      <td className="center aligned">{item.doc.activate}</td>
+      <td className="center aligned">{item.doc.accounting_period}</td>
+      <td className="center aligned">{item.doc.pay_category}</td>
+      <td className="center aligned">{item.doc.vendor}</td>
+      <td>{item.doc.vendor_account}</td>
       <td className="center aligned">
-          <div class="ui small basic icon buttons">
-            <button class="ui button"><i class="edit icon"></i></button>
-            <button class="ui button"><i class="remove icon"></i></button>
+          <div className="ui small basic icon buttons">
+            <button className="ui button"><i className="edit icon"></i></button>
+            <button className="ui button" onClick={() => db.remove(item.doc)}><i className="remove icon"></i></button>
           </div>
       </td>
-    </tr>
+    </tr>)}
   </tbody>
   <tfoot>
     <tr><th colSpan="11">
@@ -91,17 +102,8 @@ export default function ZYTable(props) {
     </th>
   </tr></tfoot>
 </table>
-    <input onChange={(event)=>setTitle(event.target.value)} />
+    <textarea value={title} onChange={(event)=>setTitle(event.target.value)}/>
     <br/>
     <button onClick={() => addTodo(title)}>add</button>
-    <div className="ui divider"/>
-    <ul>
-        {todos.map(item => <li key={item.key}>{item.doc.title}
-          <button onClick={() => {
-            item.doc.title += '123'
-            db.put(item.doc)
-          }}>edit</button>
-        <button onClick={() => db.remove(item.doc)}>delete</button></li>)}
-    </ul>
   </div>
 }

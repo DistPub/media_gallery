@@ -20,11 +20,11 @@ function initDBContext(name) {
     sessionStorage.setItem('password', password);
   }
 
-  let remoteCouch = `https://${username}:${password}@relax.smitechow.com/todos`;
+  let remoteCouch = `https://${username}:${password}@relax.smitechow.com/${name}`;
   let opts = {live: true};
   db.replicate.to(remoteCouch, opts, console.error);
   db.replicate.from(remoteCouch, opts, console.error);
   return React.createContext(db);
 }
 
-export const PouchDBContext = initDBContext('todos')
+export const PouchDBContext = initDBContext('zyms')
