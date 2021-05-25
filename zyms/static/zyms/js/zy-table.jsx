@@ -61,10 +61,10 @@ export default function ZYTable(props) {
   return <div className="ui segment">
     { addDoc && <ModalDialog title={'添加资源'} body={<AddDocForm closeForm={() => setAddDoc(false)}/>} container={modalContainer} onClose={
         ()=>setAddDoc(false)
-      } negative={false} showIcon={false}/>}
+      } negative={false} showIcon={false} blurClose={false}/>}
       { editDoc && <ModalDialog title={'编辑资源'} body={<AddDocForm closeForm={() => setEditDoc(null)} doc={editDoc}/>} container={modalContainer} onClose={
         ()=>setEditDoc(null)
-      } negative={false} showIcon={false}/>}
+      } negative={false} showIcon={false} blurClose={false}/>}
     <table className="ui selectable celled padded table">
   <thead>
     <tr><th>#</th>

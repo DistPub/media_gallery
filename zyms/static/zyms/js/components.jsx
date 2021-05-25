@@ -119,8 +119,13 @@ export function ModalDialog(props) {
   }
   const negative = props.negative ?? true;
   const showIcon = props.showIcon ?? true;
+  const blurClose = props.blurClose ?? true;
 
   return ReactDOM.createPortal(<dialog className={styles.dialog} ref={ref} onClick={(event)=>{
+    if (!blurClose) {
+      return;
+    }
+
     const rect = ref.current.getBoundingClientRect()
     if (event.clientY < rect.top || event.clientY > rect.bottom ||
       event.clientX < rect.left || event.clientX > rect.right) {

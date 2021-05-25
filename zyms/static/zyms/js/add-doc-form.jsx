@@ -3,6 +3,7 @@ import {PouchDBContext} from "./context.js";
 export default function AddDocForm(props) {
   const db = React.useContext(PouchDBContext);
 
+  const isEidt = !!props.doc;
   const [data, setData] = React.useState(props.doc ?? {
     "platform": "微博",
     "name": "张三分",
@@ -39,11 +40,11 @@ export default function AddDocForm(props) {
   }
 
   return <form className="ui form">
-  <div className="field">
+  <div className={`field ${isEidt && 'disabled'}`}>
     <label>平台</label>
     <input value={data.platform} onChange={(event) => setData(old => { return {...old, platform: event.target.value}})}/>
   </div>
-  <div className="field">
+  <div className={`field ${isEidt && 'disabled'}`}>
     <label>账号名称</label>
     <input value={data.name} onChange={(event) => setData(old => {
       return {
@@ -106,9 +107,15 @@ export default function AddDocForm(props) {
         ...old, follow_number: event.target.value
       }})}/>
   </div>
-  <button className="positive ui button" type="submit" onClick={() => {
-    addDoc();
-    props.closeForm();
-  }}>保存</button>
+    <div className="ui buttons">
+      <button className="positive ui button" type="submit" onClick={() => {
+        addDoc();
+        props.closeForm();
+      }}>保存
+      </button>
+      <div className="or"></div>
+      <button className="ui button" onClick={props.closeForm}>取消</button>
+    </div>
+
 </form>
 }
