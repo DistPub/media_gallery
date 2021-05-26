@@ -18,6 +18,7 @@ export default function ZYTable(props) {
   const [pages, setPages] = React.useState(1);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [navs, setNavs] = React.useState([]);
+  const [total, setTotal] = React.useState(0);
 
   const [searchKey, setSearchKey] = React.useState('');
   const [search, setSearch] = React.useState('');
@@ -83,6 +84,7 @@ export default function ZYTable(props) {
       });
     }
 
+    setTotal(result.total_rows);
     setPages(getPages(result.total_rows, size));
     setDocs(result.rows ?? result.docs);
     setNeedSync(false);
@@ -225,8 +227,13 @@ export default function ZYTable(props) {
     </tr>)}
   </tbody>
   <tfoot>
-    <tr><th colSpan="12">
-      <div className="ui right floated pagination menu">
+    <tr><th colSpan="12"><div className="ui middle aligned two column grid">
+      <div className="left floated one column"><button className="positive ui button" onClick={() => setAddDoc(true)}>新增</button></div>
+      <div className="right floated right aligned one column">
+        <span className="ui label">
+          <i className="signal icon"></i>{total}
+        </span>
+        <div className="ui pagination menu">
         <a className={`icon ${
           currentPage===1 && 'disabled'
           } item`} onClick={() => {
@@ -247,9 +254,8 @@ export default function ZYTable(props) {
             setCurrentPage(currentPage+1);
         }}>
           <i className="right chevron icon"></i>
-        </a>
-      </div>
-          <div className="ui left floated"><button className="positive ui button" onClick={() => setAddDoc(true)}>新增</button></div>
+        </a></div>
+      </div></div>
     </th>
   </tr></tfoot>
 </table>
