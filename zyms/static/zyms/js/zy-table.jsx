@@ -1,6 +1,6 @@
 import styles from '../css/zy-table.cssm' assert {type: 'css'};
-import {ShellContext, PouchDBContext, ModalContainer} from "./context.js";
-import {ModalDialog} from './components.jsx';
+import {ShellContext, PouchDBContext, ModalContainer, ConstsContext} from "./context.js";
+import {ModalDialog, ResetButton} from './components.jsx';
 import AddDocForm from './add-doc-form.jsx';
 import {getPages} from "./utils.js";
 
@@ -8,6 +8,7 @@ export default function ZYTable(props) {
   const db = React.useContext(PouchDBContext);
   const shell = React.useContext(ShellContext);
   const modalContainer = React.useContext(ModalContainer)
+  const Consts = React.useContext(ConstsContext)
 
   const [docs, setDocs] = React.useState([]);
   const [addDoc, setAddDoc] = React.useState(false);
@@ -21,6 +22,8 @@ export default function ZYTable(props) {
   const [searchKey, setSearchKey] = React.useState('');
   const [search, setSearch] = React.useState('');
   const [needSync, setNeedSync] = React.useState(false);
+  const [categoryFilter, setCategoryFilter] = React.useState(null);
+  const [platformFilter, setPlatformFilter] = React.useState(null);
 
   React.useEffect(() => {
     let navs = [];
@@ -39,7 +42,7 @@ export default function ZYTable(props) {
     let result;
 
     if (search) {
-      result = await db.find({
+      let filter = {
         selector: {
           $or: [{name: {$regex: new XRegExp(`(?i)${search}`)}}, {id: {$regex: new XRegExp(`(?i)${search}`)}}],
           category: {$gte: null},
@@ -49,7 +52,17 @@ export default function ZYTable(props) {
         sort: [{follow_number: 'desc'}],
         limit: size,
         skip
-      });
+      }
+
+      if (categoryFilter) {
+        filter.selector.category = categoryFilter;
+      }
+
+      if (platformFilter) {
+        filter.selector.platform = platformFilter;
+      }
+
+      result = await db.find(filter);
       result.total_rows = currentPage * size;
       if (size === result.docs.length) {
         result.total_rows += 1;
@@ -63,7 +76,7 @@ export default function ZYTable(props) {
         skip,
         startkey: 'data',
         endkey: 'data\ufff0'});
-      result.total_rows -= (await db.getIndexes()).indexes.filter(item=>item.type==='json').length;
+      result.total_rows -= 2+2; // 2 index and 2 consts
       result.total_rows = Math.max(0, result.total_rows);
       result.rows = result.rows.map(item=>{
         return {...item.doc, _id: item.id, _rev: item.value.rev};
@@ -79,7 +92,7 @@ export default function ZYTable(props) {
     setSkip((currentPage-1)*size)
   }, [currentPage]);
 
-  React.useEffect(showDocs, [skip, search]);
+  React.useEffect(showDocs, [skip, search, platformFilter, categoryFilter]);
 
   React.useEffect(() => {
     let sync = db.changes({
@@ -107,8 +120,8 @@ export default function ZYTable(props) {
       <p>检测到数据有更新，你可以选择立即刷新或者关闭消息。</p>
     </div>
   </div>}
-  <div className="ui segment">
-    <div className="ui action input">
+  <div className="ui segment form">
+    <div className="ui action input field">
       <input tabIndex="0" type="text" placeholder="Search..." value={searchKey}
              onChange={event => setSearchKey(event.target.value)}
              onKeyPress={event => {
@@ -117,13 +130,41 @@ export default function ZYTable(props) {
                  setCurrentPage(1);
                }
              }}/>
-  <button className="ui icon button" onClick={() => {
-    setSearch(searchKey);
-    setCurrentPage(1);
-  }}>
-    <i className="search icon"></i>
-  </button>
-</div>
+      <button className="ui icon button" onClick={() => {
+        setSearch(searchKey);
+        setCurrentPage(1);
+      }}>
+        <i className="search icon"></i>
+      </button>
+    </div>
+    <div className="inline fields">
+    <label htmlFor="category">类别:</label>
+      {Consts.category.map(item=>
+    <div className="field" key={item}>
+      <div className="ui radio checkbox">
+        <input type="radio" name="category" checked={item === categoryFilter} value={item} readOnly className="hidden"/>
+        <label onClick={()=>{
+          setCategoryFilter(item)
+        }}>{item}</label>
+      </div>
+    </div>)}
+    <ResetButton onClick={()=>setCategoryFilter(null)}/>
+    </div>
+
+    <div className="inline fields">
+    <label htmlFor="platform">平台:</label>
+      {Consts.platform.map(item=>
+    <div className="field" key={item}>
+      <div className="ui radio checkbox">
+        <input type="radio" name="platform" checked={item === platformFilter} value={item} readOnly className="hidden"/>
+        <label onClick={()=>{
+          setPlatformFilter(item)
+        }}>{item}</label>
+      </div>
+    </div>)}
+    <ResetButton onClick={()=>setPlatformFilter(null)}/>
+    </div>
+
   </div>
   <div className="ui segment">
     { addDoc && <ModalDialog title={'添加资源'} body={<AddDocForm closeForm={() => setAddDoc(false)}/>} container={modalContainer} onClose={

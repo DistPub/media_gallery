@@ -4,7 +4,7 @@ await dshell.init();
 export const ShellContext = React.createContext(dshell);
 export const ModalContainer = React.createContext(document.querySelector('#modal'));
 
-function initDBContext(name) {
+async function initDB(name) {
   let db = new PouchDB(name);
   let username = sessionStorage.getItem('username');
 
@@ -28,15 +28,31 @@ function initDBContext(name) {
   let opts = {live: true, retry: true};
   db.replicate.to(remoteCouch, opts, console.error);
   db.replicate.from(remoteCouch, opts, console.error);
-  db.createIndex({
+  await db.createIndex({
     index: {fields: ['name', 'id', 'category', 'platform']},
     ddoc: 'search-index'
   });
-  db.createIndex({
+  await db.createIndex({
     index: {fields: ['follow_number']},
     ddoc: 'sort-index'
   });
-  return React.createContext(db);
+  return db;
 }
 
-export const PouchDBContext = initDBContext('zyms')
+let db = await initDB('zyms');
+export const PouchDBContext = React.createContext(db);
+
+const Consts = {};
+
+async function getEnums(name, defaultValue) {
+  try {
+    return (await db.get(`consts/${name}`)).value;
+  } catch (error) {
+    await db.put({_id: `consts/${name}`, value: defaultValue})
+    return defaultValue;
+  }
+}
+
+Consts.category = await getEnums('category', []);
+Consts.platform = await getEnums('platform', []);
+export const ConstsContext = React.createContext(Consts);
