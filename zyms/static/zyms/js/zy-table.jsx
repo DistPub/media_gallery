@@ -3,6 +3,29 @@ import {ShellContext, PouchDBContext, ModalContainer, ConstsContext} from "./con
 import {ModalDialog, ResetButton} from './components.jsx';
 import AddDocForm from './add-doc-form.jsx';
 import {getPages} from "./utils.js";
+import { XLSX } from "https://cdn.jsdelivr.net/npm/dshell@1.4.0/dep.js";
+
+async function CBuildExcel(_, sheetName, header, rows) {
+  const workbook = XLSX.utils.book_new()
+  if (Array.isArray(rows[0])) {
+    rows = rows.map(row => {
+      const data = {}
+      for (const [idx, cell] of row.entries()) {
+        data[header[idx]] = cell
+      }
+      return data
+    })
+  }
+  const sheet = XLSX.utils.json_to_sheet(rows, { header: header })
+  XLSX.utils.book_append_sheet(workbook, sheet, sheetName)
+  return XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+}
+
+function makeFlow(shell, docs) {
+  return shell.Action
+    .cBuildExcel(['data', Object.keys(docs[0]), docs])
+    .download(['zyms.xlsx'])
+}
 
 export default function ZYTable(props) {
   const db = React.useContext(PouchDBContext);
@@ -39,7 +62,7 @@ export default function ZYTable(props) {
     setNavs(navs);
   }, [pages, currentPage])
 
-  async function showDocs() {
+  async function showDocs(download=false) {
     let result;
 
     if (search) {
@@ -63,6 +86,11 @@ export default function ZYTable(props) {
         filter.selector.platform = platformFilter;
       }
 
+      if (download) {
+        filter.skip = 0;
+        filter.limit = pages * size;
+      }
+
       result = await db.find(filter);
       result.total_rows = currentPage * size;
       if (size === result.docs.length) {
@@ -71,12 +99,19 @@ export default function ZYTable(props) {
         result.total_rows = (currentPage - 1) * size + result.docs.length;
       }
     } else {
-      result = await db.allDocs({
+      let option = {
         include_docs: true,
         limit: size,
         skip,
         startkey: 'data',
-        endkey: 'data\ufff0'});
+        endkey: 'data\ufff0'}
+
+      if (download) {
+        option.limit = pages * size;
+        option.skip = 0;
+      }
+
+      result = await db.allDocs(option);
       result.total_rows -= 2+2; // 2 index and 2 consts
       result.total_rows = Math.max(0, result.total_rows);
       result.rows = result.rows.map(item=>{
@@ -84,10 +119,24 @@ export default function ZYTable(props) {
       });
     }
 
+    if (download) {
+      return result.rows ?? result.docs;
+    }
+
     setTotal(result.total_rows);
     setPages(getPages(result.total_rows, size));
     setDocs(result.rows ?? result.docs);
     setNeedSync(false);
+  }
+
+  async function ExportExcel() {
+    let result = await showDocs(true);
+    let flow = makeFlow(shell, result.map(item=>{
+      delete item._id;
+      delete item._rev;
+      return item;
+    }));
+    await shell.exec(flow);
   }
 
   React.useEffect(()=>{
@@ -97,6 +146,8 @@ export default function ZYTable(props) {
   React.useEffect(showDocs, [skip, search, platformFilter, categoryFilter]);
 
   React.useEffect(() => {
+    shell.installExternalAction(CBuildExcel)
+
     let sync = db.changes({
       since: 'now',
       live: true
@@ -228,7 +279,10 @@ export default function ZYTable(props) {
   </tbody>
   <tfoot>
     <tr><th colSpan="12"><div className="ui middle aligned two column grid">
-      <div className="left floated one column"><button className="positive ui button" onClick={() => setAddDoc(true)}>新增</button></div>
+      <div className="left floated one column">
+        <button className="positive ui button" onClick={() => setAddDoc(true)}>新增</button>
+        <button className="ui download primary button" onClick={ExportExcel}>导出所有数据</button>
+      </div>
       <div className="right floated right aligned one column">
         <span className="ui label">
           <i className="signal icon"></i>{total}
