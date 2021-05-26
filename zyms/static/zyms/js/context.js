@@ -10,14 +10,18 @@ function initDBContext(name) {
 
   if (!username) {
     username = prompt("请输入用户名", "<username>");
-    sessionStorage.setItem('username', username);
+    if (username) {
+      sessionStorage.setItem('username', username);
+    }
   }
 
   let password = sessionStorage.getItem('password');
 
   if (!password) {
     password = prompt("请输入密码", "<password>");
-    sessionStorage.setItem('password', password);
+    if (password) {
+      sessionStorage.setItem('password', password);
+    }
   }
 
   let remoteCouch = `https://${username}:${password}@relax.smitechow.com/${name}`;
