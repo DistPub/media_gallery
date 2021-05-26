@@ -21,7 +21,7 @@ export default function AddDocForm(props) {
 
   function addDoc() {
     if (!data._id) {
-      data._id = `${data.platform}|${data.name}`
+      data._id = `data/${data.platform}/${data.name}`
     }
     db.put(data, function callback(err, result) {
       if (!err) {
@@ -30,9 +30,11 @@ export default function AddDocForm(props) {
     });
   }
 
-  window.batchAdd = () => {
-    for (let idx=0; idx < 300; idx ++) {
-      data._id = `${data.platform}|${data.name}${idx}`
+  window.batchAdd = (count) => {
+    for (let idx=0; idx < count; idx ++) {
+      data.name = `张三分${idx}`
+      data._id = `data/${data.platform}/${data.name}`
+      data.follow_number = idx
     db.put(data, function callback(err, result) {
       if (!err) {
         console.log('Successfully posted a data!');

@@ -1,3 +1,4 @@
+import styles from '../css/zy-table.cssm' assert {type: 'css'};
 import {ShellContext, PouchDBContext, ModalContainer} from "./context.js";
 import {ModalDialog} from './components.jsx';
 import AddDocForm from './add-doc-form.jsx';
@@ -49,11 +50,19 @@ export default function ZYTable(props) {
           $or: [{name: {$regex: search}},{id: {$regex: search}}]
         },
         limit: size,
-        skip
+        skip,
+        sort: ['follow_number']
       });
       result.total_rows = result.docs.length;
     } else {
-      result = await db.allDocs({include_docs: true, descending: true, limit: size, skip});
+      let designDocNumber = (await db.getIndexes()).indexes.filter(item=>item.type==='json').length;
+      result = await db.allDocs({
+        include_docs: true,
+        limit: size,
+        skip,
+        startkey: 'data',
+        endkey: 'data\ufff0'});
+      result.total_rows -= designDocNumber;
       result.rows = result.rows.map(item=>{
         return {...item.doc, _id: item.id, _rev: item.value.rev};
       });
@@ -145,8 +154,8 @@ export default function ZYTable(props) {
   </tr></thead>
   <tbody>
   {docs.map((item, idx) =>
-    <tr key={item._id} className={item.isEdit && 'positive'}>
-      <td className="center aligned">{idx+1}</td>
+    <tr key={item._id} className={`${item.isEdit && 'positive'} ${item.isRemove && 'negative'}`}>
+      <td className="center aligned">{skip+idx+1}</td>
       <td className="center aligned">{item.platform}</td>
       <td className="center aligned">{item.name}</td>
       <td className="center aligned">{item.id_isEdit && <i className="attention icon"></i>}{item.id}</td>
@@ -157,13 +166,13 @@ export default function ZYTable(props) {
       <td className="center aligned">{item.pay_category_isEdit && <i className="attention icon"></i>}{item.pay_category}</td>
       <td className="center aligned">{item.vendor_isEdit && <i className="attention icon"></i>}{item.vendor}</td>
       <td>{item.vendor_account_isEdit && <i className="attention icon"></i>}{item.vendor_account}</td>
-      <td className="center aligned">
+      <td className={`${item.isRemove && styles['operator-hide']} center aligned`}>
           <div className="ui small basic icon buttons">
             <button className="ui button" onClick={() => setEditDoc(idx+1) }><i className="edit icon"></i></button>
-            <button className="ui button" onClick={(event) => {
-              event.target.closest('tr').classList.add('negative');
-              event.target.closest('td').style.display = 'none';
+            <button className="ui button" onClick={() => {
               db.remove(item);
+              item.isRemove = true;
+              docs[idx] = item;
             }}><i className="remove icon"></i></button>
           </div>
       </td>

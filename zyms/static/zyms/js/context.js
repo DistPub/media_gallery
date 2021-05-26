@@ -25,7 +25,7 @@ function initDBContext(name) {
   db.replicate.to(remoteCouch, opts, console.error);
   db.replicate.from(remoteCouch, opts, console.error);
   db.createIndex({
-    index: {fields: ['name', 'id', 'category', 'platform']}
+    index: {fields: ['name', 'id', 'category', 'platform', 'follow_number']}
   });
   return React.createContext(db);
 }
