@@ -40,29 +40,32 @@ export default function ZYTable(props) {
     let result;
 
     if (search) {
-      if (currentPage !== 1) {
-        setCurrentPage(1);
-        return;
-      }
-
       result = await db.find({
         selector: {
-          $or: [{name: {$regex: search}},{id: {$regex: search}}]
+          $or: [{name: {$regex: search}}, {id: {$regex: search}}],
+          category: {$gte: null},
+          platform: {$gte: null},
+          follow_number: {$gte: null},
         },
+        sort: [{follow_number: 'desc'}],
         limit: size,
-        skip,
-        sort: ['follow_number']
+        skip
       });
-      result.total_rows = result.docs.length;
+      result.total_rows = currentPage * size;
+      if (size === result.docs.length) {
+        result.total_rows += 1;
+      } else {
+        result.total_rows = (currentPage - 1) * size + result.docs.length;
+      }
     } else {
-      let designDocNumber = (await db.getIndexes()).indexes.filter(item=>item.type==='json').length;
       result = await db.allDocs({
         include_docs: true,
         limit: size,
         skip,
         startkey: 'data',
         endkey: 'data\ufff0'});
-      result.total_rows -= designDocNumber;
+      result.total_rows -= (await db.getIndexes()).indexes.filter(item=>item.type==='json').length;
+      result.total_rows = Math.max(0, result.total_rows);
       result.rows = result.rows.map(item=>{
         return {...item.doc, _id: item.id, _rev: item.value.rev};
       });
@@ -112,10 +115,14 @@ export default function ZYTable(props) {
              onChange={event => setSearchKey(event.target.value)}
              onKeyPress={event => {
                if (event.key === 'Enter') {
-                 setSearch(searchKey)
+                 setSearch(searchKey);
+                 setCurrentPage(1);
                }
              }}/>
-  <button className="ui icon button" onClick={() => setSearch(searchKey)}>
+  <button className="ui icon button" onClick={() => {
+    setSearch(searchKey);
+    setCurrentPage(1);
+  }}>
     <i className="search icon"></i>
   </button>
 </div>
