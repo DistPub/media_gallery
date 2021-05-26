@@ -17,7 +17,6 @@ export default function ZYTable(props) {
   const [pages, setPages] = React.useState(1);
   const [currentPage, setCurrentPage] = React.useState(1);
   const [navs, setNavs] = React.useState([]);
-  const [total, setTotal] = React.useState(0);
 
   const [searchKey, setSearchKey] = React.useState('');
   const [search, setSearch] = React.useState('');
@@ -42,7 +41,7 @@ export default function ZYTable(props) {
     if (search) {
       result = await db.find({
         selector: {
-          $or: [{name: {$regex: search}}, {id: {$regex: search}}],
+          $or: [{name: {$regex: new XRegExp(`(?i)${search}`)}}, {id: {$regex: new XRegExp(`(?i)${search}`)}}],
           category: {$gte: null},
           platform: {$gte: null},
           follow_number: {$gte: null},
@@ -71,7 +70,6 @@ export default function ZYTable(props) {
       });
     }
 
-    setTotal(result.total_rows);
     setPages(getPages(result.total_rows, size));
     setDocs(result.rows ?? result.docs);
     setNeedSync(false);
