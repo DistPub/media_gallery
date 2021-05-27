@@ -9,3 +9,7 @@
 #wrapper .download-demo-file {
   margin-left: 1rem;
 }
+
+#wrapper .flex-middle-aligned {
+  align-items: center;
+}

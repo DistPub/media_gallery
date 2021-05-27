@@ -98,7 +98,7 @@ export default function BatchOperateZY(props) {
         let flow = makeFlow(shell);
         shell.exec(flow);
       }}>下载模板文件</a></h3>
-      <div className="fields">
+      <div className={`${styles['flex-middle-aligned']} fields`}>
         <div className="inline field">
           <label htmlFor="file" className={`${styles['file-input']} ui icon button`}>
             <i className="file icon"></i>
