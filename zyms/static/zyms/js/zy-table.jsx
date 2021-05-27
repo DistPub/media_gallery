@@ -68,7 +68,7 @@ export default function ZYTable(props) {
   async function showDocs(download=false) {
     let result;
 
-    if (search) {
+    if (search || categoryFilter || platformFilter) {
       let filter = {
         selector: {
           $or: [{name: {$regex: new XRegExp(`(?i)${search}`)}}, {id: {$regex: new XRegExp(`(?i)${search}`)}}],
@@ -79,6 +79,11 @@ export default function ZYTable(props) {
         sort: [{follow_number: 'desc'}],
         limit: size,
         skip
+      }
+
+      if (!search) {
+        filter.selector.name = {$gte: null};
+        filter.selector.id = {$gte: null};
       }
 
       if (categoryFilter) {
@@ -149,7 +154,11 @@ export default function ZYTable(props) {
     setSkip((currentPage-1)*size)
   }, [currentPage]);
 
-  React.useEffect(showDocs, [skip, search, platformFilter, categoryFilter]);
+  React.useEffect(showDocs, [skip]);
+  React.useEffect(()=>{
+    setCurrentPage(1);
+    showDocs();
+  }, [search, platformFilter, categoryFilter]);
 
   React.useEffect(() => {
     shell.installExternalAction(CBuildExcel)
