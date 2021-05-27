@@ -41,7 +41,7 @@ export default function AddDocForm(props) {
     }
   }
 
-  return <form className="ui form">
+  return <div className="ui form">
   <div className={`field ${isEidt && 'disabled'}`}>
     <label>平台</label>
     <input value={data.platform} onChange={(event) => setData(old => { return {...old, platform: event.target.value}})}/>
@@ -118,5 +118,5 @@ export default function AddDocForm(props) {
       <button className="ui button" onClick={() => props.closeForm()}>取消</button>
     </div>
 
-</form>
+</div>
 }

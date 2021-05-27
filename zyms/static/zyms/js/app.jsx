@@ -9,10 +9,12 @@ const tabs = {
 };
 
 export default function App(props) {
-  const [tab, setTab] = React.useState('table');
+  let hash = location.hash;
+  const [tab, setTab] = React.useState(hash === '' ? 'table' : hash.substr(1));
 
   React.useEffect(() => {
     document.title = `ZYMS画廊 - ${tabs[tab]}`
+    document.location.hash = `#${tab}`
   }, [tab])
 
   return <div className={styles.flex}>
