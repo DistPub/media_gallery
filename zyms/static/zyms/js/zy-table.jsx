@@ -131,13 +131,15 @@ export default function ZYTable(props) {
       return result.rows ?? result.docs;
     }
 
-    setTotal(result.total_rows);
-    setPages(getPages(result.total_rows, size));
-    setDocs(result.rows ?? result.docs);
-    setNeedSync(false);
-    setEditedFields({});
-    setEdited([]);
-    setRemoved([]);
+    ReactDOM.unstable_batchedUpdates(() => {
+      setTotal(result.total_rows);
+      setPages(getPages(result.total_rows, size));
+      setDocs(result.rows ?? result.docs);
+      setNeedSync(false);
+      setEditedFields({});
+      setEdited([]);
+      setRemoved([]);
+    });
   }
 
   async function ExportExcel() {
@@ -155,9 +157,12 @@ export default function ZYTable(props) {
   }, [currentPage]);
 
   React.useEffect(showDocs, [skip]);
-  React.useEffect(()=>{
-    setCurrentPage(1);
-    showDocs();
+  React.useEffect(async ()=>{
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    } else {
+      await showDocs();
+    }
   }, [search, platformFilter, categoryFilter]);
 
   React.useEffect(() => {
@@ -180,10 +185,7 @@ export default function ZYTable(props) {
     <div className="ui message">
       <i className="close icon" onClick={() => setNeedSync(false)}></i>
       <div className="header">
-        数据已更新，<a href="#" onClick={() => {
-          showDocs();
-          setNeedSync(false);
-      }}>立即刷新</a>？
+        数据已更新，<a href="#" onClick={async () => await showDocs()}>立即刷新</a>？
       </div>
       <p>检测到数据有更新，你可以选择立即刷新或者关闭消息。</p>
     </div>
@@ -259,19 +261,20 @@ export default function ZYTable(props) {
         if (notChange) {
           return;
         }
+        ReactDOM.unstable_batchedUpdates(() => {
+          setEdited(old=>old.concat([doc._id]));
+          setEditedFields(old=>{
+            let tmp = {...old};
 
-        setEdited(old=>old.concat([doc._id]));
-        setEditedFields(old=>{
-          let tmp = {...old};
-
-          if (tmp[doc._id]) {
-            tmp[doc._id] = {...tmp[doc._id], ...changed}
-          } else {
-            tmp[doc._id] = changed;
-          }
-          return tmp;
+            if (tmp[doc._id]) {
+              tmp[doc._id] = {...tmp[doc._id], ...changed}
+            } else {
+              tmp[doc._id] = changed;
+            }
+            return tmp;
+          });
+          docs[editDoc - 1] = doc;
         });
-        docs[editDoc - 1] = doc;
       }} doc={docs[editDoc-1]}/>} container={modalContainer} onClose={
         ()=>setEditDoc(null)
       } negative={false} showIcon={false} blurClose={false}/>}

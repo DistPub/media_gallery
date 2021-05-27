@@ -19,15 +19,13 @@ export default function AddDocForm(props) {
 账号：459871549669`
   })
 
-  function addDoc() {
+  async function addDoc() {
     if (!data._id) {
       data._id = `data/${data.platform}/${data.name}`
     }
-    db.put(data, function callback(err, result) {
-      if (!err) {
-        console.log('Successfully posted a data!');
-      }
-    });
+    let {rev} = await db.put(data);
+    data._rev = rev;
+    return data;
   }
 
   window.batchAdd = (count) => {
@@ -112,9 +110,8 @@ export default function AddDocForm(props) {
       }})}/>
   </div>
     <div className="ui buttons">
-      <button className="positive ui button" type="submit" onClick={() => {
-        addDoc();
-        props.closeForm(data);
+      <button className="positive ui button" type="submit" onClick={async () => {
+        props.closeForm(await addDoc());
       }}>保存
       </button>
       <div className="or"></div>
