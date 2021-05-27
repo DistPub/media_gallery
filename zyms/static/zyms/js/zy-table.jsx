@@ -299,13 +299,24 @@ export default function ZYTable(props) {
       <td className="center aligned">{editedFields[item._id]?.pay_category && <i className="attention icon"></i>}{item.pay_category}</td>
       <td className="center aligned">{editedFields[item._id]?.vendor && <i className="attention icon"></i>}{item.vendor}</td>
       <td>{editedFields[item._id]?.vendor_account && <i className="attention icon"></i>}{item.vendor_account}</td>
-      <td className={`${removed.includes(item._id) && styles['operator-hide']} center aligned`}>
+      <td className={`center aligned`}>
           <div className="ui small basic icon buttons">
+            {!removed.includes(item._id) && <>
             <button className="ui button" onClick={() => setEditDoc(idx+1) }><i className="edit icon"></i></button>
-            <button className="ui button" onClick={() => {
-              db.remove(item);
+            <button className="ui button" onClick={async () => {
+              await db.remove(item);
               setRemoved(old=>old.concat([item._id]))
-            }}><i className="remove icon"></i></button>
+            }}><i className="remove icon"></i></button></>}
+
+            {removed.includes(item._id) && <button className="ui button" onClick={async () => {
+              delete item._rev;
+              await db.put(item);
+              setRemoved(old=>{
+                let tmp = [...old];
+                tmp.splice(tmp.indexOf(item._id));
+                return tmp;
+              })
+            }}><i className="undo icon"></i></button>}
           </div>
       </td>
     </tr>)}
