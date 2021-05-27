@@ -151,7 +151,7 @@ export default function BatchOperateZY(props) {
       return doc
     }
 
-    return tmp;
+    return {...tmp, id: name, platform};
   }
 
   React.useEffect(()=>{
