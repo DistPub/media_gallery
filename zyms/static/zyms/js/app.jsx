@@ -1,6 +1,7 @@
 import styles from '../css/app.cssm' assert { type: "css" }
 import SideBar from './side-bar.jsx';
 import ZYTable from './zy-table.jsx';
+import BatchOperateZY from './batch-operate-zy.jsx';
 
 const tabs = {
   table: '资源管理',
@@ -18,6 +19,7 @@ export default function App(props) {
     <SideBar tabs={tabs} tabName={tab} showTab={(name) => setTab(name)}/>
     <div className={`${styles['tab-container']}`}>
       {tab === 'table' && <ZYTable/>}
+      {tab === 'batch' && <BatchOperateZY/>}
     </div>
   </div>
 }
