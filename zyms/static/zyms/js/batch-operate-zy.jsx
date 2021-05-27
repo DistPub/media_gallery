@@ -120,7 +120,7 @@ export default function BatchOperateZY(props) {
       </div>
       <ProgressBar display={display} total={total} complete={complete}/>
       {error.length>0 && <div className="ui red message">
-        <p>有数据在库中已存在：<a href='#' onClick={()=>{
+        <p>数据上传完成，有数据在库中已存在：<a href='#' onClick={()=>{
           let flow = makeDownloadErrorFlow(shell, fileName, error)
           shell.exec(flow);
         }}>下载重复数据列表</a></p>
