@@ -118,7 +118,7 @@ export default function AddDocForm(props) {
       }}>保存
       </button>
       <div className="or"></div>
-      <button className="ui button" onClick={props.closeForm}>取消</button>
+      <button className="ui button" onClick={() => props.closeForm()}>取消</button>
     </div>
 
 </form>

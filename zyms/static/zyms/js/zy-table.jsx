@@ -241,6 +241,11 @@ export default function ZYTable(props) {
       { editDoc && <ModalDialog title={'编辑资源'} body={<AddDocForm closeForm={(doc) => {
         setEditDoc(null);
 
+        // cancel
+        if (!doc) {
+          return;
+        }
+
         let changed = {};
         let notChange = true;
 
