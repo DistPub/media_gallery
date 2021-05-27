@@ -42,6 +42,9 @@ export default function ZYTable(props) {
   const [currentPage, setCurrentPage] = React.useState(1);
   const [navs, setNavs] = React.useState([]);
   const [total, setTotal] = React.useState(0);
+  const [edited, setEdited] = React.useState([]);
+  const [editedFields, setEditedFields] = React.useState([]);
+  const [removed, setRemoved] = React.useState([]);
 
   const [searchKey, setSearchKey] = React.useState('');
   const [search, setSearch] = React.useState('');
@@ -127,6 +130,9 @@ export default function ZYTable(props) {
     setPages(getPages(result.total_rows, size));
     setDocs(result.rows ?? result.docs);
     setNeedSync(false);
+    setEditedFields({});
+    setEdited([]);
+    setRemoved([]);
   }
 
   async function ExportExcel() {
@@ -224,15 +230,34 @@ export default function ZYTable(props) {
         ()=>setAddDoc(false)
       } negative={false} showIcon={false} blurClose={false}/>}
       { editDoc && <ModalDialog title={'编辑资源'} body={<AddDocForm closeForm={(doc) => {
+        setEditDoc(null);
+
+        let changed = {};
+        let notChange = true;
+
         for (let key in doc) {
           if (doc[key] !== docs[editDoc - 1][key]) {
-            doc[`${key}_isEdit`] = true;
+            changed[key] = true;
+            notChange = false;
           }
         }
-        doc.isEdit = true;
 
-        docs[editDoc-1] = doc;
-        setEditDoc(null);
+        if (notChange) {
+          return;
+        }
+
+        setEdited(old=>old.concat([doc._id]));
+        setEditedFields(old=>{
+          let tmp = {...old};
+
+          if (tmp[doc._id]) {
+            tmp[doc._id] = {...tmp[doc._id], ...changed}
+          } else {
+            tmp[doc._id] = changed;
+          }
+          return tmp;
+        });
+        docs[editDoc - 1] = doc;
       }} doc={docs[editDoc-1]}/>} container={modalContainer} onClose={
         ()=>setEditDoc(null)
       } negative={false} showIcon={false} blurClose={false}/>}
@@ -253,25 +278,24 @@ export default function ZYTable(props) {
   </tr></thead>
   <tbody>
   {docs.map((item, idx) =>
-    <tr key={item._id} className={`${item.isEdit && 'positive'} ${item.isRemove && 'negative'}`}>
+    <tr key={item._id} className={`${edited.includes(item._id) && 'positive'} ${removed.includes(item._id) && 'negative'}`}>
       <td className="center aligned">{skip+idx+1}</td>
       <td className="center aligned">{item.platform}</td>
       <td className="center aligned">{item.name}</td>
-      <td className="center aligned">{item.id_isEdit && <i className="attention icon"></i>}{item.id}</td>
-      <td className="center aligned">{item.category_isEdit && <i className="attention icon"></i>}{item.category}</td>
-      <td className="center aligned">{item.follow_number_isEdit && <i className="attention icon"></i>}{item.follow_number}</td>
-      <td className="center aligned">{item.activate_isEdit && <i className="attention icon"></i>}{item.activate}</td>
-      <td className="center aligned">{item.accounting_period_isEdit && <i className="attention icon"></i>}{item.accounting_period}</td>
-      <td className="center aligned">{item.pay_category_isEdit && <i className="attention icon"></i>}{item.pay_category}</td>
-      <td className="center aligned">{item.vendor_isEdit && <i className="attention icon"></i>}{item.vendor}</td>
-      <td>{item.vendor_account_isEdit && <i className="attention icon"></i>}{item.vendor_account}</td>
-      <td className={`${item.isRemove && styles['operator-hide']} center aligned`}>
+      <td className="center aligned">{editedFields[item._id]?.id && <i className="attention icon"></i>}{item.id}</td>
+      <td className="center aligned">{editedFields[item._id]?.category && <i className="attention icon"></i>}{item.category}</td>
+      <td className="center aligned">{editedFields[item._id]?.follow_number && <i className="attention icon"></i>}{item.follow_number}</td>
+      <td className="center aligned">{editedFields[item._id]?.activate && <i className="attention icon"></i>}{item.activate}</td>
+      <td className="center aligned">{editedFields[item._id]?.accounting_period && <i className="attention icon"></i>}{item.accounting_period}</td>
+      <td className="center aligned">{editedFields[item._id]?.pay_category && <i className="attention icon"></i>}{item.pay_category}</td>
+      <td className="center aligned">{editedFields[item._id]?.vendor && <i className="attention icon"></i>}{item.vendor}</td>
+      <td>{editedFields[item._id]?.vendor_account && <i className="attention icon"></i>}{item.vendor_account}</td>
+      <td className={`${removed.includes(item._id) && styles['operator-hide']} center aligned`}>
           <div className="ui small basic icon buttons">
             <button className="ui button" onClick={() => setEditDoc(idx+1) }><i className="edit icon"></i></button>
             <button className="ui button" onClick={() => {
               db.remove(item);
-              item.isRemove = true;
-              docs[idx] = item;
+              setRemoved(old=>old.concat([item._id]))
             }}><i className="remove icon"></i></button>
           </div>
       </td>
