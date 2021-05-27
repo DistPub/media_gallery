@@ -310,7 +310,9 @@ export default function ZYTable(props) {
 
             {removed.includes(item._id) && <button className="ui button" onClick={async () => {
               delete item._rev;
-              await db.put(item);
+              let {rev} = await db.put(item);
+              item._rev = rev;
+
               setRemoved(old=>{
                 let tmp = [...old];
                 tmp.splice(tmp.indexOf(item._id));
