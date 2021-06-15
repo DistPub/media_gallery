@@ -2,9 +2,9 @@ import styles from '../css/zy-table.cssm' assert {type: 'css'};
 import {ShellContext, PouchDBContext, ModalContainer, ConstsContext} from "./context.js";
 import {ModalDialog, ResetButton} from './components.jsx';
 import AddDocForm from './add-doc-form.jsx';
-import {getPages} from "./utils.js";
+import {getPages, replaceKeyToLabel} from "./utils.js";
 import { XLSX } from "https://cdn.jsdelivr.net/npm/dshell@1.4.0/dep.js";
-import {defaultDoc} from "./consts.js";
+import {defaultDocLabelInverted} from "./consts.js";
 
 async function CBuildExcel(_, sheetName, header, rows) {
   const workbook = XLSX.utils.book_new()
@@ -23,8 +23,9 @@ async function CBuildExcel(_, sheetName, header, rows) {
 }
 
 function makeFlow(shell, docs) {
+  docs = docs.map(replaceKeyToLabel)
   return shell.Action
-    .cBuildExcel(['data', Object.keys(defaultDoc), docs])
+    .cBuildExcel(['data', Object.keys(defaultDocLabelInverted), docs])
     .download(['zyms.xlsx'])
 }
 

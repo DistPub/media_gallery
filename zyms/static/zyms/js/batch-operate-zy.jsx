@@ -2,6 +2,8 @@ import styles from '../css/batch-operate-zy.cssm' assert { type: 'css' };
 import {ShellContext, PouchDBContext, ModalContainer, ConstsContext} from "./context.js";
 import {ModalDialog, ProgressBar,ResetButton, SubmitButton, TextArea} from "./components.jsx";
 import { XLSX } from "https://cdn.jsdelivr.net/npm/dshell@1.4.0/dep.js";
+import {defaultDocLabelInverted} from "./consts.js";
+import {replaceLabelToKey, replaceKeyToLabel} from "./utils.js";
 
 const dataTypes = {
   name: '账号名称',
@@ -42,24 +44,30 @@ async function CBuildExcel(_, sheetName, header, rows) {
   return XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
 }
 
+function ReplaceKeyToLabel(_, rows) {
+  return rows.map(replaceKeyToLabel);
+}
+
 function makeExportFlow(shell, names, dataType, platform) {
   return shell.Action
     .map([names])
     .fetchDoc([dataType, platform])
-    .Collect
+    .Collect.ReplaceKeyToLabel
     .cBuildExcel(['data', undefined])
     .download(['export_data.xlsx'])
 }
 
 function makeFlow(shell) {
   return shell.Action
-    .buildExcel(['data', Object.keys(tmp), []])
+    .buildExcel(['data', Object.keys(defaultDocLabelInverted), []])
     .download(['demo.xlsx'])
 }
 
 function makeDownloadErrorFlow(shell, name, errors) {
+  errors = errors.map(replaceKeyToLabel);
+
   return shell.Action
-    .cBuildExcel(['error', Object.keys(errors[0]), errors])
+    .cBuildExcel(['error', undefined, errors])
     .download([`${name}_error.xlsx`])
 }
 
@@ -87,6 +95,7 @@ export default function BatchOperateZY(props) {
 
   async function process_wb(wb) {
     let rows = XLSX.utils.sheet_to_json(wb.Sheets['data'], {raw:false})
+    rows = rows.map(replaceLabelToKey);
 
     if (!rows.length) {
       setFileError('上传的文件没有包含任何数据！')
@@ -159,6 +168,7 @@ export default function BatchOperateZY(props) {
   React.useEffect(()=>{
     shell.installExternalAction(CBuildExcel)
     shell.installExternalAction(FetchDoc)
+    shell.installExternalAction(ReplaceKeyToLabel)
   }, [])
 
   function batchUpload() {
