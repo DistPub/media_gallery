@@ -4,6 +4,7 @@ import {ModalDialog, ResetButton} from './components.jsx';
 import AddDocForm from './add-doc-form.jsx';
 import {getPages} from "./utils.js";
 import { XLSX } from "https://cdn.jsdelivr.net/npm/dshell@1.4.0/dep.js";
+import {defaultDoc} from "./consts.js";
 
 async function CBuildExcel(_, sheetName, header, rows) {
   const workbook = XLSX.utils.book_new()
@@ -23,7 +24,7 @@ async function CBuildExcel(_, sheetName, header, rows) {
 
 function makeFlow(shell, docs) {
   return shell.Action
-    .cBuildExcel(['data', Object.keys(docs[0]), docs])
+    .cBuildExcel(['data', Object.keys(defaultDoc), docs])
     .download(['zyms.xlsx'])
 }
 
