@@ -53,7 +53,7 @@ function makeExportFlow(shell, names, dataType, platform) {
     .map([names])
     .fetchDoc([dataType, platform])
     .Collect.ReplaceKeyToLabel
-    .cBuildExcel(['data', undefined])
+    .cBuildExcel(['data', Object.keys(defaultDocLabelInverted)])
     .download(['export_data.xlsx'])
 }
 
@@ -67,7 +67,7 @@ function makeDownloadErrorFlow(shell, name, errors) {
   errors = errors.map(replaceKeyToLabel);
 
   return shell.Action
-    .cBuildExcel(['error', undefined, errors])
+    .cBuildExcel(['error', Object.keys(defaultDocLabelInverted), errors])
     .download([`${name}_error.xlsx`])
 }
 
