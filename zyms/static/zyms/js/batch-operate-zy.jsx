@@ -95,7 +95,9 @@ export default function BatchOperateZY(props) {
 
   async function process_wb(wb) {
     let rows = XLSX.utils.sheet_to_json(wb.Sheets['data'], {raw:false})
-    rows = rows.map(replaceLabelToKey);
+    rows = rows.map(replaceLabelToKey).map(item=>{
+      return {...tmp, ...item}
+    });
 
     if (!rows.length) {
       setFileError('上传的文件没有包含任何数据！')
