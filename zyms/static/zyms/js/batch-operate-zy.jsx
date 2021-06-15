@@ -16,6 +16,8 @@ const tmp = {
   "follow_number": 'N/A',
   "activate": "N/A",
   "accounting_period": "N/A",
+  "micro_task_direct": "N/A",
+  "micro_task_forward": "N/A",
   "pay_category": "N/A",
   "vendor": "N/A",
   "vendor_account": 'N/A'
@@ -51,7 +53,7 @@ function makeExportFlow(shell, names, dataType, platform) {
 
 function makeFlow(shell) {
   return shell.Action
-    .buildExcel(['data', ["platform", "name", "id", "category", "follow_number", "activate", "accounting_period", "pay_category", "vendor", "vendor_account"], []])
+    .buildExcel(['data', Object.keys(tmp), []])
     .download(['demo.xlsx'])
 }
 
