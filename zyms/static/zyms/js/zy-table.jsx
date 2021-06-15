@@ -288,6 +288,8 @@ export default function ZYTable(props) {
     <th>粉丝量</th>
     <th>粉丝活跃度</th>
     <th>账期</th>
+    <th>微任务直发</th>
+    <th>微任务转发</th>
     <th>付款形式</th>
     <th>供应商名称</th>
     <th>供应商账户</th>
@@ -304,6 +306,8 @@ export default function ZYTable(props) {
       <td className="center aligned">{editedFields[item._id]?.follow_number && <i className="attention icon"></i>}{item.follow_number}</td>
       <td className="center aligned">{editedFields[item._id]?.activate && <i className="attention icon"></i>}{item.activate}</td>
       <td className="center aligned">{editedFields[item._id]?.accounting_period && <i className="attention icon"></i>}{item.accounting_period}</td>
+      <td className="center aligned">{editedFields[item._id]?.micro_task_direct && <i className="attention icon"></i>}{item.micro_task_direct}</td>
+      <td className="center aligned">{editedFields[item._id]?.micro_task_forward && <i className="attention icon"></i>}{item.micro_task_forward}</td>
       <td className="center aligned">{editedFields[item._id]?.pay_category && <i className="attention icon"></i>}{item.pay_category}</td>
       <td className="center aligned">{editedFields[item._id]?.vendor && <i className="attention icon"></i>}{item.vendor}</td>
       <td>{editedFields[item._id]?.vendor_account && <i className="attention icon"></i>}{item.vendor_account}</td>
@@ -332,7 +336,7 @@ export default function ZYTable(props) {
     </tr>)}
   </tbody>
   <tfoot>
-    <tr><th colSpan="12"><div className="ui middle aligned two column grid">
+    <tr><th colSpan="14"><div className="ui middle aligned two column grid">
       <div className="left floated one column">
         <button className="positive ui button" onClick={() => setAddDoc(true)}>新增</button>
         <button className="ui download primary button" onClick={ExportExcel}>导出所有数据</button>

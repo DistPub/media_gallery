@@ -12,6 +12,8 @@ export default function AddDocForm(props) {
     "follow_number": 4564654,
     "activate": "45%",
     "accounting_period": "30天",
+    "micro_task_direct": "30天",
+    "micro_task_forward": "30天",
     "pay_category": "对公",
     "vendor": "文档问号",
     "vendor_account": `苏州铃铛文化传播有限公司\n
@@ -79,6 +81,20 @@ export default function AddDocForm(props) {
     <input value={data.accounting_period} onChange={(event) => setData(old => {
       return {
         ...old, accounting_period: event.target.value
+      }})}/>
+  </div>
+  <div className="field">
+    <label>微任务直发</label>
+    <input value={data.micro_task_direct} onChange={(event) => setData(old => {
+      return {
+        ...old, micro_task_direct: event.target.value
+      }})}/>
+  </div>
+  <div className="field">
+    <label>微任务转发</label>
+    <input value={data.micro_task_forward} onChange={(event) => setData(old => {
+      return {
+        ...old, micro_task_forward: event.target.value
       }})}/>
   </div>
   <div className="field">
