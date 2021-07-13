@@ -10,7 +10,7 @@ import {
 import {ShellContext, ModalContainer} from './context.js'
 
 function BuildAPI(_, name) {
-  let api = new URL(atob('aHR0cHM6Ly9zdGFyLnRvdXRpYW8uY29tL3YvYXBpL2RlbWFuZC9hdXRob3JfbGlzdC8='))
+  let api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL3YvYXBpL2RlbWFuZC9hdXRob3JfbGlzdC8="))
   api.searchParams.append('limit', 20)
   api.searchParams.append('need_detail', true)
   api.searchParams.append('page', 1)
@@ -51,7 +51,7 @@ async function GetInfo({exec}, data) {
 
     ;({id: real, short_id: id, follower: fensi, expected_play_num: yuedu} = authors[0])
 
-    let api = new URL(atob('aHR0cHM6Ly9zdGFyLnRvdXRpYW8uY29tL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv'))
+    let api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
       api.searchParams.append('o_author_id', real)
       api.searchParams.append('platform_source', 1)
       api.searchParams.append('platform_channel', 1)
@@ -70,7 +70,7 @@ async function GetInfo({exec}, data) {
     ;({min_like: dianzan} = response.data.description)
 
 
-    api = new URL(atob('aHR0cHM6Ly9zdGFyLnRvdXRpYW8uY29tL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv'))
+    api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
       api.searchParams.append('o_author_id', real)
       api.searchParams.append('platform_source', 1)
       api.searchParams.append('author_type', 1)
@@ -89,7 +89,7 @@ async function GetInfo({exec}, data) {
     huoyue = distribution.description.slice('活跃粉丝占比'.length)
 
 
-    api = new URL(atob('aHR0cHM6Ly9zdGFyLnRvdXRpYW8uY29tL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv'))
+    api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
       api.searchParams.append('o_author_id', real)
       api.searchParams.append('platform_source', 1)
       api.searchParams.append('platform_channel', 1)
