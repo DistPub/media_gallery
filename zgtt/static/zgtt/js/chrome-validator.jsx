@@ -12,7 +12,7 @@ export default function ChromeValidator(props) {
     }
 
     try {
-      const response = await fetch(atob('aHR0cHM6Ly9zdGFyLnRvdXRpYW8uY29tL3YvYXBpL3VzZXIvaW5mby8='),
+      const response = await fetch(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL3YvYXBpL3VzZXIvaW5mby8="),
         {mode: 'cors', credentials: 'include'})
       const data = await response.json()
 
@@ -55,8 +55,8 @@ export default function ChromeValidator(props) {
     return <CheckListForm title={'网络请求权限错误，请检查'} icon={'minus circle'} label="已检查，继续" onClick={()=>reCheck()}
                           ignore={true} onIgnore={()=>setConnectError(false)}>
       <li>已经登录系统</li>
-      <li><img width='100%' src={absURL('../images/disabled-same-site-by-default-cookies.png', import.meta.url)}/>
-        如图已经关闭Chrome flag<a className='ui red label'>chrome://flags/#same-site-by-default-cookies</a></li>
+      <li><img width='100%' src={absURL('../images/escape-same-site-policy-extension.png', import.meta.url)}/>
+        如图配置<a className='ui red label'>Escape Cookie SameSite Policy</a></li>
     </CheckListForm>
   }
 
