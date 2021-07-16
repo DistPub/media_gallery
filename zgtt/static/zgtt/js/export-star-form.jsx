@@ -223,7 +223,7 @@ export default function ExportFensiForm(props) {
   }
 
   return <>
-    <Header title={'信息导出'} subTitle={'请在文本框中用户名称，每行一个'}/>
+    <Header title={'信息导出'} subTitle={'请在文本框中输入用户名称，每行一个'}/>
     { view }
   </>
 }
