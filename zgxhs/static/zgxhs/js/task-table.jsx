@@ -5,30 +5,29 @@ import { XLSX } from "https://cdn.jsdelivr.net/npm/dshell@1.4.0/dep.js";
 import {Header} from "./components.jsx";
 import {statusLabel} from "./consts.js";
 
-async function CBuildExcel(_, sheetName, header, rows) {
-  const workbook = XLSX.utils.book_new()
-  if (Array.isArray(rows[0])) {
-    rows = rows.map(row => {
-      const data = {}
-      for (const [idx, cell] of row.entries()) {
-        data[header[idx]] = cell
-      }
-      return data
-    })
+function getKeyResult(username, results) {
+  results = results.filter(item => item[0].toLowerCase() === username.toLowerCase())
+
+  if (results.length === 1) {
+    return results[0][1].replace('小红书号：', '')
   }
-  const sheet = XLSX.utils.json_to_sheet(rows, { header: header })
-  XLSX.utils.book_append_sheet(workbook, sheet, sheetName)
-  return XLSX.write(workbook, { bookType: 'xlsx', type: 'array' })
+
+  return results.join('\n')
 }
 
 function TransResults(_, task) {
-  return []
+  let rows = []
+  for (let username in task.data) {
+    rows.push([username, getKeyResult(username, task.data[username])])
+  }
+  return rows
 }
 
 function makeFlow(shell, doc) {
   return shell.Action
-    .cBuildExcel(['data', ['username', 'ids'], docs])
-    .download(['zyms.xlsx'])
+    .transResults([doc])
+    .buildExcel(['data', ['username', 'ids']])
+    .download(['zgxhs.xlsx'])
 }
 
 export default function TaskTable(props) {
@@ -57,7 +56,7 @@ export default function TaskTable(props) {
     setNavs(navs);
   }, [pages, currentPage])
 
-  async function showDocs(download=false) {
+  async function showDocs() {
     let result;
 
       let filter = {
@@ -94,7 +93,6 @@ export default function TaskTable(props) {
   React.useEffect(showDocs, [skip]);
 
   React.useEffect(() => {
-    shell.installExternalAction(CBuildExcel)
     shell.installExternalAction(TransResults)
 
     let sync = db.changes({
@@ -141,7 +139,7 @@ export default function TaskTable(props) {
               <button className="ui button" onClick={async () => {
                 const response = await shell.exec(makeFlow(shell, item))
                 console.log(response.json())
-              }}><i className="edit icon"></i></button>
+              }}><i className="download icon"></i></button>
             }
           </div>
       </td>
