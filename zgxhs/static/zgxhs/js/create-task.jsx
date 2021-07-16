@@ -1,24 +1,35 @@
 import {LoadingMessage, TextArea, SubmitButton, ResetButton, ModalDialog, Header} from "./components.jsx";
-import {ShellContext, ModalContainer} from "./context.js";
+import {ShellContext, ModalContainer, PouchDBContext} from "./context.js";
+import uuidv4 from 'https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/esm-browser/v4.js';
 
 function BuildTask(_, names) {
-  return {}
-}
-
-function PutTask(_, task) {
-  return task
+  return {
+    type: 'xhs/search/username',
+    _id: uuidv4(),
+    status: 0,
+    args: names,
+    created: dayjs().format('YYYY-MM-DD HH:mm:ss')
+  }
 }
 
 function makeFlow(shell, names) {
-  return shell.Action
+  return shell.Action.buildTask([names]).PutTask
 }
 
 export default function CreateTask(props) {
+  const db = React.useContext(PouchDBContext);
   const shell = React.useContext(ShellContext)
   const modalContainer = React.useContext(ModalContainer)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState(false)
   const [resource, setResource] = React.useState('')
+
+  async function PutTask(_, task) {
+    let {rev} = await db.put(task);
+    task._rev = rev;
+    return task
+  }
+
   React.useEffect(async () => {
     shell.installExternalAction(BuildTask)
     shell.installExternalAction(PutTask)

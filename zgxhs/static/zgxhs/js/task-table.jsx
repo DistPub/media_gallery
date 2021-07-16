@@ -1,3 +1,4 @@
+import styles from '../css/task-table.cssm' assert {type: 'css'};
 import {ShellContext, PouchDBContext} from "./context.js";
 import {getPages} from "./utils.js";
 import { XLSX } from "https://cdn.jsdelivr.net/npm/dshell@1.4.0/dep.js";
@@ -35,7 +36,7 @@ export default function TaskTable(props) {
   const shell = React.useContext(ShellContext);
 
   const [docs, setDocs] = React.useState([]);
-  const [size, setSize] = React.useState(50);
+  const [size, setSize] = React.useState(10);
   const [skip, setSkip] = React.useState(0);
   const [pages, setPages] = React.useState(1);
   const [currentPage, setCurrentPage] = React.useState(1);
@@ -114,7 +115,7 @@ export default function TaskTable(props) {
     <div className="ui message">
       <i className="close icon" onClick={() => setNeedSync(false)}></i>
       <div className="header">
-        数据已更新，<a onClick={async () => await showDocs()}>立即刷新</a>？
+        数据已更新，<a className={styles.pointer} onClick={async () => await showDocs()}>立即刷新</a>？
       </div>
       <p>检测到数据有更新，你可以选择立即刷新或者关闭消息。</p>
     </div>
