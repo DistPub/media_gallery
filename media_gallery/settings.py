@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'zgwb',
     'zgtt',
     'zyms',
+    'zgxhs',
 ]
 
 MIDDLEWARE = [

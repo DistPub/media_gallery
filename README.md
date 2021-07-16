@@ -8,6 +8,7 @@ for develop reason, all external resources defined by codename in codebase.
 * `zgvg` => `ぷひíɡζζé`
 * `zgwb` => `┕ωéιьǒ┕`
 * `zgtt` => `o﹎τòùτＩαò┌↘`
+* `zgxhs` => `☆χíαǒんǒńɡsんú☆`
 
 ### Encrypt Endpoint
 
@@ -24,3 +25,7 @@ for develop reason, all external endpoints encrypted by base64.
 1. configure Chrome to trust cert
     >open `chrome://settings/certificates`, switch to `Authorities` tab, find `org-mitmproxy`, trust it
 1. restart Chrome
+
+### Note
+
+* django `runserver` command must set `--nostatic` option!

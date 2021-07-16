@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}ZGXHS画廊{% endblock %}
+{% block sw_url %}{% url "zgxhs:sw.js" %}{% endblock %}
+{% block container %}
+  <div id="root"></div>
+  <div id="modal"></div>
+{% endblock %}
+{% block script %}
+  <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.2.1/dist/pouchdb.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.2.2/dist/pouchdb.find.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dshell@1.4.0/dep.bundle.min.js"></script>
+  {% if debug %}
+    <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.development.js" crossorigin></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.development.js" crossorigin></script>
+  {% else %}
+    <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.production.min.js" crossorigin></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.production.min.js" crossorigin></script>
+  {% endif %}
+  <script type="module" src="{% static 'zgxhs/js/index.jsx' %}"></script>
+{% endblock %}
