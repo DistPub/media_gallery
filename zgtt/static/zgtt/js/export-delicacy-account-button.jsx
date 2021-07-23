@@ -30,7 +30,7 @@ async function* QueryAccount(di, page=1) {
   setTotal(old => old + data.data.authors.length*3)
 
   for (let item of data.data.authors) {
-    yield [item.id, [item.nick_name, item.short_id, item.price_info[0].price, item.price_info[1].price, item.follower]]
+    yield [item.id, [item.nick_name, item.short_id, item.price_info[0]?.price, item.price_info[1]?.price, item.follower]]
   }
 
   if (data.data.pagination.has_more) {
@@ -55,7 +55,7 @@ async function AccountDetail(di, args) {
 
   let response = await fetch(api, {mode: 'cors', credentials: 'include'})
   response = await response.json()
-  let intro = response.data.self_intro;
+  let intro = response.data?.self_intro;
   setComplete(old => old + 1)
 
   api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
