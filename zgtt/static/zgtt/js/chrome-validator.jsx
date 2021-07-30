@@ -15,6 +15,7 @@ export default function ChromeValidator(props) {
     let reply = await requestExtension({ method: "ping" })
     if (reply !== 'pong') {
       setChromeError(true)
+      setLoading(false)
       return
     }
 
