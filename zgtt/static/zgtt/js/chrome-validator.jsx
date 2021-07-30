@@ -1,5 +1,5 @@
 import {LoadingMessage, CheckListForm} from "./components.jsx";
-import {absURL} from "./utils.js";
+import {absURL, requestExtension} from "./utils.js";
 
 export default function ChromeValidator(props) {
   const [loading, setLoading] = React.useState(true)
@@ -9,6 +9,25 @@ export default function ChromeValidator(props) {
   React.useEffect(async () => {
     if (!loading) {
       return
+    }
+
+    // check extension
+    let reply = await requestExtension({ method: "ping" })
+    if (reply !== 'pong') {
+      setChromeError(true)
+      return
+    }
+
+    reply = await requestExtension({ method: "get-config" })
+    let host = atob('d3d3Lnhpbmd0dS5jbg==')
+
+    if (!reply.whitelist.includes(host)) {
+      await requestExtension({ method: "add-whitelist", data: host })
+    }
+
+    host = atob('c3NvLm9jZWFuZW5naW5lLmNvbQ==')
+    if (!reply.whitelist.includes(host)) {
+      await requestExtension({ method: "add-whitelist", data: host })
     }
 
     try {
@@ -48,6 +67,7 @@ export default function ChromeValidator(props) {
         如图配置扩展<a className='ui red label'>Allow CORS: Access-Control-Allow-origin</a></li>
       <li><img width='100%' src={absURL('../images/cors-status-on.png', import.meta.url)}/>
         如图确保扩展<a className='ui red label'>Allow CORS: Access-Control-Allow-origin</a>处于开启状态</li>
+      <li>确保安装最新版本【Escape Cookie SameSite Policy】浏览器扩展</li>
     </CheckListForm>
   }
 
@@ -55,8 +75,7 @@ export default function ChromeValidator(props) {
     return <CheckListForm title={'网络请求权限错误，请检查'} icon={'minus circle'} label="已检查，继续" onClick={()=>reCheck()}
                           ignore={true} onIgnore={()=>setConnectError(false)}>
       <li>已经登录系统</li>
-      <li><img width='100%' src={absURL('../images/escape-same-site-policy-extension.png', import.meta.url)}/>
-        如图配置<a className='ui red label'>Escape Cookie SameSite Policy</a></li>
+      <li>尝试退出重新登录系统</li>
     </CheckListForm>
   }
 
