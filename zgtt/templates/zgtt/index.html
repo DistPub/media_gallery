@@ -12,9 +12,23 @@
   {% if debug %}
     <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.development.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.development.js" crossorigin></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "settings": "{% static 'zgtt/js/settings.dev.js' %}"
+        }
+      }
+    </script>
   {% else %}
     <script src="https://cdn.jsdelivr.net/npm/react@17.0.1/umd/react.production.min.js" crossorigin></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@17.0.1/umd/react-dom.production.min.js" crossorigin></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "settings": "{% static 'zgtt/js/settings.prd.js' %}"
+        }
+      }
+    </script>
   {% endif %}
   <script type="module" src="{% static 'zgtt/js/index.jsx' %}"></script>
 {% endblock %}

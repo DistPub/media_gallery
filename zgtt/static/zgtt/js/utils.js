@@ -1,14 +1,4 @@
-const ids = {}
-
-export function generateID(prefix) {
-  if (!ids.hasOwnProperty(prefix)) {
-    ids[prefix] = 1
-  }
-  const id = `${prefix}${ids[prefix]}`
-  ids[prefix] ++
-  console.log(id)
-  return id
-}
+import {ChromeExtensionID} from 'settings';
 
 export function absURL(relative, base) {
   const url = new URL(relative, base)
@@ -17,6 +7,6 @@ export function absURL(relative, base) {
 
 export function requestExtension(message) {
   return new Promise(resolve => {
-    chrome.runtime.sendMessage('hlelilbkabllbfdclcgbbeenhgfnnbbm', message, resolve)}
+    chrome.runtime.sendMessage(ChromeExtensionID, message, resolve)}
   )
 }
