@@ -17,6 +17,6 @@ export function absURL(relative, base) {
 
 export function requestExtension(message) {
   return new Promise(resolve => {
-    chrome.runtime.sendMessage('opkhnmaapndgdngphjdjooglndjacehh', message, resolve)}
+    chrome.runtime.sendMessage('hlelilbkabllbfdclcgbbeenhgfnnbbm', message, resolve)}
   )
 }
