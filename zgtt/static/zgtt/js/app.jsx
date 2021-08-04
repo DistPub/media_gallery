@@ -19,7 +19,10 @@ export default function App(props) {
     <ExportFensiForm/>
     <div className="ui divider"/>
       <Header title={'批量导出'} subTitle={'请登录相关账号'}/>
-    <ExportDelicacyAccountButton tag="48" name="导出美食+cpm<20"/>
+    <ExportDelicacyAccountButton tag="48" name="美食+cpm<20"/>
+    <ExportDelicacyAccountButton tag="97" name="剧情搞笑+cpm<20"/>
+    <ExportDelicacyAccountButton tag="55" name="母婴亲子+cpm<20"/>
+    <ExportDelicacyAccountButton tag="11" name="萌宠+cpm<20"/>
     <ExportHotAccountButton hotID="6766936376500813837" name="达人指数榜"/>
     <ExportHotAccountButton hotID="6720184315054915588" name="涨粉指数榜"/>
   </ShellContext.Provider>
