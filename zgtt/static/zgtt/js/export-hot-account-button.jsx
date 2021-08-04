@@ -1,10 +1,10 @@
-import {Header, LoadingMessage, ProgressBar, ExportButton} from "./components.jsx";
+import {LoadingMessage, ProgressBar, ExportButton} from "./components.jsx";
 import {ShellContext} from "./context.js";
 
-function makeFlow(shell, hotID) {
-  return shell.Action
+function makeFlow(shell, hotID, namespace) {
+  return shell.Action.using(namespace)
     .hotAccount([hotID]) // [id, info]
-    .HotAccountDetail // info
+    .HotAccountDetail.using(null) // info
     .Collect // => [row, ...]
     .buildExcel(['data',
       ["账号名", "粉丝量", "账号ID", "星图20秒价格", "星图60秒价格", "20S cpm", "60S cpm", "简介", "完播率", "星图指数"]
@@ -13,7 +13,6 @@ function makeFlow(shell, hotID) {
 }
 
 export default function ExportHotAccountButton(props) {
-  let hotID = props.hotID;
   const shell = React.useContext(ShellContext)
   const [loading, setLoading] = React.useState(true)
   const [total, setTotal] = React.useState(0)
@@ -140,8 +139,8 @@ async function HotAccountDetail(di, args) {
     if (!shell) {
       return
     }
-    shell.installExternalAction(HotAccount)
-    shell.installExternalAction(HotAccountDetail)
+    shell.installExternalAction(HotAccount, props.name)
+    shell.installExternalAction(HotAccountDetail, props.name)
 
     setLoading(false)
   }, [shell])
@@ -159,7 +158,7 @@ async function HotAccountDetail(di, args) {
         setTotal(0)
         setDisplay(true)
 
-        const response = await shell.exec(makeFlow(shell, props.hotID))
+        const response = await shell.exec(makeFlow(shell, props.hotID, props.name))
         console.log(response.json())
       }}>{props.name}</ExportButton>
     </>
