@@ -20,7 +20,7 @@ function makeFlow(shell, tag, namespace) {
     .buildExcel(['data',
       ["账号名", "账号ID", "星图20秒价格", "星图60秒价格", "粉丝量", "20S cpm", "60S cpm", "简介", "完播率", "星图指数"]
     ])
-    .download(['accounts.xlsx'])
+    .download([`accounts_${tag}.xlsx`])
 }
 
 export default function ExportDelicacyAccountButton(props) {
