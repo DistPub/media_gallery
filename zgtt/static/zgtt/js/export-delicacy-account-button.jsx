@@ -1,10 +1,21 @@
-import {Header, LoadingMessage, ProgressBar, ExportButton} from "./components.jsx";
+import {LoadingMessage, ProgressBar, ExportButton} from "./components.jsx";
 import {ShellContext} from "./context.js";
 
-function makeFlow(shell) {
-  return shell.Action
-    .QueryAccount // [id, info]
-    .AccountDetail // info
+function makeFlow(shell, tag, namespace) {
+  let params = {
+    limit: 30,
+    need_detail: true,
+    platform_source: 1,
+    task_category: 1,
+    tag,
+    order_by: 'score',
+    disable_replace_keyword: false,
+    expected_cpm__le: 20,
+    marketing_target: 1,
+    is_filter: true}
+  return shell.Action.using(namespace)
+    .queryAccount([params]) // [id, info]
+    .AccountDetail.using(null) // info
     .Collect // => [row, ...]
     .buildExcel(['data',
       ["账号名", "账号ID", "星图20秒价格", "星图60秒价格", "粉丝量", "20S cpm", "60S cpm", "简介", "完播率", "星图指数"]
@@ -12,19 +23,23 @@ function makeFlow(shell) {
     .download(['accounts.xlsx'])
 }
 
-export default function ExportDelicacyAccountButton() {
+export default function ExportDelicacyAccountButton(props) {
   const shell = React.useContext(ShellContext)
   const [loading, setLoading] = React.useState(true)
   const [total, setTotal] = React.useState(0)
   const [complete, setComplete] = React.useState(0)
 
 
-async function* QueryAccount(di, page=1) {
-  setTotal(old => old + 1)
+async function* QueryAccount(di, params, page=1) {
+    setTotal(old => old + 1)
 
-  let response = await fetch(
-    atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL3YvYXBpL2RlbWFuZC9hdXRob3JfbGlzdC8/bGltaXQ9MzAmbmVlZF9kZXRhaWw9dHJ1ZSZwbGF0Zm9ybV9zb3VyY2U9MSZ0YXNrX2NhdGVnb3J5PTEmdGFnPTQ4Jm9yZGVyX2J5PXNjb3JlJmRpc2FibGVfcmVwbGFjZV9rZXl3b3JkPWZhbHNlJmV4cGVjdGVkX2NwbV9fbGU9MjAmbWFya2V0aW5nX3RhcmdldD0xJmlzX2ZpbHRlcj10cnVl")+`&page=${page}`,
-    {mode: 'cors', credentials: 'include'})
+    let api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL3YvYXBpL2RlbWFuZC9hdXRob3JfbGlzdC8="))
+    for (let key in params) {
+      api.searchParams.append(key, params[key])
+    }
+    api.searchParams.append('page', page)
+
+  let response = await fetch(api, {mode: 'cors', credentials: 'include'})
   let data = await response.json()
 
   setTotal(old => old + data.data.authors.length*3)
@@ -34,7 +49,7 @@ async function* QueryAccount(di, page=1) {
   }
 
   if (data.data.pagination.has_more) {
-    yield* QueryAccount.apply(this, [di, page+1])
+    yield* QueryAccount.apply(this, [di, params, page+1])
   }
 
   setComplete(old => old + 1)
@@ -100,8 +115,8 @@ async function AccountDetail(di, args) {
     if (!shell) {
       return
     }
-    shell.installExternalAction(QueryAccount)
-    shell.installExternalAction(AccountDetail)
+    shell.installExternalAction(QueryAccount, props.tag)
+    shell.installExternalAction(AccountDetail, props.tag)
 
     setLoading(false)
   }, [shell])
@@ -119,13 +134,13 @@ async function AccountDetail(di, args) {
         setTotal(0)
         setDisplay(true)
 
-        const response = await shell.exec(makeFlow(shell))
+        const response = await shell.exec(makeFlow(shell, props.tag, props.tag))
         console.log(response.json())
-      }}>{"导出美食+cpm<20"}</ExportButton>
+      }}>{props.name}</ExportButton>
     </>
   }
 
-  return <><Header title={'批量导出'} subTitle={'请登录相关账号'}/>
+  return <>
   { view }
   </>
 }
