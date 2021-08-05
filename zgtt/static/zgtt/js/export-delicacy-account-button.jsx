@@ -1,7 +1,7 @@
 import {LoadingMessage, ProgressBar, ExportButton} from "./components.jsx";
 import {ShellContext} from "./context.js";
 
-function makeFlow(shell, tag, namespace, maxPage) {
+function makeFlow(shell, tag, namespace, maxPage, noCPM) {
   let params = {
     limit: 30,
     need_detail: true,
@@ -12,7 +12,12 @@ function makeFlow(shell, tag, namespace, maxPage) {
     disable_replace_keyword: false,
     expected_cpm__le: 20,
     marketing_target: 1,
-    is_filter: true}
+    is_filter: true};
+
+    if (noCPM) {
+      delete params['expected_cpm__le']
+    }
+
   return shell.Action.using(namespace)
     .queryAccount([params, maxPage]) // [id, info]
     .AccountDetail.using(null) // info
@@ -134,7 +139,7 @@ async function AccountDetail(di, args) {
         setTotal(0)
         setDisplay(true)
 
-        const response = await shell.exec(makeFlow(shell, props.tag, props.tag, props.maxPage))
+        const response = await shell.exec(makeFlow(shell, props.tag, props.tag, props.maxPage, props.noCPM))
         console.log(response.json())
       }}>{props.name}</ExportButton>
     </>
