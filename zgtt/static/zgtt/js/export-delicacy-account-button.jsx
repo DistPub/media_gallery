@@ -1,7 +1,7 @@
 import {LoadingMessage, ProgressBar, ExportButton} from "./components.jsx";
 import {ShellContext} from "./context.js";
 
-function makeFlow(shell, tag, namespace) {
+function makeFlow(shell, tag, namespace, maxPage) {
   let params = {
     limit: 30,
     need_detail: true,
@@ -14,7 +14,7 @@ function makeFlow(shell, tag, namespace) {
     marketing_target: 1,
     is_filter: true}
   return shell.Action.using(namespace)
-    .queryAccount([params]) // [id, info]
+    .queryAccount([params, maxPage]) // [id, info]
     .AccountDetail.using(null) // info
     .Collect // => [row, ...]
     .buildExcel(['data',
@@ -30,7 +30,7 @@ export default function ExportDelicacyAccountButton(props) {
   const [complete, setComplete] = React.useState(0)
 
 
-async function* QueryAccount(di, params, page=1) {
+async function* QueryAccount(di, params, maxPage, page=1) {
     setTotal(old => old + 1)
 
     let api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL3YvYXBpL2RlbWFuZC9hdXRob3JfbGlzdC8="))
@@ -48,8 +48,8 @@ async function* QueryAccount(di, params, page=1) {
     yield [item.id, [item.nick_name, item.short_id, item.price_info[0]?.price, item.price_info[1]?.price, item.follower]]
   }
 
-  if (data.data.pagination.has_more) {
-    yield* QueryAccount.apply(this, [di, params, page+1])
+  if (data.data.pagination.has_more && page<maxPage) {
+    yield* QueryAccount.apply(this, [di, params, maxPage, page+1])
   }
 
   setComplete(old => old + 1)
@@ -134,7 +134,7 @@ async function AccountDetail(di, args) {
         setTotal(0)
         setDisplay(true)
 
-        const response = await shell.exec(makeFlow(shell, props.tag, props.tag))
+        const response = await shell.exec(makeFlow(shell, props.tag, props.tag, props.maxPage))
         console.log(response.json())
       }}>{props.name}</ExportButton>
     </>
