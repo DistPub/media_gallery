@@ -32,6 +32,7 @@ export default function App(props) {
       <ExportDelicacyAccountButton maxPage={maxPage} tag="97" name="剧情搞笑+cpm<20"/>
       <ExportDelicacyAccountButton maxPage={maxPage} tag="55" name="母婴亲子+cpm<20"/>
       <ExportDelicacyAccountButton maxPage={maxPage} tag="11" name="萌宠+cpm<20"/>
+      <ExportDelicacyAccountButton maxPage={maxPage} tag="75" name="家居家装+cpm<20"/>
       <ExportHotAccountButton hotID="6766936376500813837" name="达人指数榜"/>
       <ExportHotAccountButton hotID="6720184315054915588" name="涨粉指数榜"/>
     </div>
