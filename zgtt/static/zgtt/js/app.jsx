@@ -4,7 +4,24 @@ import ExportFensiForm from './export-star-form.jsx'
 import ExportDelicacyAccountButton from "./export-delicacy-account-button.jsx";
 import ExportHotAccountButton from './export-hot-account-button.jsx';
 import {Header} from "./components.jsx";
+import {getCode, requestExtension} from "./utils.js";
 
+function Ping(di) {
+  console.log('pong')
+  return 'pong';
+}
+
+function checker() {
+  (function() {
+    return location.href === atob('aHR0cHM6Ly93d3cueGluZ3R1LmNuL2FkL2NyZWF0b3IvbWFya2V0');
+  })();
+}
+
+function maker() {
+  (function() {
+    return {action: '/Ping'};
+  })();
+}
 
 export default function App(props) {
   const [shell, setShell] = React.useState(null)
@@ -13,6 +30,39 @@ export default function App(props) {
   React.useEffect(async () => {
     await dshell.init()
     setShell(dshell)
+    dshell.installExternalAction(Ping)
+
+    let reply = await requestExtension({
+      method: "add-feature-plus",
+      name: '批量导出',
+      checker: getCode(checker),
+      maker: getCode(maker)
+    })
+
+    if (reply) {
+      console.log(`add feature plus, tab id: ${reply.tab.id}`)
+    }
+
+    let status = 0;
+    let timer = setInterval(async () => {
+      if (status) {
+        return;
+      }
+
+      status = 1;
+      let flow = await requestExtension({ method: "get-flow" })
+      if (flow) {
+        console.log(`consumeFlow: ${JSON.stringify(flow)}`)
+        await dshell.exec(flow);
+      } else {
+        console.log('consumeFlow: no flow found')
+      }
+      status = 0;
+    }, 1000);
+
+    return () => {
+      clearInterval(timer);
+    }
   }, [])
 
   return <ShellContext.Provider value={shell}>

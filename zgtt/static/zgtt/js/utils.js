@@ -10,3 +10,9 @@ export function requestExtension(message) {
     chrome.runtime.sendMessage(ChromeExtensionID, message, resolve)}
   )
 }
+
+export function getCode(func) {
+  let code = func.toString().slice(0, -1);
+  let start = code.indexOf('{');
+  return code.slice(start + 1, -1);
+}
