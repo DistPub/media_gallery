@@ -23,7 +23,7 @@ function makeFlow(shell, tag, namespace, maxPage, noCPM) {
     .AccountDetail.using(null) // info
     .Collect // => [row, ...]
     .buildExcel(['data',
-      ["账号名", "账号ID", "星图20秒价格", "星图60秒价格", "粉丝量", "20S cpm", "60S cpm", "简介", "完播率", "星图指数"]
+      ["账号名", "账号ID", "星图20秒价格", "星图60秒价格", "粉丝量", "20S cpm", "60S cpm", "简介", "完播率", "星图指数", "MCN"]
     ])
     .download([`accounts_${tag}.xlsx`])
 }
@@ -47,7 +47,7 @@ async function* QueryAccount(di, params, maxPage, page=1) {
   let response = await fetch(api, {mode: 'cors', credentials: 'include'})
   let data = await response.json()
 
-  setTotal(old => old + data.data.authors.length*3)
+  setTotal(old => old + data.data.authors.length*4)
 
   for (let item of data.data.authors) {
     yield [item.id, [item.nick_name, item.short_id, item.price_info[0]?.price, item.price_info[1]?.price, item.follower]]
@@ -112,7 +112,25 @@ async function AccountDetail(di, args) {
   let playOverRate = response.data.play_over_rate.value
   let {cpm_1_20:cpm20, cpm_21_60:cpm60} = response.data.expect_cpm
   setComplete(old => old + 1)
-  return [...info, cpm20, cpm60, intro, playOverRate, score]
+
+  api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
+  api.searchParams.append('o_author_id', id)
+  api.searchParams.append('platform_source', 1)
+  api.searchParams.append('platform_channel', 1)
+  api.searchParams.append('recommend', true)
+  api.searchParams.append('service_name', 'author.AdStarAuthorService')
+  api.searchParams.append('service_method', 'GetAuthorBaseInfo')
+
+  paramsString = `o_author_id${id}platform_channel1platform_source1recommendrecommendservice_methodGetAuthorBaseInfoservice_nameauthor.AdStarAuthorService`
+  paramsString = paramsString + 'e39539b8836fb99e1538974d3ac1fe98'
+  api.searchParams.append('sign', md5(paramsString))
+
+  response = await fetch(api, {mode: 'cors', credentials: 'include'})
+  response = await response.json()
+  let mcn = response.data.mcn_name
+  setComplete(old => old + 1)
+
+  return [...info, cpm20, cpm60, intro, playOverRate, score, mcn]
 }
 
 

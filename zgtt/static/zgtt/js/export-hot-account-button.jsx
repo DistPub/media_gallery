@@ -7,7 +7,7 @@ function makeFlow(shell, hotID, namespace) {
     .HotAccountDetail.using(null) // info
     .Collect // => [row, ...]
     .buildExcel(['data',
-      ["账号名", "粉丝量", "账号ID", "星图20秒价格", "星图60秒价格", "20S cpm", "60S cpm", "简介", "完播率", "星图指数"]
+      ["账号名", "粉丝量", "账号ID", "星图20秒价格", "星图60秒价格", "20S cpm", "60S cpm", "简介", "完播率", "星图指数", "MCN"]
     ])
     .download(['accounts.xlsx'])
 }
@@ -111,6 +111,7 @@ async function HotAccountDetail(di, args) {
   response = await response.json()
   let short_id = response.data.short_id
     let follower = response.data.follower
+  let mcn = response.data.mcn_name
   setComplete(old => old + 1)
 
   api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
@@ -131,7 +132,7 @@ async function HotAccountDetail(di, args) {
   let playOverRate = response.data.play_over_rate.value
   let {cpm_1_20:cpm20, cpm_21_60:cpm60} = response.data.expect_cpm
   setComplete(old => old + 1)
-  return [...info, follower, short_id, price20, price60, cpm20, cpm60, intro, playOverRate, score]
+  return [...info, follower, short_id, price20, price60, cpm20, cpm60, intro, playOverRate, score, mcn]
 }
 
 
