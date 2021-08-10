@@ -12,11 +12,20 @@ function Ping(di) {
 }
 
 function checker(historyRequests) {
-  return location.href === atob('aHR0cHM6Ly93d3cueGluZ3R1LmNuL2FkL2NyZWF0b3IvbWFya2V0');
+  let urls = Object.values(historyRequests).filter(item=>{
+    return item.url.startsWith(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL3YvYXBpL2RlbWFuZC9hdXRob3JfbGlzdC8="))
+  })
+  return urls.length && location.href === atob('aHR0cHM6Ly93d3cueGluZ3R1LmNuL2FkL2NyZWF0b3IvbWFya2V0');
 }
 
 function maker(historyRequests) {
-  return {action: '/Ping', args: [historyRequests]};
+  let last = Object.values(historyRequests).filter(item=>{
+    return item.url.startsWith(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL3YvYXBpL2RlbWFuZC9hdXRob3JfbGlzdC8="))
+  }).sort((a, b)=>{
+    return a.timeStamp<b.timeStamp?1:-1;
+  })[0];
+  let url = new URL(last.url);
+  return Object.fromEntries(url.searchParams.entries());
 }
 
 export default function App(props) {
@@ -48,8 +57,7 @@ export default function App(props) {
       status = 1;
       let flow = await requestExtension({ method: "get-flow" })
       if (flow) {
-        console.log(`consumeFlow: ${JSON.stringify(flow)}`)
-        await dshell.exec(flow);
+        console.log(`consumeFlow:`, flow)
       } else {
         console.log('consumeFlow: no flow found')
       }
