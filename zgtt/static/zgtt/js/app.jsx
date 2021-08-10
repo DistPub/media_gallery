@@ -11,16 +11,12 @@ function Ping(di) {
   return 'pong';
 }
 
-function checker() {
-  (function() {
-    return location.href === atob('aHR0cHM6Ly93d3cueGluZ3R1LmNuL2FkL2NyZWF0b3IvbWFya2V0');
-  })();
+function checker(historyRequests) {
+  return location.href === atob('aHR0cHM6Ly93d3cueGluZ3R1LmNuL2FkL2NyZWF0b3IvbWFya2V0');
 }
 
-function maker() {
-  (function() {
-    return {action: '/Ping'};
-  })();
+function maker(historyRequests) {
+  return {action: '/Ping', args: [historyRequests]};
 }
 
 export default function App(props) {
