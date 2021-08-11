@@ -1,23 +1,8 @@
 import {LoadingMessage, ProgressBar, ExportButton} from "./components.jsx";
-import {ShellContext} from "./context.js";
+import {ShellContext, context} from "./context.js";
 
-function makeFlow(shell, tag, namespace, maxPage, noCPM) {
-  let params = {
-    limit: 30,
-    need_detail: true,
-    platform_source: 1,
-    task_category: 1,
-    tag,
-    order_by: 'score',
-    disable_replace_keyword: false,
-    expected_cpm__le: 20,
-    marketing_target: 1,
-    is_filter: true};
-
-    if (noCPM) {
-      delete params['expected_cpm__le']
-    }
-
+function makeFlow(shell, namespace, maxPage, params) {
+  delete params.page;
   return shell.Action.using(namespace)
     .queryAccount([params, maxPage]) // [id, info]
     .AccountDetail.using(null) // info
@@ -25,10 +10,10 @@ function makeFlow(shell, tag, namespace, maxPage, noCPM) {
     .buildExcel(['data',
       ["账号名", "账号ID", "星图20秒价格", "星图60秒价格", "粉丝量", "20S cpm", "60S cpm", "简介", "完播率", "星图指数", "MCN"]
     ])
-    .download([`accounts_${tag}.xlsx`])
+    .download([`accounts_${namespace}.xlsx`])
 }
 
-export default function ExportDelicacyAccountButton(props) {
+function ExportDelicacyAccountButton(props) {
   const shell = React.useContext(ShellContext)
   const [loading, setLoading] = React.useState(true)
   const [total, setTotal] = React.useState(0)
@@ -133,17 +118,23 @@ async function AccountDetail(di, args) {
   return [...info, cpm20, cpm60, intro, playOverRate, score, mcn]
 }
 
-
+  const [display, setDisplay] = React.useState(true)
   React.useEffect(async () => {
     if (!shell) {
       return
     }
-    shell.installExternalAction(QueryAccount, props.tag)
-    shell.installExternalAction(AccountDetail, props.tag)
+    shell.installExternalAction(QueryAccount, props.idxStr)
+    shell.installExternalAction(AccountDetail, props.idxStr)
 
     setLoading(false)
   }, [shell])
-  const [display, setDisplay] = React.useState(false)
+  React.useEffect(async () => {
+    if (loading) {
+      return;
+    }
+    const response = await shell.exec(makeFlow(shell, props.idxStr, props.maxPage, props.flow.searchParams))
+    console.log(response.json())
+  }, [loading]);
 
   let view = null
 
@@ -157,9 +148,9 @@ async function AccountDetail(di, args) {
         setTotal(0)
         setDisplay(true)
 
-        const response = await shell.exec(makeFlow(shell, props.tag, props.tag, props.maxPage, props.noCPM))
+        const response = await shell.exec(makeFlow(shell, props.idxStr, context.maxPage, props.flow.searchParams))
         console.log(response.json())
-      }}>{props.name}</ExportButton>
+      }}>{props.flow.description ?? '默认过滤条件'}</ExportButton>
     </>
   }
 
@@ -167,3 +158,6 @@ async function AccountDetail(di, args) {
   { view }
   </>
 }
+
+const MemoExportDelicacyAccountButton = React.memo(ExportDelicacyAccountButton);
+export default MemoExportDelicacyAccountButton;
