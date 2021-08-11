@@ -43,6 +43,10 @@ export default function App(props) {
     <ExportFensiForm/>
     <div className="ui divider"/>
       <Header title={'批量导出'} subTitle={'请登录相关账号'}/>
+    <div className="ui segment">
+      <ExportHotAccountButton hotID="6766936376500813837" name="达人指数榜"/>
+      <ExportHotAccountButton hotID="6720184315054915588" name="涨粉指数榜"/>
+    </div>
     <div className="ui form raised segment">
       <a className="ui red ribbon label">导出设置</a>
       <div className="inline field">
@@ -53,10 +57,10 @@ export default function App(props) {
       }}/>
       </div>
     </div>
-    <div className="ui segment">
-      <ExportHotAccountButton hotID="6766936376500813837" name="达人指数榜"/>
-      <ExportHotAccountButton hotID="6720184315054915588" name="涨粉指数榜"/>
+    <div className="ui form raised segment">
+      <a className="ui red ribbon label">导出舞台</a>
+      <WorkerExportDelicacyAccount pool={pool}/>
+      {pool.length===0 && <div className="ui green message">请在目标页面使用浏览器扩展创建舞台任务</div>}
     </div>
-    <WorkerExportDelicacyAccount pool={pool}/>
   </ShellContext.Provider>
 }

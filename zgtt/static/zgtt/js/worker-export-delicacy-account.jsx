@@ -40,11 +40,9 @@ export default function WorkerExportDelicacyAccount(props) {
     });
   }, []);
 
-  return <>{props.pool.length>0 && <div className="ui segment">
-  {
+  return <>{
     props.pool.filter(([_, flow]) => flow.type === workerType).map(([maxPage, flow], idx) =>
       <MemoExportDelicacyAccountButton key={idx} idxStr={idx.toString()} maxPage={maxPage} flow={flow}/>
     )
-  }
-  </div>}</>;
+  }</>;
 }
