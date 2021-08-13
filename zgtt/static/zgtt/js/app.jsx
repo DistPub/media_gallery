@@ -4,7 +4,6 @@ import ExportFensiForm from './export-star-form.jsx';
 import ExportHotAccountButton from './export-hot-account-button.jsx';
 import {Header} from "./components.jsx";
 import WorkerExportDelicacyAccount from "./worker-export-delicacy-account.jsx";
-import {requestExtension} from "./utils.js";
 
 export default function App(props) {
   const [shell, setShell] = React.useState(null)
@@ -22,7 +21,7 @@ export default function App(props) {
       }
 
       status = 1;
-      let flow = await requestExtension({ method: "get-flow" })
+      let flow = await requestEdgeLover({ method: "get-flow" })
       if (flow) {
         console.log(`consumeFlow:`, flow)
         flow = [context.maxPage, flow];

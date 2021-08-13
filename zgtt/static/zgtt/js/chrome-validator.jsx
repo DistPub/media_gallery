@@ -1,5 +1,5 @@
 import {LoadingMessage, CheckListForm} from "./components.jsx";
-import {absURL, requestExtension} from "./utils.js";
+import {absURL} from "./utils.js";
 
 export default function ChromeValidator(props) {
   const [loading, setLoading] = React.useState(true)
@@ -12,23 +12,22 @@ export default function ChromeValidator(props) {
     }
 
     // check extension
-    let reply = await requestExtension({ method: "ping" })
-    if (reply !== 'pong') {
+    if (!window.requestEdgeLover) {
       setChromeError(true)
       setLoading(false)
       return
     }
 
-    reply = await requestExtension({ method: "get-config" })
-    let host = atob('d3d3Lnhpbmd0dS5jbg==')
+    let whitelist = await requestEdgeLover({ method: "get-whitelist" })
+    let host = atob("aHR0cHM6Ly93d3cueGluZ3R1LmNu")
 
-    if (!reply.whitelist.includes(host)) {
-      await requestExtension({ method: "add-whitelist", data: host })
+    if (!whitelist.includes(host)) {
+      await requestEdgeLover({ method: "add-whitelist", data: host })
     }
 
-    host = atob('c3NvLm9jZWFuZW5naW5lLmNvbQ==')
-    if (!reply.whitelist.includes(host)) {
-      await requestExtension({ method: "add-whitelist", data: host })
+    host = atob("aHR0cHM6Ly9zc28ub2NlYW5lbmdpbmUuY29t")
+    if (!whitelist.includes(host)) {
+      await requestEdgeLover({ method: "add-whitelist", data: host })
     }
 
     try {
@@ -64,10 +63,6 @@ export default function ChromeValidator(props) {
 
   if (chromeError) {
     return <CheckListForm title={'Chrome配置错误，请检查'} icon={'chrome'} onClick={()=>reCheck()}>
-      <li><img width='100%' src={absURL('../images/cors-options.png', import.meta.url)}/>
-        如图配置扩展<a className='ui red label'>Allow CORS: Access-Control-Allow-origin</a></li>
-      <li><img width='100%' src={absURL('../images/cors-status-on.png', import.meta.url)}/>
-        如图确保扩展<a className='ui red label'>Allow CORS: Access-Control-Allow-origin</a>处于开启状态</li>
       <li>确保安装最新版本【Escape Cookie SameSite Policy】浏览器扩展</li>
     </CheckListForm>
   }

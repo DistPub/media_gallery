@@ -1,5 +1,4 @@
 import MemoExportDelicacyAccountButton from "./export-delicacy-account-button.jsx";
-import {getCode, requestExtension} from "./utils.js";
 
 const workerType = 'export-delicacy-account';
 
@@ -32,11 +31,11 @@ function maker(historyRequests) {
 
 export default function WorkerExportDelicacyAccount(props) {
   React.useEffect(async () => {
-    await requestExtension({
+    await requestEdgeLover({
       method: "add-feature-plus",
       name: '批量导出',
-      checker: getCode(checker),
-      maker: getCode(maker)
+      checker: checker.toString(),
+      maker: maker.toString()
     });
   }, []);
 
