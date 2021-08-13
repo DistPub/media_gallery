@@ -62,7 +62,7 @@ export default function ChromeValidator(props) {
   }
 
   if (chromeError) {
-    return <CheckListForm title={'Chrome配置错误，请检查'} icon={'chrome'} onClick={()=>reCheck()}>
+    return <CheckListForm title={'Chrome配置错误，请检查'} icon={'chrome'} onClick={()=>location.reload()}>
       <li>确保安装最新版本【Escape Cookie SameSite Policy】浏览器扩展</li>
     </CheckListForm>
   }
