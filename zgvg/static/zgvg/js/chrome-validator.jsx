@@ -1,5 +1,6 @@
 import {LoadingMessage, CheckListForm} from "./components.jsx";
-import {absURL} from "./utils.js";
+
+let host = atob("aHR0cDovL3dvcmsudmlnbGxlLmNvbQ==");
 
 export default function ChromeValidator(props) {
   const [loading, setLoading] = React.useState(true)
@@ -9,6 +10,18 @@ export default function ChromeValidator(props) {
   React.useEffect(async () => {
     if (!loading) {
       return
+    }
+
+    // check extension
+    if (!window.requestEdgeLover) {
+      setChromeError(true)
+      setLoading(false)
+      return
+    }
+
+    let whitelist = await requestEdgeLover({ method: "get-whitelist" })
+    if (!whitelist.includes(host)) {
+      await requestEdgeLover({ method: "add-whitelist", data: host })
     }
 
     try {
@@ -42,13 +55,9 @@ export default function ChromeValidator(props) {
   }
 
   if (chromeError) {
-    return <CheckListForm title={'Chrome配置错误，请检查'} icon={'chrome'} onClick={()=>reCheck()}>
-      <li><img width='100%' src={absURL('../images/mix-content-enable.png', import.meta.url)}/>
-        如图允许<a className='ui red label'>不安全内容</a></li>
-      <li><img width='100%' src={absURL('../images/cors-options.png', import.meta.url)}/>
-        如图配置扩展<a className='ui red label'>Allow CORS: Access-Control-Allow-origin</a></li>
-      <li><img width='100%' src={absURL('../images/cors-status-on.png', import.meta.url)}/>
-        如图确保扩展<a className='ui red label'>Allow CORS: Access-Control-Allow-origin</a>处于开启状态</li>
+    return <CheckListForm title={'Chrome配置错误，请检查'} icon={'chrome'} onClick={()=>location.reload()}>
+      <li>确保{host}添加到了<span>chrome://flags/#unsafely-treat-insecure-origin-as-secure</span></li>
+      <li>确保安装最新版本【Escape Cookie SameSite Policy】浏览器扩展</li>
     </CheckListForm>
   }
 
@@ -56,8 +65,7 @@ export default function ChromeValidator(props) {
     return <CheckListForm title={'网络请求权限错误，请检查'} icon={'minus circle'} label="已检查，继续" onClick={()=>reCheck()}
                           ignore={true} onIgnore={()=>setConnectError(false)}>
       <li>已经登录系统</li>
-      <li><img width='100%' src={absURL('../images/disabled-same-site-by-default-cookies.png', import.meta.url)}/>
-        如图已经关闭Chrome flag<a className='ui red label'>chrome://flags/#same-site-by-default-cookies</a></li>
+      <li>尝试退出重新登录系统</li>
     </CheckListForm>
   }
 

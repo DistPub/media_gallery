@@ -1,5 +1,4 @@
 import {LoadingMessage, CheckListForm} from "./components.jsx";
-import {absURL} from "./utils.js";
 
 export default function ChromeValidator(props) {
   const [loading, setLoading] = React.useState(true)
