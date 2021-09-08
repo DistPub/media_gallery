@@ -37,7 +37,12 @@ function GetVendor(_, data) {
   const element = document.createElement('div')
   element.innerHTML = html
   const rows = element.querySelectorAll('.contact-box')
-  const index = [...rows].map(row=>row.querySelector('strong').innerText).indexOf(name)
+  let index = [...rows].map(row=>row.querySelector('strong').innerText.toLowerCase()).indexOf(name.toLowerCase())
+
+  // 兼容id搜索
+  if (index === -1) {
+    index = [...rows].map(row=>row.querySelector('div.col-sm-2 > div:nth-child(2) >div').innerText.toLowerCase()).indexOf(name.toLowerCase())
+  }
 
   if (index === -1) {
     return 'N/A'
@@ -144,7 +149,7 @@ export default function ExportVendorForm(props) {
   }
 
   return <>
-    <Header title={'供应商导出'} subTitle={'请在文本框中输入资源项目名称，每行一个'}/>
+    <Header title={'供应商导出'} subTitle={'请在文本框中输入资源项目名称或id，每行一个'}/>
     { view }
   </>
 }
