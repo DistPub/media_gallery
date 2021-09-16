@@ -8,7 +8,8 @@ function makeFlow(shell, hotID, namespace) {
     .Collect // => [row, ...]
     .buildExcel(['data',
       ["账号名", "粉丝量", "账号ID", "星图20秒价格", "星图60秒价格", "20S cpm", "60S cpm", "简介", "完播率", "星图指数", "MCN",
-      "标签", "地区", "男性占比", "女性占比", "地域占比（top10）"]
+      "标签", "地区", "观众男性占比", "观众女性占比", "观众地域占比（top10）",
+        "粉丝男性占比", "粉丝女性占比", "粉丝地域占比（top10）","粉丝活跃度"]
     ])
     .download(['accounts.xlsx'])
 }
@@ -45,11 +46,11 @@ async function* HotAccount(di, hotID) {
       let response = await fetch(api, {mode: 'cors', credentials: 'include'})
       response = await response.json()
 
-      setTotal(old => old + response.data.stars.length * 6)
+      setTotal(old => old + response.data.stars.length * 7)
 
       for (let item of response.data.stars) {
         if (cache.includes(item.id)){
-          setTotal(old => old - 6)
+          setTotal(old => old - 7)
           continue;
         } else {
           cache.push(item.id);
@@ -181,10 +182,48 @@ async function HotAccountDetail(di, args) {
   }, 0)
   let locationTop10 = locationDistributions.distribution_list.slice(0, 10).map(item=>{
     return `${item.distribution_key}: ${(item.distribution_value/locationAll*100).toFixed(2)}%`
-  }).reduce((a,b)=>[a,b].join(', '), '')
+  }).reduce((a,b)=>[a,b].join(', '))
   setComplete(old => old + 1)
+
+  api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
+  api.searchParams.append('o_author_id', id)
+  api.searchParams.append('platform_source', 1)
+  api.searchParams.append('author_type', 1)
+  api.searchParams.append('sign_strict', 1)
+  api.searchParams.append('service_name', 'data.AdStarDataService')
+  api.searchParams.append('service_method', 'GetAuthorFansDistributionV2')
+
+  paramsString = `author_type1o_author_id${id}platform_source1service_methodGetAuthorFansDistributionV2service_namedata.AdStarDataServicesign_strict1`
+  paramsString = paramsString + 'e39539b8836fb99e1538974d3ac1fe98'
+  api.searchParams.append('sign', md5(paramsString))
+
+  response = await fetch(api, {mode: 'cors', credentials: 'include'})
+  response = await response.json()
+  let sexDistributionsFans = response.data.distributions[1]
+  let [menFans, womenFans] = sexDistributionsFans.distribution_list
+  menFans = parseInt(menFans.distribution_value)
+  womenFans = parseInt(womenFans.distribution_value)
+
+  let locationDistributionsFans = response.data.distributions[3]
+  let locationAllFans = locationDistributionsFans.distribution_list.map(item=>parseInt(item.distribution_value)).reduce((a,b)=>{
+    return a+b;
+  }, 0)
+  let locationTop10Fans = locationDistributionsFans.distribution_list.slice(0, 10).map(item=>{
+    return `${item.distribution_key}: ${(item.distribution_value/locationAllFans*100).toFixed(2)}%`
+  }).reduce((a,b)=>[a,b].join(', '))
+  let hyd = response.data.distributions[2]
+  let hydAll = hyd.distribution_list.map(item=>parseInt(item.distribution_value)).reduce((a,b)=>{
+    return a+b;
+  }, 0)
+  hyd = hyd.distribution_list.map(item=>{
+    return `${item.distribution_key}: ${(item.distribution_value/hydAll*100).toFixed(2)}%`
+  }).reduce((a,b)=>[a,b].join(', '))
+  setComplete(old => old + 1)
+
   return [...info, follower, short_id, price20, price60, cpm20, cpm60, intro, playOverRate, score, mcn, tags, address,
-    (men/(men+women)*100).toFixed(2)+'%', (women/(men+women)*100).toFixed(2)+'%', locationTop10]
+    (men/(men+women)*100).toFixed(2)+'%', (women/(men+women)*100).toFixed(2)+'%', locationTop10,
+    (menFans/(menFans+womenFans)*100).toFixed(2)+'%', (womenFans/(menFans+womenFans)*100).toFixed(2)+'%',
+    locationTop10Fans, hyd]
 }
 
 
