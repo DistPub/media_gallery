@@ -7,7 +7,8 @@ function makeFlow(shell, hotID, namespace) {
     .HotAccountDetail.using(null) // info
     .Collect // => [row, ...]
     .buildExcel(['data',
-      ["账号名", "粉丝量", "账号ID", "星图20秒价格", "星图60秒价格", "20S cpm", "60S cpm", "简介", "完播率", "星图指数", "MCN"]
+      ["账号名", "粉丝量", "账号ID", "星图20秒价格", "星图60秒价格", "20S cpm", "60S cpm", "简介", "完播率", "星图指数", "MCN",
+      "标签", "地区", "男性占比", "女性占比", "地域占比（top10）"]
     ])
     .download(['accounts.xlsx'])
 }
@@ -18,30 +19,49 @@ export default function ExportHotAccountButton(props) {
   const [total, setTotal] = React.useState(0)
   const [complete, setComplete] = React.useState(0)
 
-
 async function* HotAccount(di, hotID) {
-  setTotal(old => old + 1)
+    let tags;
+    let cache=[];
 
-  let api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
-  api.searchParams.append('hot_list_id', hotID)
-  api.searchParams.append('tag', "")
-  api.searchParams.append('service_name', 'author.AdStarAuthorService')
-  api.searchParams.append('service_method', 'GetHotListData')
+    if (hotID==='6766936376500813837'){
+      tags=["", "颜值达人", "剧情搞笑", "美妆", "时尚", "萌宠", "音乐", "美食", "游戏", "旅行", "汽车", "生活", "测评", "二次元",
+        "母婴亲子", "科技数码", "运动健身", "家居家装", "影视娱乐", "财经投资", "情感", "三农"]
+    }else{
+      tags=['']
+    }
+    async function* inner(tag) {
+      setTotal(old => old + 1)
 
-  let paramsString = `hot_list_id${hotID}service_methodGetHotListDataservice_nameauthor.AdStarAuthorServicetag`
-  paramsString = paramsString + 'e39539b8836fb99e1538974d3ac1fe98'
-  api.searchParams.append('sign', md5(paramsString))
+      let api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
+      api.searchParams.append('hot_list_id', hotID)
+      api.searchParams.append('tag', tag)
+      api.searchParams.append('service_name', 'author.AdStarAuthorService')
+      api.searchParams.append('service_method', 'GetHotListData')
 
-  let response = await fetch(api, {mode: 'cors', credentials: 'include'})
-  response = await response.json()
+      let paramsString = `hot_list_id${hotID}service_methodGetHotListDataservice_nameauthor.AdStarAuthorServicetag${tag}`
+      paramsString = paramsString + 'e39539b8836fb99e1538974d3ac1fe98'
+      api.searchParams.append('sign', md5(paramsString))
 
-  setTotal(old => old + response.data.stars.length*5)
+      let response = await fetch(api, {mode: 'cors', credentials: 'include'})
+      response = await response.json()
 
-  for (let item of response.data.stars) {
-    yield [item.id, [item.nick_name]]
-  }
+      setTotal(old => old + response.data.stars.length * 6)
 
-  setComplete(old => old + 1)
+      for (let item of response.data.stars) {
+        if (cache.includes(item.id)){
+          setTotal(old => old - 6)
+          continue;
+        } else {
+          cache.push(item.id);
+        }
+        yield [item.id, [item.nick_name]]
+      }
+
+      setComplete(old => old + 1)
+    }
+    for (let item of tags) {
+      yield* inner(item);
+    }
 }
 
 async function HotAccountDetail(di, args) {
@@ -112,6 +132,8 @@ async function HotAccountDetail(di, args) {
   let short_id = response.data.short_id
     let follower = response.data.follower
   let mcn = response.data.mcn_name
+  let tags = Object.keys(response.data.tags_relation).join(', ')
+  let address = `${response.data.province}-${response.data.city}`
   setComplete(old => old + 1)
 
   api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
@@ -132,7 +154,37 @@ async function HotAccountDetail(di, args) {
   let playOverRate = response.data.play_over_rate.value
   let {cpm_1_20:cpm20, cpm_21_60:cpm60} = response.data.expect_cpm
   setComplete(old => old + 1)
-  return [...info, follower, short_id, price20, price60, cpm20, cpm60, intro, playOverRate, score, mcn]
+
+  api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
+  api.searchParams.append('o_author_id', id)
+  api.searchParams.append('platform_source', 1)
+  api.searchParams.append('platform_channel', 1)
+  api.searchParams.append('type', 1)
+  api.searchParams.append('sign_strict', 1)
+  api.searchParams.append('service_name', 'data.AdStarDataService')
+  api.searchParams.append('service_method', 'GetAuthorWatchedDistribution')
+
+  paramsString = `o_author_id${id}platform_channel1platform_source1service_methodGetAuthorWatchedDistributionservice_namedata.AdStarDataServicesign_strict1type1`
+  paramsString = paramsString + 'e39539b8836fb99e1538974d3ac1fe98'
+  api.searchParams.append('sign', md5(paramsString))
+
+  response = await fetch(api, {mode: 'cors', credentials: 'include'})
+  response = await response.json()
+  let sexDistributions = response.data.distributions[1]
+  let [men, women] = sexDistributions.distribution_list
+  men = parseInt(men.distribution_value)
+  women = parseInt(women.distribution_value)
+
+  let locationDistributions = response.data.distributions[3]
+  let locationAll = locationDistributions.distribution_list.map(item=>parseInt(item.distribution_value)).reduce((a,b)=>{
+    return a+b;
+  }, 0)
+  let locationTop10 = locationDistributions.distribution_list.slice(0, 10).map(item=>{
+    return `${item.distribution_key}: ${(item.distribution_value/locationAll*100).toFixed(2)}%`
+  }).reduce((a,b)=>[a,b].join(', '), '')
+  setComplete(old => old + 1)
+  return [...info, follower, short_id, price20, price60, cpm20, cpm60, intro, playOverRate, score, mcn, tags, address,
+    (men/(men+women)*100).toFixed(2)+'%', (women/(men+women)*100).toFixed(2)+'%', locationTop10]
 }
 
 
