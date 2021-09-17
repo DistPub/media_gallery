@@ -1,5 +1,6 @@
 import {LoadingMessage, ProgressBar, ExportButton} from "./components.jsx";
 import {ShellContext} from "./context.js";
+import {sleep} from './utils.js';
 
 function makeFlow(shell, hotID, namespace) {
   return shell.Action.using(namespace)
@@ -25,6 +26,7 @@ export default function ExportHotAccountButton(props) {
 async function* HotAccount(di, hotID) {
     let tags;
     let cache=[];
+    let called = [];
 
     if (hotID==='6766936376500813837'){
       tags=["", "颜值达人", "剧情搞笑", "美妆", "时尚", "萌宠", "音乐", "美食", "游戏", "旅行", "汽车", "生活", "测评", "二次元",
@@ -59,7 +61,27 @@ async function* HotAccount(di, hotID) {
         } else {
           cache.push(item.id);
         }
+
+        called.push((new Date).getTime());
         yield [item.id, [item.nick_name]]
+
+        do {
+          let nowT = (new Date()).getTime() - 1000;
+          for (let [idx, item] of called.entries()) {
+            if (item >= nowT) {
+              called = called.splice(idx)
+              break;
+            }
+          }
+
+          // reach the limit
+          if (called.length>=10) {
+            await sleep(1000);
+          } else {
+            break;
+          }
+
+        } while (1)
       }
 
       setComplete(old => old + 1)
