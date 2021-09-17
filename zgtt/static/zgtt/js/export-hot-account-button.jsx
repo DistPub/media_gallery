@@ -1,6 +1,5 @@
 import {LoadingMessage, ProgressBar, ExportButton} from "./components.jsx";
 import {ShellContext} from "./context.js";
-import {sleep} from './utils.js';
 
 function makeFlow(shell, hotID, namespace) {
   return shell.Action.using(namespace)
@@ -60,7 +59,6 @@ async function* HotAccount(di, hotID) {
         } else {
           cache.push(item.id);
         }
-        await sleep(200*callTimes);
         yield [item.id, [item.nick_name]]
       }
 
@@ -83,7 +81,7 @@ async function HotAccountDetail(di, args) {
   let paramsString = `o_author_id${id}platform_channel1platform_source1service_methodGetAuthorPlatformChannelInfoV2service_nameauthor.AdStarAuthorService`
   paramsString = paramsString + 'e39539b8836fb99e1538974d3ac1fe98'
   api.searchParams.append('sign', md5(paramsString))
-  let fetch1 = fetch(api, {mode: 'cors', credentials: 'include'});
+  let fetch1 = await fetch(api, {mode: 'cors', credentials: 'include'});
 
   api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
   api.searchParams.append('o_author_id', id)
@@ -95,7 +93,7 @@ async function HotAccountDetail(di, args) {
   paramsString = `o_author_id${id}platform_channel1platform_source1service_methodAuthorScoreV2service_nameauthor.AdStarAuthorService`
   paramsString = paramsString + 'e39539b8836fb99e1538974d3ac1fe98'
   api.searchParams.append('sign', md5(paramsString))
-  let fetch2 = fetch(api, {mode: 'cors', credentials: 'include'});
+  let fetch2 = await fetch(api, {mode: 'cors', credentials: 'include'});
 
   api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
   api.searchParams.append('o_author_id', id)
@@ -107,7 +105,7 @@ async function HotAccountDetail(di, args) {
   paramsString = `o_author_id${id}platform_channel1platform_source1service_methodGetAuthorMarketingInfoservice_nameauthor.AdStarAuthorService`
   paramsString = paramsString + 'e39539b8836fb99e1538974d3ac1fe98'
   api.searchParams.append('sign', md5(paramsString))
-  let fetch3 = fetch(api, {mode: 'cors', credentials: 'include'});
+  let fetch3 = await fetch(api, {mode: 'cors', credentials: 'include'});
 
   api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
   api.searchParams.append('o_author_id', id)
@@ -120,7 +118,7 @@ async function HotAccountDetail(di, args) {
   paramsString = `o_author_id${id}platform_channel1platform_source1recommendrecommendservice_methodGetAuthorBaseInfoservice_nameauthor.AdStarAuthorService`
   paramsString = paramsString + 'e39539b8836fb99e1538974d3ac1fe98'
   api.searchParams.append('sign', md5(paramsString))
-  let fetch4 = fetch(api, {mode: 'cors', credentials: 'include'})
+  let fetch4 = await fetch(api, {mode: 'cors', credentials: 'include'})
 
   api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
   api.searchParams.append('o_author_id', id)
@@ -134,7 +132,7 @@ async function HotAccountDetail(di, args) {
   paramsString = `o_author_id${id}platform_channel1platform_source1range2service_methodGetAuthorSpreadInfoservice_namedata.AdStarDataServicetype2`
   paramsString = paramsString + 'e39539b8836fb99e1538974d3ac1fe98'
   api.searchParams.append('sign', md5(paramsString))
-  let fetch5 = fetch(api, {mode: 'cors', credentials: 'include'})
+  let fetch5 = await fetch(api, {mode: 'cors', credentials: 'include'})
 
   api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
   api.searchParams.append('o_author_id', id)
@@ -148,7 +146,7 @@ async function HotAccountDetail(di, args) {
   paramsString = `o_author_id${id}platform_channel1platform_source1service_methodGetAuthorWatchedDistributionservice_namedata.AdStarDataServicesign_strict1type1`
   paramsString = paramsString + 'e39539b8836fb99e1538974d3ac1fe98'
   api.searchParams.append('sign', md5(paramsString))
-  let fetch6 = fetch(api, {mode: 'cors', credentials: 'include'})
+  let fetch6 = await fetch(api, {mode: 'cors', credentials: 'include'})
 
   api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
   api.searchParams.append('o_author_id', id)
@@ -161,7 +159,7 @@ async function HotAccountDetail(di, args) {
   paramsString = `author_type1o_author_id${id}platform_source1service_methodGetAuthorFansDistributionV2service_namedata.AdStarDataServicesign_strict1`
   paramsString = paramsString + 'e39539b8836fb99e1538974d3ac1fe98'
   api.searchParams.append('sign', md5(paramsString))
-  let fetch7 = fetch(api, {mode: 'cors', credentials: 'include'})
+  let fetch7 = await fetch(api, {mode: 'cors', credentials: 'include'})
 
   api = new URL(atob("aHR0cHM6Ly93d3cueGluZ3R1LmNuL2gvYXBpL2dhdGV3YXkvaGFuZGxlcl9nZXQv"))
   api.searchParams.append('o_author_id', id)
@@ -175,14 +173,13 @@ async function HotAccountDetail(di, args) {
   paramsString = `limit10o_author_id${id}platform_channel1platform_source1service_methodGetAuthorShowItemsV2service_nameauthor.AdStarAuthorServicesign_strict1`
   paramsString = paramsString + 'e39539b8836fb99e1538974d3ac1fe98'
   api.searchParams.append('sign', md5(paramsString))
-  let fetch8 = fetch(api, {mode: 'cors', credentials: 'include'})
+  let fetch8 = await fetch(api, {mode: 'cors', credentials: 'include'})
 
-  let responses = await Promise.all([
-    fetch1, fetch2, fetch3, fetch4, fetch5, fetch6, fetch7, fetch8
-  ])
-  let [response1,response2,response3,response4,response5,response6,response7,response8] = await Promise.all(
-    responses.map(item=>item.json())
-  )
+  let responses = []
+  for(let item of [fetch1, fetch2, fetch3, fetch4, fetch5, fetch6, fetch7, fetch8]){
+    responses.push(await item.json());
+  }
+  let [response1,response2,response3,response4,response5,response6,response7,response8] = responses
   setComplete(old => old + 8)
 
   let intro = response1.data?.self_intro;
