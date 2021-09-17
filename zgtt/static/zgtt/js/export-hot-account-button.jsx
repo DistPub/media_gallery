@@ -66,18 +66,15 @@ async function* HotAccount(di, hotID) {
         yield [item.id, [item.nick_name]]
 
         do {
-          let nowT = (new Date()).getTime() - 1000;
-          for (let [idx, item] of called.entries()) {
-            if (item >= nowT) {
-              called = called.splice(idx)
-              break;
-            }
-          }
+          let nowT = (new Date()).getTime() - (60*1000);
+          called = called.filter(item=>item>=nowT);
 
           // reach the limit
           if (called.length>=10) {
+            console.log(`too fast, sleep...`)
             await sleep(1000);
           } else {
+            console.log(`resume...`)
             break;
           }
 
