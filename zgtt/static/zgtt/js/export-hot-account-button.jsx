@@ -1,5 +1,6 @@
 import {LoadingMessage, ProgressBar, ExportButton} from "./components.jsx";
 import {ShellContext} from "./context.js";
+import {sleep} from './utils.js';
 
 function makeFlow(shell, hotID, namespace) {
   return shell.Action.using(namespace)
@@ -48,15 +49,18 @@ async function* HotAccount(di, hotID) {
       let response = await fetch(api, {mode: 'cors', credentials: 'include'})
       response = await response.json()
 
-      setTotal(old => old + response.data.stars.length * 8)
+      let callTimes = 8;
+
+      setTotal(old => old + response.data.stars.length * callTimes)
 
       for (let item of response.data.stars) {
         if (cache.includes(item.id)){
-          setTotal(old => old - 8)
+          setTotal(old => old - callTimes)
           continue;
         } else {
           cache.push(item.id);
         }
+        await sleep(200*callTimes);
         yield [item.id, [item.nick_name]]
       }
 
