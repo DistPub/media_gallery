@@ -179,6 +179,7 @@ async function HotAccountDetail(di, args) {
   let [response1,response2,response3,response4,response5,response6,response7,response8] = await Promise.all(
     responses.map(item=>item.json())
   )
+  setComplete(old => old + 8)
 
   let intro = response1.data?.self_intro;
   let score = response2.data.top_score
