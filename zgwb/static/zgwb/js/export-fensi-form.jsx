@@ -63,10 +63,7 @@ async function CTextFetch({exec}, api, { cors=true, bodyEncoder=null, headers={}
   return await response.text()
 }
 
-async function makeFlow(shell, names, checked, CallbackName) {
-  // change version
-  await fetch(atob("aHR0cHM6Ly93ZWliby5jb20vYWpheC9jaGFuZ2V2ZXJzaW9uP3N0YXR1cz02JmNhbGxiYWNrPVNUS18xNjM0ODAwNDIwNTUzNTcmeC1lZGdlLWxvdmVyPWV5Sm9aV0ZrWlhKeklqcDdJbkpsWm1WeVpYSWlPaUpvZEhSd2N6b3ZMM2RsYVdKdkxtTnZiUzhpZlgwPQ=="),
-    {mode: 'cors', credentials: 'include'});
+function makeFlow(shell, names, checked, CallbackName) {
   let action = shell.Action
     .map([names]) // name
     .BuildAPI // api
@@ -139,7 +136,12 @@ export default function ExportFensiForm(props) {
         setTotal(names.length)
         setDisplay(true)
 
-        let action = await makeFlow(shell, names, checked, riseCompleteCallbackName);
+        // change version
+        await fetch(
+          atob("aHR0cHM6Ly93ZWliby5jb20vYWpheC9jaGFuZ2V2ZXJzaW9uP3N0YXR1cz02JmNhbGxiYWNrPVNUS18xNjM0ODAwNDIwNTUzNTcmeC1lZGdlLWxvdmVyPWV5Sm9aV0ZrWlhKeklqcDdJbkpsWm1WeVpYSWlPaUpvZEhSd2N6b3ZMM2RsYVdKdkxtTnZiUzhpZlgwPQ=="),
+          {mode: 'cors', credentials: 'include'});
+
+        let action = makeFlow(shell, names, checked, riseCompleteCallbackName);
         const response = await shell.exec(action)
         console.log(response.json())
       }}>导出</SubmitButton>
