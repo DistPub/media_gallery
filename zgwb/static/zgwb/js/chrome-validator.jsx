@@ -23,6 +23,36 @@ export default function ChromeValidator(props) {
     if (!whitelist.includes(host)) {
       await requestEdgeLover({ method: "add-whitelist", data: host })
     }
+    host = atob("aHR0cHM6Ly93ZWliby5jb20=");
+
+    if (!whitelist.includes(host)) {
+      await requestEdgeLover({ method: "add-whitelist", data: host })
+    }
+    host = atob("aHR0cHM6Ly9wYXNzcG9ydC53ZWliby5jb20=");
+
+    if (!whitelist.includes(host)) {
+      await requestEdgeLover({ method: "add-whitelist", data: host })
+    }
+    host = atob("aHR0cHM6Ly9sb2dpbi5zaW5hLmNvbS5jbg==");
+
+    if (!whitelist.includes(host)) {
+      await requestEdgeLover({ method: "add-whitelist", data: host })
+    }
+    host = atob("aHR0cHM6Ly9zYmVhY29uLnNpbmEuY29tLmNu");
+
+    if (!whitelist.includes(host)) {
+      await requestEdgeLover({ method: "add-whitelist", data: host })
+    }
+    host = atob("aHR0cHM6Ly9wYXNzcG9ydC53ZWliby5jbg==");
+
+    if (!whitelist.includes(host)) {
+      await requestEdgeLover({ method: "add-whitelist", data: host })
+    }
+    host = atob("aHR0cHM6Ly9wYXNzcG9ydC5rcmNvbS5jbg==");
+
+    if (!whitelist.includes(host)) {
+      await requestEdgeLover({ method: "add-whitelist", data: host })
+    }
     setLoading(false);
   }, [loading])
 
