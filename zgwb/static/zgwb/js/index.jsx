@@ -16,7 +16,7 @@ window.onerror = (message, file, line, column, error) => {
 
 (async () => {
   try {
-    const Main = React.lazy(()=>import('./app.jsx'))
+    const Main = React.lazy(()=>import('./main.jsx'))
     ReactDOM.render(<React.Suspense fallback={<>正在打开应用...</>}><Main/></React.Suspense>, root)
   } catch (error) {
     fallback(error)
